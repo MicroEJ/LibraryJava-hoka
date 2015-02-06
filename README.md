@@ -4,7 +4,7 @@ This repository contains the Hoka HTTP server and dependencies as well as an exa
 ### Structure
 Structure of the repository :
 
-- ExampleJava-hoka
+- LibraryJava-hoka
    - hoka
    - hoka-example
    - socket-connector-core
