@@ -21,7 +21,7 @@ import com.is2t.server.http.support.MIMEUtils;
  * Represents a HTTP Request.
  * </p>
  */
-public final class HTTPRequest {
+public class HTTPRequest {
 
 	/**
 	 * IS2T-API
