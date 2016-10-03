@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Hashtable;
+import java.util.LinkedList;
+import java.util.List;
 
 import ej.hoka.http.support.MIMEUtils;
 
@@ -471,57 +473,43 @@ public class HTTPRequest {
 
 		// 3. the body contains a multipart form encoded
 		if ((contentType != null) && contentType.startsWith(MIMEUtils.MIME_MULTIPART_FORM_ENCODED_DATA)) {
-
 			String boundary = contentType.substring(contentType.indexOf(';') + 1);
 
 			boundary = boundary.substring(boundary.indexOf("boundary=") + 9); //$NON-NLS-1$
-
-			StringBuffer multipartBodyBuffer = new StringBuffer(2048);
+			String multipartBody = ""; //$NON-NLS-1$
 
 			int readLen = -1;
-			char[] buff = new char[256];
+			char[] buff = new char[1024];
 			try (InputStreamReader reader = new InputStreamReader(this.stream)) {
 				while ((readLen = reader.read(buff)) != -1) {
-					multipartBodyBuffer.append(buff, 0, readLen);
+					multipartBody += String.valueOf(buff, 0, readLen);
+					readLen = reader.read(buff);
 				}
 			}
-
-			String multipartBody = multipartBodyBuffer.toString();
+			buff = null;
 			this.parts = split(multipartBody, boundary);
-
 			this.isMultipartFormEncoded = true;
 		} else {
 			readBody(this.stream);
 		}
-
-		this.stream.close();
 	}
 
 	private String[] split(String toSplit, String separator) {
-
 		int index = toSplit.indexOf(separator);
-		int numberOfElements = 0;
-		String[] parts = new String[50];
+		List<String> parts = new LinkedList<String>();
 
 		while (index > -1) {
-
 			int indexEnd = toSplit.indexOf(separator, index + separator.length());
 
 			if (indexEnd != -1) {
-				parts[numberOfElements] = toSplit.substring(index + separator.length() + 2, indexEnd - 4);
+				parts.add(toSplit.substring(index + separator.length() + 2, indexEnd - 4));
 			} else {
-				parts[numberOfElements] = toSplit.substring(index + separator.length() + 2, toSplit.length() - 2);
+				parts.add(toSplit.substring(index + separator.length() + 2, toSplit.length() - 2));
 			}
-
-			numberOfElements++;
 			index = indexEnd;
-
 		}
 
-		System.arraycopy(parts, 0, parts = new String[numberOfElements], 0, numberOfElements - 1);
-
-		return parts;
-
+		return parts.toArray(new String[parts.size()]);
 	}
 
 	/**
@@ -797,7 +785,9 @@ public class HTTPRequest {
 			builder.append((char) read);
 			read = input.read();
 		}
-		switch (builder.toString().toUpperCase()) {
+
+		String inputMethod = builder.toString().toUpperCase();
+		switch (inputMethod) {
 		case HTTPConstants.HTTP_METHOD_GET:
 			this.method = GET;
 			return true;
