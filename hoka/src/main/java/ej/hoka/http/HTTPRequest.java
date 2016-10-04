@@ -479,13 +479,18 @@ public class HTTPRequest {
 			String multipartBody = ""; //$NON-NLS-1$
 
 			int readLen = -1;
-			char[] buff = new char[1024];
+			char[] buff = new char[512];
 			try (InputStreamReader reader = new InputStreamReader(this.stream)) {
-				while ((readLen = reader.read(buff)) != -1) {
-					multipartBody += String.valueOf(buff, 0, readLen);
+				while (true) {
 					readLen = reader.read(buff);
+					if (readLen == -1) {
+						break;
+					}
+
+					multipartBody += String.valueOf(buff, 0, readLen);
 				}
 			}
+
 			buff = null;
 			this.parts = split(multipartBody, boundary);
 			this.isMultipartFormEncoded = true;
