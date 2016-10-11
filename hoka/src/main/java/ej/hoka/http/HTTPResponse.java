@@ -19,6 +19,59 @@ import java.util.Hashtable;
  */
 public class HTTPResponse {
 
+	/**
+	 * An empty HTTP response with status code 200.
+	 */
+	public static final HTTPResponse RESPONSE_OK = createResponseFromStatus(HTTPConstants.HTTP_STATUS_OK);
+	/**
+	 * An empty HTTP response with status code 301.
+	 */
+	public static final HTTPResponse RESPONSE_MOVED_PERMANENTLY = createResponseFromStatus(
+			HTTPConstants.HTTP_STATUS_REDIRECT);
+	/**
+	 * An empty HTTP response with status code 304.
+	 */
+	public static final HTTPResponse RESPONSE_NOT_MODIFIED = createResponseFromStatus(
+			HTTPConstants.HTTP_STATUS_NOTMODIFIED);
+	/**
+	 * An empty HTTP response with status code 400.
+	 */
+	public static final HTTPResponse RESPONSE_BAD_REQUEST = createResponseFromStatus(
+			HTTPConstants.HTTP_STATUS_BADREQUEST);
+	/**
+	 * An empty HTTP response with status code 403.
+	 */
+	public static final HTTPResponse RESPONSE_FORBIDDEN = createResponseFromStatus(HTTPConstants.HTTP_STATUS_FORBIDDEN);
+	/**
+	 * An empty HTTP response with status code 404.
+	 */
+	public static final HTTPResponse RESPONSE_NOT_FOUND = createResponseFromStatus(HTTPConstants.HTTP_STATUS_NOTFOUND);
+	/**
+	 * An empty HTTP response with status code 405.
+	 */
+	public static final HTTPResponse RESPONSE_METHOD_NOT_ALLOWED = createResponseFromStatus(
+			HTTPConstants.HTTP_STATUS_METHOD);
+	/**
+	 * An empty HTTP response with status code 406.
+	 */
+	public static final HTTPResponse RESPONSE_NOT_ACCEPTABLE = createResponseFromStatus(
+			HTTPConstants.HTTP_STATUS_NOTACCEPTABLE);
+	/**
+	 * An empty HTTP response with status code 415.
+	 */
+	public static final HTTPResponse RESPONSE_UNSUPPORTED_MEDIA_TYPE = createResponseFromStatus(
+			HTTPConstants.HTTP_STATUS_MEDIA_TYPE);
+	/**
+	 * An empty HTTP response with status code 500.
+	 */
+	public static final HTTPResponse RESPONSE_INTERNAL_ERROR = createResponseFromStatus(
+			HTTPConstants.HTTP_STATUS_INTERNALERROR);
+	/**
+	 * An empty HTTP response with status code 501.
+	 */
+	public static final HTTPResponse RESPONSE_NOT_IMPLEMENTED = createResponseFromStatus(
+			HTTPConstants.HTTP_STATUS_NOTIMPLEMENTED);
+
 	private String status;
 
 	/**
@@ -50,6 +103,13 @@ public class HTTPResponse {
 	 * @see #close()
 	 */
 	private boolean dataStreamClosed = false;
+
+	private static HTTPResponse createResponseFromStatus(String status) {
+		HTTPResponse response = new HTTPResponse();
+		response.setStatus(status);
+		response.addHeaderField(HTTPConstants.FIELD_CONNECTION, HTTPConstants.CONNECTION_FIELD_VALUE_CLOSE);
+		return response;
+	}
 
 	/**
 	 * <p>
