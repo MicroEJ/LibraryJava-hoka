@@ -1,0 +1,37 @@
+<!--
+	Ivy
+	
+	Copyright 2016 IS2T. All rights reserved.
+	IS2T PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+-->
+<ivy-module version="2.0" xmlns:ea="http://www.easyant.org" xmlns:m="http://ant.apache.org/ivy/extra"> 
+	<info organisation="ej.library.iot" module="hoka" status="integration" revision="2.0.0">
+		<ea:build organisation="com.is2t.easyant.buildtypes" module="build-microej-javalib" revision="+">
+		</ea:build>
+	</info>
+	<configurations defaultconfmapping="default->default;provided->provided">
+		<conf name="default" visibility="public" description="Runtime dependencies to other artifacts"/>
+		<conf name="provided" visibility="public" description="Compile-time dependencies to APIs provided by the platform"/>
+		<conf name="documentation" visibility="public" description="Documentation related to the artifact (javadoc, PDF)"/>
+		<conf name="source" visibility="public" description="Source code"/>
+		<conf name="dist" visibility="public" description="Contains extra files such as README.md, licenses"/>
+		<conf name="test" visibility="private" description="Dependencies for test execution. It is not required for normal use of the application, and is only available for the test compilation and execution phases."/>
+	</configurations>
+	
+	<publications>
+		<!-- keep this empty if no specific artifact to publish -->
+		<!-- must be here in order to avoid all configurations for the default artifact -->
+	</publications>
+	
+	<dependencies>
+		<!-- 
+			Put MicroEJ API dependencies to the "provided->*" configuration
+			Other regular runtime dependencies are in the "default" configuration  
+		-->
+		<dependency conf="provided->*" org="ej.api" name="edc" rev="[1.2.0-RC0,2.0.0-RC0["/>
+		<dependency conf="provided->*" org="ej.api" name="net" rev="[1.0.0-RC0,2.0.0-RC0["/>
+		<dependency org="ej.library.eclasspath" name="lists" rev="[1.0.0-RC0,2.0.0-RC0["/>
+		<dependency org="ej.library.eclasspath" name="stringtokenizer" rev="[1.0.0-RC0,2.0.0-RC0["/>
+		<dependency transitive="false" org="com.is2t.libraries" name="checkHelper" rev="[1.1.0-RC0,2.0.0-RC0[" conf="test->default" />
+	</dependencies>
+</ivy-module>

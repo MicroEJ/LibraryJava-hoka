@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="src" path="src-calibration"/>
-	<classpathentry kind="var" path="EDC-1.2"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/socket-connector-netembedded"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/socket-connector-core"/>
+	<classpathentry kind="src" path="src/main/java"/>
+	<classpathentry kind="con" path="org.apache.ivyde.eclipse.cpcontainer.IVYDE_CONTAINER/?project=hoka&amp;ivyXmlPath=module.ivy&amp;confs=*"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
