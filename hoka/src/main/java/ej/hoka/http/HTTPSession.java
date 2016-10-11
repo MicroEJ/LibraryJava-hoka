@@ -499,12 +499,12 @@ public abstract class HTTPSession {
 			try (OutputStream dataOutput = this.server.getIdentityTransferCodingHandler().open(response, output)) {
 				if (encodingHandler != null) {
 					try (OutputStream encodedDataOutput = encodingHandler.open(dataOutput)) {
-						encodedDataOutput.write(rawData);
+						writeAndFlush(rawData, encodedDataOutput);
 					}
 				} else {
-					dataOutput.write(rawData);
+					writeAndFlush(rawData, dataOutput);
 				}
-
+				response.setDataStreamClosed();
 			}
 		} else if (dataStream != null) {
 			try {
@@ -541,5 +541,11 @@ public abstract class HTTPSession {
 			}
 		}
 		output.flush();
+	}
+
+	private void writeAndFlush(byte[] data, OutputStream stream) throws IOException {
+		stream.write(data);
+		stream.flush();
+		stream.close();
 	}
 }
