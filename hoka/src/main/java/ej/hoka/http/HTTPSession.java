@@ -400,6 +400,7 @@ public abstract class HTTPSession {
 		} catch (IOException e) {
 			// an error occurred when sending the response: can't do anything
 			// more
+			this.server.getLogger().unexpectedError(e);
 		}
 	}
 
@@ -529,6 +530,8 @@ public abstract class HTTPSession {
 						dataOutput.write(readBuffer, 0, len);
 						dataOutput.flush();
 					}
+				} catch (Throwable t) {
+					this.server.getLogger().unexpectedError(t);
 				} finally {
 					// close data output stream. This does not close underlying
 					// TCP connection since transfer output stream does not

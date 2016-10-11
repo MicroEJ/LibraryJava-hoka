@@ -152,6 +152,7 @@ public class DefaultLogger implements Logger {
 			message = sb.append(message).append(" from ").append(address).toString(); //$NON-NLS-1$
 		} catch (IOException e) {
 			// FIXME handle error
+			this.unexpectedError(e);
 		}
 		dumpConnectionEvent(c, message);
 	}
