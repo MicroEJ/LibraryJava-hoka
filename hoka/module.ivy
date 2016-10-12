@@ -31,7 +31,6 @@
 		<dependency conf="provided->*" org="ej.api" name="edc" rev="[1.2.0-RC0,2.0.0-RC0["/>
 		<dependency conf="provided->*" org="ej.api" name="net" rev="[1.0.0-RC0,2.0.0-RC0["/>
 		<dependency org="ej.library.eclasspath" name="lists" rev="[1.0.0-RC0,2.0.0-RC0["/>
-		<dependency org="ej.library.eclasspath" name="stringtokenizer" rev="[1.0.0-RC0,2.0.0-RC0["/>
 		<dependency transitive="false" org="com.is2t.libraries" name="checkHelper" rev="[1.1.0-RC0,2.0.0-RC0[" conf="test->default" />
 	</dependencies>
 </ivy-module>
