@@ -116,7 +116,7 @@ public class MIMEUtils {
 	 */
 	public static String getMIMEType(String uri) {
 		int pos;
-		if ((uri == null) || ((pos = uri.indexOf('.')) == -1)) {
+		if ((uri == null) || ((pos = uri.lastIndexOf('.')) == -1)) {
 			return null;
 		}
 

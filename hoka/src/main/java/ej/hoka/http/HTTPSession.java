@@ -400,6 +400,7 @@ public abstract class HTTPSession {
 		} catch (IOException e) {
 			// an error occurred when sending the response: can't do anything
 			// more
+			this.server.getLogger().unexpectedError(e);
 		}
 	}
 
@@ -499,12 +500,12 @@ public abstract class HTTPSession {
 			try (OutputStream dataOutput = this.server.getIdentityTransferCodingHandler().open(response, output)) {
 				if (encodingHandler != null) {
 					try (OutputStream encodedDataOutput = encodingHandler.open(dataOutput)) {
-						encodedDataOutput.write(rawData);
+						writeAndFlush(rawData, encodedDataOutput);
 					}
 				} else {
-					dataOutput.write(rawData);
+					writeAndFlush(rawData, dataOutput);
 				}
-
+				response.setDataStreamClosed();
 			}
 		} else if (dataStream != null) {
 			try {
@@ -529,6 +530,8 @@ public abstract class HTTPSession {
 						dataOutput.write(readBuffer, 0, len);
 						dataOutput.flush();
 					}
+				} catch (Throwable t) {
+					this.server.getLogger().unexpectedError(t);
 				} finally {
 					// close data output stream. This does not close underlying
 					// TCP connection since transfer output stream does not
@@ -541,5 +544,11 @@ public abstract class HTTPSession {
 			}
 		}
 		output.flush();
+	}
+
+	private void writeAndFlush(byte[] data, OutputStream stream) throws IOException {
+		stream.write(data);
+		stream.flush();
+		stream.close();
 	}
 }

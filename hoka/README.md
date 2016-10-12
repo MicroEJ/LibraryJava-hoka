@@ -12,13 +12,14 @@ Most of the documentation is available in the Hoka documentation folder.
 
 # Usage
 Add the following line to your `module.ivy` or your `ivy.xml`:
-> `<dependency org="com.is2t.connector.net" name="socket-connector-core" rev="1.+"/>`
+> `<dependency org="ej.library.iot" name="hoka" rev="1.+"/>`
 	
 # Requirements
   - EDC 1.2 or later
+  - NET 1.2 or later
 
 # Dependencies
-None.
+  - EClasspath Lists 1.0.0 or later.
 
 # Source
 N.A.
