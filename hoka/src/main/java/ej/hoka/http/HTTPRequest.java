@@ -1,7 +1,7 @@
 /*
  * Java
  *
- * Copyright 2009-2016 IS2T. All rights reserved.
+ * Copyright 2009-2017 IS2T. All rights reserved.
  * IS2T PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
 package ej.hoka.http;
@@ -259,7 +259,7 @@ public class HTTPRequest {
 	}
 
 	/**
-	 * Parses URL query parameters. This method can be called in {@link HTTPSession#answer(HTTPRequest)} method
+	 * Parses URL query parameters. This method can be called in {@link AbstractHTTPSession#answer(HTTPRequest)} method
 	 * implementation to parse POST parameters in message body. Returns the parameters in a hashtable or
 	 * <code>null</code> if the parameters cannot be read (EOF reached).
 	 *
@@ -422,12 +422,19 @@ public class HTTPRequest {
 	private final HTTPServer server;
 
 	/**
+	 * The {@link BodyParser}.
+	 */
+	private BodyParser bodyParser;
+
+	/**
 	 * Constructs a new instance of HTTPRequest.
 	 *
 	 * @param server
 	 *            the {@link HTTPServer} instance
 	 * @param inputStream
 	 *            the input stream for the request
+	 * @param parser
+	 *            the {@link BodyParser} to use
 	 * @throws IOException
 	 *             if connection is lost during processing the request
 	 * @throws IllegalArgumentException
@@ -435,8 +442,10 @@ public class HTTPRequest {
 	 * @throws UnsupportedHTTPEncodingException
 	 *             when an unsupported HTTP encoding encountered
 	 */
-	protected HTTPRequest(HTTPServer server, InputStream inputStream) throws IOException, IllegalArgumentException {
+	protected HTTPRequest(HTTPServer server, InputStream inputStream, BodyParser parser)
+			throws IOException, IllegalArgumentException {
 		this.server = server;
+		this.bodyParser = parser;
 
 		this.parameters = new Hashtable<String, String>(10); // reasonable size for HTTP
 		// Parameters (50 in our default
@@ -497,6 +506,24 @@ public class HTTPRequest {
 		} else {
 			readBody(this.stream);
 		}
+	}
+
+	/**
+	 * Constructs a new instance of HTTPRequest.
+	 *
+	 * @param server
+	 *            the {@link HTTPServer} instance
+	 * @param inputStream
+	 *            the input stream for the request
+	 * @throws IOException
+	 *             if connection is lost during processing the request
+	 * @throws IllegalArgumentException
+	 *             if parsing the request header or body failed
+	 * @throws UnsupportedHTTPEncodingException
+	 *             when an unsupported HTTP encoding encountered
+	 */
+	protected HTTPRequest(HTTPServer server, InputStream inputStream) throws IOException, IllegalArgumentException {
+		this(server, inputStream, null);
 	}
 
 	private String[] split(String toSplit, String separator) {
@@ -933,8 +960,37 @@ public class HTTPRequest {
 	 *             if an error occured during processing
 	 */
 	protected void readBody(InputStream stream) throws IOException {
-		// it's not a multipart type, we are not able to handle it by now
-		// throw new RuntimeException("Multipart Encoded Data not supported");
+		BodyParser parser = this.bodyParser;
+		if (parser != null) {
+			parser.parseBody(stream);
+		}
 	}
 
+	/**
+	 * Gets the stream.
+	 *
+	 * @return the stream.
+	 */
+	public InputStream getStream() {
+		return this.stream;
+	}
+
+	/**
+	 * Gets the bodyParser.
+	 *
+	 * @return the bodyParser.
+	 */
+	public BodyParser getBodyParser() {
+		return this.bodyParser;
+	}
+
+	/**
+	 * Sets the parser.
+	 *
+	 * @param parser
+	 *            the parser to set.
+	 */
+	public void setBodyParser(BodyParser parser) {
+		this.bodyParser = parser;
+	}
 }

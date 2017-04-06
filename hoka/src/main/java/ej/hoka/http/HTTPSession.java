@@ -1,7 +1,7 @@
 /*
  * Java
  *
- * Copyright 2009-2016 IS2T. All rights reserved.
+ * Copyright 2009-2017 IS2T. All rights reserved.
  * IS2T PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
 package ej.hoka.http;
@@ -93,6 +93,8 @@ public abstract class HTTPSession {
 	 * The {@link SocketConnection} instance.
 	 */
 	private ISocketConnection streamConnection;
+
+	private BodyParser bodyParser;
 
 	/**
 	 * <p>
@@ -221,7 +223,8 @@ public abstract class HTTPSession {
 
 						HTTPRequest request;
 						try {
-							request = new HTTPRequest(HTTPSession.this.server, inputStream);
+							request = new HTTPRequest(HTTPSession.this.server, inputStream,
+									HTTPSession.this.bodyParser);
 						} catch (IllegalArgumentException e) {
 							sendError(HTTPConstants.HTTP_STATUS_BADREQUEST);
 							continue runloop;
@@ -550,5 +553,24 @@ public abstract class HTTPSession {
 		stream.write(data);
 		stream.flush();
 		stream.close();
+	}
+
+	/**
+	 * Gets the bodyParser.
+	 *
+	 * @return the bodyParser.
+	 */
+	public BodyParser getBodyParser() {
+		return this.bodyParser;
+	}
+
+	/**
+	 * Sets the bodyParser.
+	 *
+	 * @param bodyParser
+	 *            the bodyParser to set.
+	 */
+	public void setBodyParser(BodyParser bodyParser) {
+		this.bodyParser = bodyParser;
 	}
 }
