@@ -4,7 +4,7 @@
  * Copyright 2017 IS2T. All rights reserved.
  * IS2T PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
-package ej.hoka.http;
+package ej.hoka.http.body;
 
 import java.io.IOException;
 import java.io.InputStream;

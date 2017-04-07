@@ -13,12 +13,12 @@ import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
 
+import ej.hoka.http.body.BodyParser;
+import ej.hoka.http.body.BodyParserFactory;
 import ej.hoka.http.support.MIMEUtils;
 
 /**
- * <p>
  * Represents a HTTP Request.
- * </p>
  */
 public class HTTPRequest {
 
@@ -433,8 +433,8 @@ public class HTTPRequest {
 	 *            the {@link HTTPServer} instance
 	 * @param inputStream
 	 *            the input stream for the request
-	 * @param parser
-	 *            the {@link BodyParser} to use
+	 * @param bodyParserFactory
+	 *            the {@link BodyParserFactory} to use
 	 * @throws IOException
 	 *             if connection is lost during processing the request
 	 * @throws IllegalArgumentException
@@ -442,10 +442,9 @@ public class HTTPRequest {
 	 * @throws UnsupportedHTTPEncodingException
 	 *             when an unsupported HTTP encoding encountered
 	 */
-	protected HTTPRequest(HTTPServer server, InputStream inputStream, BodyParser parser)
+	protected HTTPRequest(HTTPServer server, InputStream inputStream, BodyParserFactory bodyParserFactory)
 			throws IOException, IllegalArgumentException {
 		this.server = server;
-		this.bodyParser = parser;
 
 		this.parameters = new Hashtable<String, String>(10); // reasonable size for HTTP
 		// Parameters (50 in our default
@@ -504,6 +503,9 @@ public class HTTPRequest {
 			this.parts = split(multipartBody, boundary);
 			this.isMultipartFormEncoded = true;
 		} else {
+			if (bodyParserFactory != null) {
+				this.bodyParser = bodyParserFactory.newBodyParser(this);
+			}
 			readBody(this.stream);
 		}
 	}
@@ -952,7 +954,7 @@ public class HTTPRequest {
 	}
 
 	/**
-	 * Not implemented.
+	 * Read the body.
 	 *
 	 * @param stream
 	 *            the {@link InputStream} to read the body of the HTTP request
@@ -960,9 +962,8 @@ public class HTTPRequest {
 	 *             if an error occured during processing
 	 */
 	protected void readBody(InputStream stream) throws IOException {
-		BodyParser parser = this.bodyParser;
-		if (parser != null) {
-			parser.parseBody(stream);
+		if (this.bodyParser != null) {
+			this.bodyParser.parseBody(stream);
 		}
 	}
 
@@ -982,15 +983,5 @@ public class HTTPRequest {
 	 */
 	public BodyParser getBodyParser() {
 		return this.bodyParser;
-	}
-
-	/**
-	 * Sets the parser.
-	 *
-	 * @param parser
-	 *            the parser to set.
-	 */
-	public void setBodyParser(BodyParser parser) {
-		this.bodyParser = parser;
 	}
 }

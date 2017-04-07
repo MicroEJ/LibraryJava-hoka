@@ -12,6 +12,7 @@ import java.io.OutputStream;
 import java.util.Enumeration;
 import java.util.Hashtable;
 
+import ej.hoka.http.body.BodyParserFactory;
 import ej.hoka.http.support.AcceptEncoding;
 import ej.hoka.http.support.MIMEUtils;
 import ej.hoka.http.support.QualityArgument;
@@ -94,7 +95,7 @@ public abstract class HTTPSession {
 	 */
 	private ISocketConnection streamConnection;
 
-	private BodyParser bodyParser;
+	private BodyParserFactory bodyParserFactory;
 
 	/**
 	 * <p>
@@ -224,7 +225,7 @@ public abstract class HTTPSession {
 						HTTPRequest request;
 						try {
 							request = new HTTPRequest(HTTPSession.this.server, inputStream,
-									HTTPSession.this.bodyParser);
+									HTTPSession.this.bodyParserFactory);
 						} catch (IllegalArgumentException e) {
 							sendError(HTTPConstants.HTTP_STATUS_BADREQUEST);
 							continue runloop;
@@ -556,21 +557,21 @@ public abstract class HTTPSession {
 	}
 
 	/**
-	 * Gets the bodyParser.
+	 * Gets the bodyParserFactory.
 	 *
-	 * @return the bodyParser.
+	 * @return the bodyParserFactory.
 	 */
-	public BodyParser getBodyParser() {
-		return this.bodyParser;
+	public BodyParserFactory getBodyParserFactory() {
+		return this.bodyParserFactory;
 	}
 
 	/**
-	 * Sets the bodyParser.
+	 * Sets the bodyParserFactory.
 	 *
-	 * @param bodyParser
-	 *            the bodyParser to set.
+	 * @param bodyParserFactory
+	 *            the bodyParserFactory to set.
 	 */
-	public void setBodyParser(BodyParser bodyParser) {
-		this.bodyParser = bodyParser;
+	public void setBodyParserFactory(BodyParserFactory bodyParserFactory) {
+		this.bodyParserFactory = bodyParserFactory;
 	}
 }
