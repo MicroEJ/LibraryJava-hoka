@@ -585,8 +585,7 @@ public class HTTPRequest {
 		HTTPServer server = this.server;
 		// 1) transfer encoding
 		String transferEncoding = getHeaderField(HTTPConstants.FIELD_TRANSFER_ENCODING);
-		IHTTPTransferCodingHandler transferCodingHandler = server
-				.getTransferCodingHandler(transferEncoding == null ? null : transferEncoding);
+		IHTTPTransferCodingHandler transferCodingHandler = server.getTransferCodingHandler(transferEncoding);
 		if (transferCodingHandler == null) {
 			// unable to manage transfer encoding
 			throw new UnsupportedHTTPEncodingException(HTTPConstants.FIELD_TRANSFER_ENCODING, transferEncoding);
