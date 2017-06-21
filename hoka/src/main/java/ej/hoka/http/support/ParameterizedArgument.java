@@ -1,7 +1,7 @@
 /*
  * Java
  *
- * Copyright 2009-2016 IS2T. All rights reserved.
+ * Copyright 2009-2017 IS2T. All rights reserved.
  * IS2T PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
 package ej.hoka.http.support;
@@ -16,7 +16,7 @@ package ej.hoka.http.support;
  *
  * <pre>
  * text/xml ; charset=toto
- * text/xml; q=0.2<br />
+ * text/xml; q=0.2
  * gzip; q=0.2
  * </pre>
  */

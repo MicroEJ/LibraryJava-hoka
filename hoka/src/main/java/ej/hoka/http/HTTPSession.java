@@ -1,7 +1,7 @@
 /*
  * Java
  *
- * Copyright 2009-2016 IS2T. All rights reserved.
+ * Copyright 2009-2017 IS2T. All rights reserved.
  * IS2T PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
 package ej.hoka.http;
@@ -12,6 +12,7 @@ import java.io.OutputStream;
 import java.util.Enumeration;
 import java.util.Hashtable;
 
+import ej.hoka.http.body.BodyParserFactory;
 import ej.hoka.http.support.AcceptEncoding;
 import ej.hoka.http.support.MIMEUtils;
 import ej.hoka.http.support.QualityArgument;
@@ -93,6 +94,8 @@ public abstract class HTTPSession {
 	 * The {@link SocketConnection} instance.
 	 */
 	private ISocketConnection streamConnection;
+
+	private BodyParserFactory bodyParserFactory;
 
 	/**
 	 * <p>
@@ -221,7 +224,8 @@ public abstract class HTTPSession {
 
 						HTTPRequest request;
 						try {
-							request = new HTTPRequest(HTTPSession.this.server, inputStream);
+							request = new HTTPRequest(HTTPSession.this.server, inputStream,
+									HTTPSession.this.bodyParserFactory);
 						} catch (IllegalArgumentException e) {
 							sendError(HTTPConstants.HTTP_STATUS_BADREQUEST);
 							continue runloop;
@@ -550,5 +554,24 @@ public abstract class HTTPSession {
 		stream.write(data);
 		stream.flush();
 		stream.close();
+	}
+
+	/**
+	 * Gets the bodyParserFactory.
+	 *
+	 * @return the bodyParserFactory.
+	 */
+	public BodyParserFactory getBodyParserFactory() {
+		return this.bodyParserFactory;
+	}
+
+	/**
+	 * Sets the bodyParserFactory.
+	 *
+	 * @param bodyParserFactory
+	 *            the bodyParserFactory to set.
+	 */
+	public void setBodyParserFactory(BodyParserFactory bodyParserFactory) {
+		this.bodyParserFactory = bodyParserFactory;
 	}
 }

@@ -14,9 +14,8 @@ import java.io.OutputStream;
  * <p>
  * Interface for defining HTTP transfer coding handlers.
  * </p>
- * The HTTP transfer coding handler decodes data from the body of a {@link HTTPRequest} and encodes the body of a
- * {@link HTTPResponse}.
- * </p>
+ * <p>The HTTP transfer coding handler decodes data from the body of a {@link HTTPRequest} and encodes the body of a
+ * {@link HTTPResponse}.</p>
  * <p>
  * Transfer coding is specified in <code>transfer-encoding</code> HTTP header.
  * </p>
@@ -30,16 +29,13 @@ import java.io.OutputStream;
 public interface IHTTPTransferCodingHandler {
 
 	/**
-	 * <p>
-	 * Returns the supported encoding id.
-	 * </p>
+	 * <p>Returns the supported encoding id.</p>
 	 *
 	 * @return an internal {@link String} in lower case format.
 	 */
 	String getId();
 
 	/**
-	 * <p>
 	 * Opens an {@link InputStream} that can be used to decode message body of the given request. The returned
 	 * {@link InputStream} MUST conforms to the followings:
 	 * <ul>
@@ -48,7 +44,6 @@ public interface IHTTPTransferCodingHandler {
 	 * <li>The {@link InputStream#close()} method MUST read any remaining bytes from the message body (if any) and MUST
 	 * NOT close the underlying stream.</li>
 	 * </ul>
-	 * </p>
 	 *
 	 * @param request
 	 *            the {@link HTTPRequest} to be decoded by this transfer coding handler.

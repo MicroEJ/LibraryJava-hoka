@@ -4,6 +4,10 @@
 	IS2T PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
 -->
 
+## 2.1.0 (2017-04-06)
+Features:
+  - Add possibility to parse the body.
+  
 ## 2.0.0 (2016-10-12)
 Features:
   - Initial  revision.
