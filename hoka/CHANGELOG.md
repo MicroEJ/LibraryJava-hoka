@@ -4,6 +4,10 @@
 	IS2T PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
 -->
 
+## 2.1.1 (2017-06-23)
+Features:
+  - Add build component.
+  
 ## 2.1.0 (2017-04-06)
 Features:
   - Add possibility to parse the body.
