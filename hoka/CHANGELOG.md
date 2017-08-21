@@ -4,6 +4,10 @@
 	IS2T PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
 -->
 
+## 3.0.0 (2017-08-21)
+Features:
+  - Use net library and remove net interfaces.
+
 ## 2.1.1 (2017-06-23)
 Features:
   - Add build component.

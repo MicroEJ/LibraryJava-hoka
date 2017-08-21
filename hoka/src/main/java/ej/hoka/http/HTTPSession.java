@@ -9,6 +9,7 @@ package ej.hoka.http;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.Socket;
 import java.util.Enumeration;
 import java.util.Hashtable;
 
@@ -17,7 +18,6 @@ import ej.hoka.http.support.AcceptEncoding;
 import ej.hoka.http.support.MIMEUtils;
 import ej.hoka.http.support.QualityArgument;
 import ej.hoka.log.Logger;
-import ej.hoka.net.ISocketConnection;
 
 /**
  * <p>
@@ -93,7 +93,7 @@ public abstract class HTTPSession {
 	/**
 	 * The {@link SocketConnection} instance.
 	 */
-	private ISocketConnection streamConnection;
+	private Socket streamConnection;
 
 	private BodyParserFactory bodyParserFactory;
 
@@ -203,13 +203,14 @@ public abstract class HTTPSession {
 					Logger logger = HTTPSession.this.server.getLogger(); // never null, at least
 					// NullLogger
 
-					ISocketConnection streamConnection = HTTPSession.this.server.getNextStreamConnection();
+					Socket streamConnection = HTTPSession.this.server.getNextStreamConnection();
 					setCurrentConnection(streamConnection);
 
 					if (streamConnection == null) {
 						// server stopped
 						return;
 					}
+
 					logger.processConnection(streamConnection);
 
 					HTTPResponse response = null;
@@ -227,9 +228,11 @@ public abstract class HTTPSession {
 							request = new HTTPRequest(HTTPSession.this.server, inputStream,
 									HTTPSession.this.bodyParserFactory);
 						} catch (IllegalArgumentException e) {
+							e.printStackTrace();
 							sendError(HTTPConstants.HTTP_STATUS_BADREQUEST);
 							continue runloop;
 						} catch (UnsupportedHTTPEncodingException e) {
+							e.printStackTrace();
 							// unable to decode data
 							// RFC2616 / 3.6: A server which receives ... a
 							// transfer-coding
@@ -239,6 +242,8 @@ public abstract class HTTPSession {
 							sendError(HTTPConstants.HTTP_STATUS_NOTIMPLEMENTED, e.field + RESPONSE_COLON + e.encoding);
 							continue runloop;
 						}
+
+						System.out.println("------------------------");
 
 						try {
 							// Build response or return a 304 status given to
@@ -368,7 +373,7 @@ public abstract class HTTPSession {
 
 	/**
 	 * Sends a HTTP response with given status and optional message. The information is also logged using
-	 * {@link Logger#httpError(ISocketConnection, String, String)}
+	 * {@link Logger#httpError(Socket, String, String)}
 	 *
 	 * @param msg
 	 *            the message, could be <code>null</code>
@@ -385,7 +390,7 @@ public abstract class HTTPSession {
 	}
 
 	/**
-	 * Sends the given {@link HTTPResponse} to the previously initialized {@link ISocketConnection}.
+	 * Sends the given {@link HTTPResponse} to the previously initialized {@link Socket}.
 	 *
 	 * @param response
 	 *            the {@link HTTPResponse} to be sent
@@ -409,12 +414,12 @@ public abstract class HTTPSession {
 	}
 
 	/**
-	 * Sets the {@link ISocketConnection} to be used.
+	 * Sets the {@link Socket} to be used.
 	 *
 	 * @param c
-	 *            the {@link ISocketConnection} to be used.
+	 *            the {@link Socket} to be used.
 	 */
-	protected void setCurrentConnection(ISocketConnection c) {
+	protected void setCurrentConnection(Socket c) {
 		this.streamConnection = c;
 	}
 

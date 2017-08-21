@@ -7,10 +7,10 @@
 package ej.hoka.tcp;
 
 import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
 
 import ej.hoka.ip.Server;
-import ej.hoka.net.IServerSocketConnection;
-import ej.hoka.net.ISocketConnection;
 
 /**
  * <p>
@@ -27,17 +27,17 @@ public abstract class TCPServer extends Server {
 	/**
 	 * The server socket used by this server.
 	 */
-	private IServerSocketConnection serverSocket;
+	private ServerSocket serverSocket;
 
 	/**
 	 * <p>
-	 * Constructs a new instance of {@link TCPServer} with {@link IServerSocketConnection} as the underlying connection.
+	 * Constructs a new instance of {@link TCPServer} with {@link Socket} as the underlying connection.
 	 * </p>
 	 *
 	 * @param connection
-	 *            the {@link IServerSocketConnection}
+	 *            the {@link Socket}
 	 */
-	public TCPServer(IServerSocketConnection connection) {
+	public TCPServer(ServerSocket connection) {
 		this.serverSocket = connection;
 	}
 
@@ -45,16 +45,16 @@ public abstract class TCPServer extends Server {
 	 * Adds a connection.
 	 *
 	 * @param client
-	 *            the {@link ISocketConnection} to add
+	 *            the {@link Socket} to add
 	 */
-	protected abstract void addConnection(ISocketConnection client);
+	protected abstract void addConnection(Socket client);
 
 	/**
-	 * Returns the current {@link IServerSocketConnection}.
+	 * Returns the current {@link Socket}.
 	 *
-	 * @return the current {@link IServerSocketConnection}
+	 * @return the current {@link Socket}
 	 */
-	protected IServerSocketConnection getCurrentConnection() {
+	protected ServerSocket getCurrentConnection() {
 		return this.serverSocket;
 	}
 
@@ -88,13 +88,13 @@ public abstract class TCPServer extends Server {
 
 			@Override
 			public void run() {
-				IServerSocketConnection serverSocket = getCurrentConnection();
+				ServerSocket serverSocket = getCurrentConnection();
 				// if server is already closed
 				if (serverSocket == null) {
 					return;
 				}
 				while (true) {
-					ISocketConnection connector;
+					Socket connector;
 					try {
 						connector = serverSocket.accept();
 					} catch (IOException e) {
@@ -138,7 +138,7 @@ public abstract class TCPServer extends Server {
 	 */
 	public void stop() {
 		try {
-			IServerSocketConnection serverSocket = this.serverSocket;
+			ServerSocket serverSocket = this.serverSocket;
 			this.serverSocket = null; // indicates the connection is being
 			// closed
 			try {

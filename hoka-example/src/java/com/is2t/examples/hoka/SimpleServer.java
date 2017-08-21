@@ -7,11 +7,10 @@
 package com.is2t.examples.hoka;
 
 import java.io.IOException;
+import java.net.ServerSocket;
 
-import com.is2t.connector.net.IServerSocketConnection;
-import com.is2t.connector.net.SocketConnectionFactory;
-import com.is2t.server.http.HTTPServer;
-import com.is2t.server.http.HTTPSession;
+import ej.hoka.http.HTTPServer;
+import ej.hoka.http.HTTPSession;
 
 /*
  * This simple server exposes resources from the src/resources folder
@@ -21,36 +20,21 @@ public class SimpleServer {
 
 	private static final int PORT = 8080;
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		
 		// retrieve the socket connector implementation of the platform
-		SocketConnectionFactory factory = SocketConnectionFactory.getImpl();
-		
-		// and create a server socket with the factory
-		IServerSocketConnection serverSocket = null;
-		try {
-			serverSocket = factory.newServerSocketConnection(PORT);
-		} catch (IOException e) {
-			//something went wrong
-			//print the issue
-			e.printStackTrace();
-			//end the program
-			return;
-		}
+		ServerSocket serverSocket = new ServerSocket(PORT);
 		
 		//create the http server with our custom http session
 		HTTPServer server = new HTTPServer(serverSocket, 10, 1) {
 			
 			protected HTTPSession newHTTPSession() {
 				return new SimpleHTTPSession(this);
-			}
-			
+			}	
 		};
 		
 		//once started the server is accessible on
 		// http://localhost:8080
 		server.start();
-
 	}
-
 }

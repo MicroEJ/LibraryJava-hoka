@@ -7,8 +7,6 @@ Structure of the repository :
 - LibraryJava-hoka
    - hoka
    - hoka-example
-   - socket-connector-core
-   - socket-connector-netembedded
 
 Each folder is an Eclipse/MicroEJ project. Each project has its own README and LICENSE requirements.
 
@@ -18,7 +16,7 @@ Import the projects in MicroEJ.
 ### Requirements
 - JRE 7 x86
 - a Java platform with NET EMBEDDED 1.0. There is currently no platform with NET EMBEDDED 1.0 delivered in MicroEJ 3.1
-- MicroEJ 3.1 or later
+- MicroEJ 4.1 or later
 
 ## Usage
 Import the projects. The example project should be run with a MicroEJ launch by:
