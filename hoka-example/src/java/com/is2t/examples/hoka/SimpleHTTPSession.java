@@ -8,12 +8,12 @@ package com.is2t.examples.hoka;
 
 import java.io.InputStream;
 
-import com.is2t.server.http.DefaultHTTPSession;
-import com.is2t.server.http.HTTPConstants;
-import com.is2t.server.http.HTTPRequest;
-import com.is2t.server.http.HTTPResponse;
-import com.is2t.server.http.HTTPServer;
-import com.is2t.server.http.support.MIMEUtils;
+import ej.hoka.http.DefaultHTTPSession;
+import ej.hoka.http.HTTPConstants;
+import ej.hoka.http.HTTPRequest;
+import ej.hoka.http.HTTPResponse;
+import ej.hoka.http.HTTPServer;
+import ej.hoka.http.support.MIMEUtils;
 
 /*
  * Adding the default resource behaviour for the root of the HTTP server 

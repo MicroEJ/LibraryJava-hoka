@@ -7,9 +7,9 @@
 package ej.hoka.log.impl;
 
 import java.io.IOException;
+import java.net.Socket;
 
 import ej.hoka.log.Logger;
-import ej.hoka.net.ISocketConnection;
 
 /**
  * <p>
@@ -44,126 +44,49 @@ public class NullLogger implements Logger {
 		// private constructor
 	}
 
-	/**
-	 * <p>
-	 * Empty implementation (does not log anything).
-	 * </p>
-	 *
-	 * @param connection
-	 *            the {@link ISocketConnection}
-	 */
 	@Override
-	public void connectionClosed(ISocketConnection connection) {
-		// no-op
+	public void connectionClosed(Socket connection) {
+		// Nothing
 	}
 
-	/**
-	 * <p>
-	 * Empty implementation (does not log anything).
-	 * </p>
-	 *
-	 * @param connection
-	 *            the {@link ISocketConnection}
-	 * @param e
-	 *            the {@link IOException}
-	 */
 	@Override
-	public void connectionLost(ISocketConnection connection, IOException e) {
-		// no-op
+	public void connectionLost(Socket connection, IOException e) {
+		// Nothing
 	}
 
-	/**
-	 * <p>
-	 * Empty implementation (does not log anything).
-	 * </p>
-	 *
-	 * @param connection
-	 *            the {@link ISocketConnection}
-	 * @param status
-	 *            the status
-	 * @param message
-	 *            the message
-	 */
 	@Override
-	public void httpError(ISocketConnection connection, String status, String message) {
-		// no-op
+	public void httpError(Socket connection, String status, String message) {
+		// Nothing
 	}
 
-	/**
-	 * <p>
-	 * Empty implementation (does not log anything).
-	 * </p>
-	 *
-	 * @param streamConnection
-	 *            the {@link ISocketConnection}
-	 */
 	@Override
-	public void newConnection(ISocketConnection streamConnection) {
-		// no-op
+	public void newConnection(Socket streamConnection) {
+		// Nothing
+
 	}
 
-	/**
-	 * <p>
-	 * Empty implementation (does not log anything).
-	 * </p>
-	 *
-	 * @param streamConnection
-	 *            the {@link ISocketConnection}
-	 */
 	@Override
-	public void processConnection(ISocketConnection streamConnection) {
-		// no-op
+	public void processConnection(Socket streamConnection) {
+		// Nothing
 	}
 
-	/**
-	 * <p>
-	 * Empty implementation (does not log anything).
-	 * </p>
-	 */
 	@Override
 	public void serverStarted() {
-		// no-op
+		// Nothing
 	}
-
-	/**
-	 * <p>
-	 * Empty implementation (does not log anything).
-	 * </p>
-	 */
 
 	@Override
 	public void serverStopped() {
-		// no-op
+		// Nothing
 	}
-
-	/**
-	 * <p>
-	 * Empty implementation (does not log anything).
-	 * </p>
-	 *
-	 * @param nbOpen
-	 *            the maximum number of connections
-	 * @param connectionRefused
-	 *            {@link ISocketConnection} the refused connection
-	 */
 
 	@Override
-	public void tooManyOpenConnections(int nbOpen, ISocketConnection connectionRefused) {
-		// no-op
+	public void tooManyOpenConnections(int count, Socket connectionRefused) {
+		// Nothing
 	}
-
-	/**
-	 * <p>
-	 * Empty implementation (does not log anything).
-	 * </p>
-	 *
-	 * @param e
-	 *            the {@link IOException}
-	 */
 
 	@Override
 	public void unexpectedError(Throwable e) {
-		// no-op
+		// Nothing
 	}
-
 }
