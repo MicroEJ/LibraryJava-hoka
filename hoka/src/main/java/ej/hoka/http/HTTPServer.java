@@ -7,9 +7,9 @@
 package ej.hoka.http;
 
 import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
 
-import ej.hoka.net.IServerSocketConnection;
-import ej.hoka.net.ISocketConnection;
 import ej.hoka.tcp.TCPServer;
 
 /**
@@ -87,7 +87,7 @@ public abstract class HTTPServer extends TCPServer {
 	/**
 	 * Non growable circular queue of opened connections
 	 */
-	private ISocketConnection[] streamConnections;
+	private Socket[] streamConnections;
 
 	/**
 	 * Pointer to the last added item.
@@ -131,7 +131,7 @@ public abstract class HTTPServer extends TCPServer {
 
 	/**
 	 * <p>
-	 * Creates a {@link HTTPServer} using the given {@link IServerSocketConnection} .
+	 * Creates a {@link HTTPServer} using the given {@link ServerSocket} .
 	 * </p>
 	 * <p>
 	 * The default encoding to be used is the identity encoding. Further encodings may be registered using
@@ -142,14 +142,14 @@ public abstract class HTTPServer extends TCPServer {
 	 * </p>
 	 *
 	 * @param connection
-	 *            the {@link IServerSocketConnection} connection used by the server
+	 *            the {@link ServerSocket} connection used by the server
 	 * @param maxSimultaneousConnection
 	 *            the maximal number of simultaneously opened connections.
 	 * @param jobCountBySession
 	 *            the number of parallel jobs to process by opened sessions. if <code>jobCountBySession</code> == 1, the
 	 *            jobs are processed sequentially.
 	 */
-	public HTTPServer(IServerSocketConnection connection, int maxSimultaneousConnection, int jobCountBySession) {
+	public HTTPServer(ServerSocket connection, int maxSimultaneousConnection, int jobCountBySession) {
 		this(connection, maxSimultaneousConnection, jobCountBySession, DEFAULT_KEEP_ALIVE_DURATION);
 	}
 
@@ -175,7 +175,7 @@ public abstract class HTTPServer extends TCPServer {
 	 *             <li><code>keepAliveDuration</code><=0
 	 *             </ul>
 	 */
-	private HTTPServer(IServerSocketConnection connection, int maxSimultaneousConnection, int jobCountBySession,
+	private HTTPServer(ServerSocket connection, int maxSimultaneousConnection, int jobCountBySession,
 			long keepAliveDuration) {
 		super(connection);
 
@@ -202,10 +202,10 @@ public abstract class HTTPServer extends TCPServer {
 	 * Add a connection to the list of current connections.
 	 *
 	 * @param connection
-	 *            {@link ISocketConnection} to add
+	 *            {@link Socket} to add
 	 */
 	@Override
-	protected void addConnection(ISocketConnection connection) {
+	protected void addConnection(Socket connection) {
 		// FIXME for memory usage only
 		// r.gc();
 		// System.out.println((new Date()).getTime()+", "+(r.totalMemory() -
@@ -279,12 +279,12 @@ public abstract class HTTPServer extends TCPServer {
 	// connection
 
 	/**
-	 * Called by HTTPSession. Get a next {@link ISocketConnection} to process. Block until a new connection is available
-	 * or server is stopped.
+	 * Called by HTTPSession. Get a next {@link Socket} to process. Block until a new connection is available or server
+	 * is stopped.
 	 *
 	 * @return null if server is stopped
 	 */
-	protected ISocketConnection getNextStreamConnection() {
+	protected Socket getNextStreamConnection() {
 		synchronized (this.streamConnections) {
 			if (this.lastAddedPtr == this.lastReadPtr) {
 				if (isStopped()) {
@@ -304,7 +304,7 @@ public abstract class HTTPServer extends TCPServer {
 			if (nextPtr == this.streamConnections.length) {
 				nextPtr = 0;
 			}
-			ISocketConnection connection = this.streamConnections[this.lastReadPtr = nextPtr];
+			Socket connection = this.streamConnections[this.lastReadPtr = nextPtr];
 			// allow GC
 			this.streamConnections[nextPtr] = null;
 			return connection;
@@ -401,7 +401,7 @@ public abstract class HTTPServer extends TCPServer {
 	 */
 	@Override
 	public void start() {
-		this.streamConnections = new ISocketConnection[this.maxOpenedConnections + 1]; // always
+		this.streamConnections = new Socket[this.maxOpenedConnections + 1]; // always
 		// an empty index in order to distinguish between empty or full queue
 		super.start();
 		// start jobs
@@ -454,13 +454,14 @@ public abstract class HTTPServer extends TCPServer {
 	 * Called when a connection cannot be added to the buffer. By default, an event is logged and connection is closed.
 	 *
 	 * @param connection
-	 *            {@link ISocketConnection} that can not be added
+	 *            {@link Socket} that can not be added
 	 */
-	protected void tooManyOpenConnections(ISocketConnection connection) {
+	protected void tooManyOpenConnections(Socket connection) {
 		this.logger.tooManyOpenConnections(this.maxOpenedConnections, connection);
 		try {
 			connection.close();
 		} catch (IOException e) {
+			e.printStackTrace();
 			// not a fatal error
 		}
 	}

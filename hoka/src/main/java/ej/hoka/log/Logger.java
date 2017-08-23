@@ -7,10 +7,10 @@
 package ej.hoka.log;
 
 import java.io.IOException;
+import java.net.Socket;
 
 import ej.hoka.http.HTTPServer;
 import ej.hoka.http.HTTPSession;
-import ej.hoka.net.ISocketConnection;
 
 /**
  * <p>
@@ -25,9 +25,9 @@ public interface Logger {
 	 * </p>
 	 *
 	 * @param connection
-	 *            the {@link ISocketConnection}
+	 *            the {@link Socket}
 	 */
-	void connectionClosed(ISocketConnection connection);
+	void connectionClosed(Socket connection);
 
 	/**
 	 * <p>
@@ -35,11 +35,11 @@ public interface Logger {
 	 * </p>
 	 *
 	 * @param connection
-	 *            the {@link ISocketConnection}
+	 *            the {@link Socket}
 	 * @param e
 	 *            the {@link IOException}
 	 */
-	void connectionLost(ISocketConnection connection, IOException e);
+	void connectionLost(Socket connection, IOException e);
 
 	/**
 	 * <p>
@@ -47,13 +47,13 @@ public interface Logger {
 	 * </p>
 	 *
 	 * @param connection
-	 *            the {@link ISocketConnection}
+	 *            the {@link Socket}
 	 * @param status
 	 *            the HTTP Error status
 	 * @param message
 	 *            the error message (may be <code>null</code>)
 	 */
-	void httpError(ISocketConnection connection, String status, String message);
+	void httpError(Socket connection, String status, String message);
 
 	/**
 	 * <p>
@@ -61,9 +61,9 @@ public interface Logger {
 	 * </p>
 	 *
 	 * @param streamConnection
-	 *            the {@link ISocketConnection}
+	 *            the {@link Socket}
 	 */
-	void newConnection(ISocketConnection streamConnection);
+	void newConnection(Socket streamConnection);
 
 	/**
 	 * <p>
@@ -71,9 +71,9 @@ public interface Logger {
 	 * </p>
 	 *
 	 * @param streamConnection
-	 *            the {@link ISocketConnection}
+	 *            the {@link Socket}
 	 */
-	void processConnection(ISocketConnection streamConnection);
+	void processConnection(Socket streamConnection);
 
 	/**
 	 * <p>
@@ -99,7 +99,7 @@ public interface Logger {
 	 * @param connectionRefused
 	 *            the connection that has been refused
 	 */
-	void tooManyOpenConnections(int count, ISocketConnection connectionRefused);
+	void tooManyOpenConnections(int count, Socket connectionRefused);
 
 	/**
 	 * <p>

@@ -8,11 +8,11 @@ package ej.hoka.log.impl;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.Socket;
 import java.util.Date;
 
 import ej.hoka.http.HTTPServer;
 import ej.hoka.log.Logger;
-import ej.hoka.net.ISocketConnection;
 
 /**
  * <p>
@@ -48,12 +48,12 @@ public class DefaultLogger implements Logger {
 	 * </p>
 	 *
 	 * @param c
-	 *            the {@link ISocketConnection} to get the hash code to log
+	 *            the {@link Socket} to get the hash code to log
 	 *
-	 * @see #dumpConnectionEvent(ISocketConnection, String)
+	 * @see #dumpConnectionEvent(Socket, String)
 	 */
 	@Override
-	public void connectionClosed(ISocketConnection c) {
+	public void connectionClosed(Socket c) {
 		dumpConnectionEvent(c, "Connection closed"); //$NON-NLS-1$
 	}
 
@@ -63,27 +63,27 @@ public class DefaultLogger implements Logger {
 	 * </p>
 	 *
 	 * @param c
-	 *            the {@link ISocketConnection} to get the hash code to log
+	 *            the {@link Socket} to get the hash code to log
 	 * @param e
 	 *            the {@link IOException} to get the reason of why the connection has been lost.
 	 *
-	 * @see #dumpConnectionEvent(ISocketConnection, String)
+	 * @see #dumpConnectionEvent(Socket, String)
 	 */
 	@Override
-	public void connectionLost(ISocketConnection c, IOException e) {
+	public void connectionLost(Socket c, IOException e) {
 		dumpConnectionEvent(c, "Connection lost (" + e.getMessage() + ")"); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
 	/**
 	 * Prints a connection event in the following form:<br>
-	 * [date] | [name of current thread] | [hash code of the {@link ISocketConnection} instance] | <code>message</code>.
+	 * [date] | [name of current thread] | [hash code of the {@link Socket} instance] | <code>message</code>.
 	 *
 	 * @param c
-	 *            the {@link ISocketConnection} instance
+	 *            the {@link Socket} instance
 	 * @param message
 	 *            the message to log
 	 */
-	protected void dumpConnectionEvent(ISocketConnection c, String message) {
+	protected void dumpConnectionEvent(Socket c, String message) {
 		dumpEvent(c.hashCode() + FIELD_SEP + message);
 	}
 
@@ -114,16 +114,16 @@ public class DefaultLogger implements Logger {
 	 * </p>
 	 *
 	 * @param c
-	 *            the {@link ISocketConnection} to get the hash code to log
+	 *            the {@link Socket} to get the hash code to log
 	 * @param status
 	 *            textual status
 	 * @param message
 	 *            optional textual message (could be <code>null</code>)
 	 *
-	 * @see #dumpConnectionEvent(ISocketConnection, String)
+	 * @see #dumpConnectionEvent(Socket, String)
 	 */
 	@Override
-	public void httpError(ISocketConnection c, String status, String message) {
+	public void httpError(Socket c, String status, String message) {
 		String msg = status;
 		if (message != null) {
 			StringBuffer sb = new StringBuffer();
@@ -134,40 +134,35 @@ public class DefaultLogger implements Logger {
 
 	/**
 	 * <p>
-	 * Displays the message "New connection from [remote IP address]" with the hash code of the
-	 * {@link ISocketConnection} instance <code>c</code>.
+	 * Displays the message "New connection from [remote IP address]" with the hash code of the {@link Socket} instance
+	 * <code>c</code>.
 	 * </p>
 	 *
 	 * @param c
-	 *            the {@link ISocketConnection} to get the remote IP address
-	 * @see #dumpConnectionEvent(ISocketConnection, String)
+	 *            the {@link Socket} to get the remote IP address
+	 * @see #dumpConnectionEvent(Socket, String)
 	 */
 	@Override
-	public void newConnection(ISocketConnection c) {
+	public void newConnection(Socket c) {
 		String message = "New connection"; //$NON-NLS-1$
 		String address;
-		try {
-			StringBuffer sb = new StringBuffer();
-			address = c.getAddress();
-			message = sb.append(message).append(" from ").append(address).toString(); //$NON-NLS-1$
-		} catch (IOException e) {
-			this.unexpectedError(e);
-		}
+		StringBuffer sb = new StringBuffer();
+		address = c.getInetAddress().toString();
+		message = sb.append(message).append(" from ").append(address).toString(); //$NON-NLS-1$
 		dumpConnectionEvent(c, message);
 	}
 
 	/**
 	 * <p>
-	 * Displays the message "Process connection" with the hash code of the {@link ISocketConnection} instance
-	 * <code>c</code>.
+	 * Displays the message "Process connection" with the hash code of the {@link Socket} instance <code>c</code>.
 	 * </p>
 	 *
 	 * @param c
-	 *            the {@link ISocketConnection}
-	 * @see #dumpConnectionEvent(ISocketConnection, String)
+	 *            the {@link Socket}
+	 * @see #dumpConnectionEvent(Socket, String)
 	 */
 	@Override
-	public void processConnection(ISocketConnection c) {
+	public void processConnection(Socket c) {
 		dumpConnectionEvent(c, "Process connection"); //$NON-NLS-1$
 	}
 
@@ -201,17 +196,12 @@ public class DefaultLogger implements Logger {
 	 * @param nbOpen
 	 *            the maximum number of open connections
 	 * @param connectionRefused
-	 *            the refused {@link ISocketConnection}
+	 *            the refused {@link Socket}
 	 * @see #dumpEvent(String)
 	 */
 	@Override
-	public void tooManyOpenConnections(int nbOpen, ISocketConnection connectionRefused) {
-		String address;
-		try {
-			address = "from " + connectionRefused.getAddress(); //$NON-NLS-1$
-		} catch (IOException e) {
-			address = ""; //$NON-NLS-1$
-		}
+	public void tooManyOpenConnections(int nbOpen, Socket connectionRefused) {
+		String address = "from " + connectionRefused.getInetAddress().toString(); //$NON-NLS-1$
 		dumpEvent("Connection " + address + " refused. Too many open connections (" + nbOpen + ")."); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 	}
 
