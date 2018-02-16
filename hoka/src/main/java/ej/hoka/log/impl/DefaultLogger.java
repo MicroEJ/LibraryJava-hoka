@@ -1,7 +1,7 @@
 /*
  * Java
  *
- * Copyright 2009-2016 IS2T. All rights reserved.
+ * Copyright 2009-2018 IS2T. All rights reserved.
  * IS2T PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
 package ej.hoka.log.impl;
@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.net.Socket;
 import java.util.Date;
+import java.util.logging.Level;
 
 import ej.hoka.http.HTTPServer;
 import ej.hoka.log.Logger;
@@ -20,6 +21,7 @@ import ej.hoka.log.Logger;
  * </p>
  */
 public class DefaultLogger implements Logger {
+
 	/**
 	 * Field separator character ("Pipe" character: "|").
 	 */
@@ -28,18 +30,24 @@ public class DefaultLogger implements Logger {
 	/**
 	 * {@link PrintStream} used for logging output.
 	 */
-	protected PrintStream out;
+	protected java.util.logging.Logger logger;
+
+	private Level eventLevel;
+
+	private Level errorLevel;
 
 	/**
 	 * <p>
 	 * Creates a new logger. Logs will be sent to the given {@link PrintStream}
 	 * </p>
 	 *
-	 * @param out
-	 *            the print stream to use for logging
+	 * @param logger
+	 *            the logger to use for logging
 	 */
-	public DefaultLogger(PrintStream out) {
-		this.out = out;
+	public DefaultLogger(java.util.logging.Logger logger) {
+		this.logger = logger;
+		this.eventLevel = Level.INFO;
+		this.errorLevel = Level.SEVERE;
 	}
 
 	/**
@@ -99,13 +107,13 @@ public class DefaultLogger implements Logger {
 	 */
 	public void dumpEvent(String message) {
 		Date d = new Date();
-		synchronized (this.out) {
-			this.out.print(d.toString());
-			this.out.print(FIELD_SEP);
-			this.out.print(Thread.currentThread().getName());
-			this.out.print(FIELD_SEP);
-			this.out.println(message);
-		}
+		StringBuilder builder = new StringBuilder();
+		builder.append(d.toString());
+		builder.append(FIELD_SEP);
+		builder.append(Thread.currentThread().getName());
+		builder.append(FIELD_SEP);
+		builder.append(message);
+		this.logger.log(this.eventLevel, builder.toString());
 	}
 
 	/**
@@ -214,9 +222,28 @@ public class DefaultLogger implements Logger {
 	 */
 	@Override
 	public void unexpectedError(Throwable e) {
-		// This is a CLDC-1.1 lack: stack trace cannot be dumped to a
-		// PrintStream other than System.err.
-		e.printStackTrace();
+		this.logger.log(this.errorLevel, "Unexpected.", e); //$NON-NLS-1$
 	}
 
+	@Override
+	public void setEventLevel(Level level) {
+		if (level == null) {
+			throw new IllegalArgumentException();
+		}
+		this.eventLevel = level;
+
+	}
+
+	@Override
+	public void setErrorLevel(Level level) {
+		if (level == null) {
+			throw new IllegalArgumentException();
+		}
+		this.errorLevel = level;
+	}
+
+	@Override
+	public java.util.logging.Logger getLogger() {
+		return this.logger;
+	}
 }

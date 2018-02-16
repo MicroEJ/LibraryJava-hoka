@@ -461,8 +461,7 @@ public abstract class HTTPServer extends TCPServer {
 		try {
 			connection.close();
 		} catch (IOException e) {
-			e.printStackTrace();
-			// not a fatal error
+			this.logger.unexpectedError(e);
 		}
 	}
 }
