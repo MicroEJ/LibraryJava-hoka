@@ -1,7 +1,7 @@
 /*
  * Java
  *
- * Copyright 2009-2017 IS2T. All rights reserved.
+ * Copyright 2009-2018 IS2T. All rights reserved.
  * IS2T PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
 package ej.hoka.http;
@@ -225,8 +225,7 @@ public abstract class HTTPSession {
 
 						HTTPRequest request;
 						try {
-							request = new HTTPRequest(HTTPSession.this.server, inputStream,
-									HTTPSession.this.bodyParserFactory);
+							request = new HTTPRequest(HTTPSession.this.server, inputStream, getBodyParserFactory());
 						} catch (IllegalArgumentException e) {
 							e.printStackTrace();
 							sendError(HTTPConstants.HTTP_STATUS_BADREQUEST);

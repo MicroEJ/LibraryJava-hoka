@@ -1,7 +1,7 @@
 /*
  * Java
  *
- * Copyright 2009-2016 IS2T. All rights reserved.
+ * Copyright 2009-2018 IS2T. All rights reserved.
  * IS2T PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
 package ej.hoka.http;
@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import ej.hoka.http.body.BodyParserFactory;
 import ej.hoka.tcp.TCPServer;
 
 /**
@@ -128,6 +129,11 @@ public abstract class HTTPServer extends TCPServer {
 	 * Array of {@link IHTTPTransferCodingHandler}s.
 	 */
 	private IHTTPTransferCodingHandler[] transferCodingHandlers;
+
+	/**
+	 * The body parser factory.
+	 */
+	private BodyParserFactory bodyParserFactory;
 
 	/**
 	 * <p>
@@ -414,7 +420,9 @@ public abstract class HTTPServer extends TCPServer {
 		// System.out.println((new Date()).getTime()+", "+(r.totalMemory() -
 		// r.freeMemory())+", beginning of server.start()" );
 		for (int i = this.sessionJobsCount; --i >= 0;) {
-			Thread job = new Thread(newHTTPSession().getRunnable(), "HTTP-JOB-" + i); //$NON-NLS-1$
+			HTTPSession session = newHTTPSession();
+			session.setBodyParserFactory(this.bodyParserFactory);
+			Thread job = new Thread(session.getRunnable(), "HTTP-JOB-" + i); //$NON-NLS-1$
 			// FIXME for mem test only
 			// r.gc();
 			// System.out.println((new Date()).getTime()+", "+(r.totalMemory() -
@@ -464,4 +472,24 @@ public abstract class HTTPServer extends TCPServer {
 			this.logger.unexpectedError(e);
 		}
 	}
+
+	/**
+	 * Gets the bodyParserFactory.
+	 *
+	 * @return the bodyParserFactory.
+	 */
+	public BodyParserFactory getBodyParserFactory() {
+		return this.bodyParserFactory;
+	}
+
+	/**
+	 * Sets the bodyParserFactory.
+	 *
+	 * @param bodyParserFactory
+	 *            the bodyParserFactory to set.
+	 */
+	public void setBodyParserFactory(BodyParserFactory bodyParserFactory) {
+		this.bodyParserFactory = bodyParserFactory;
+	}
+
 }
