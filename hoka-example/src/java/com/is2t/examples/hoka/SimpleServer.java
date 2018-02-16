@@ -1,8 +1,9 @@
 /*
 * Java
 *
-* Copyright 2015 IS2T. All rights reserved.
-* Use of this source code is governed by a BSD-style license that can be found at http://www.is2t.com/open-source-bsd-license/.
+* Copyright 2015-2018 IS2T. All rights reserved.
+* For demonstration purpose only.
+* IS2T PROPRIETARY. Use is subject to license terms.
 */
 package com.is2t.examples.hoka;
 
