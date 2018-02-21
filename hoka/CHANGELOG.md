@@ -1,9 +1,15 @@
 <!--
 	Markdown
-	Copyright 2016 IS2T. All rights reserved.
+	Copyright 2016-2018 IS2T. All rights reserved.
 	IS2T PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
 -->
 
+## 4.0.0 (2018-02-16)
+Bug fix:
+  - J0153H-2 Use a standard logger.
+Features:
+  - J0153H-3 Add body parser factory to the server.
+  
 ## 3.0.0 (2017-08-21)
 Features:
   - Use net library and remove net interfaces.

@@ -1,14 +1,15 @@
 /*
  * Java
  *
- * Copyright 2009-2016 IS2T. All rights reserved.
+ * Copyright 2009-2018 IS2T. All rights reserved.
  * IS2T PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
 package ej.hoka.ip;
 
+import java.util.logging.Level;
+
 import ej.hoka.log.Logger;
 import ej.hoka.log.impl.DefaultLogger;
-import ej.hoka.log.impl.NullLogger;
 
 /**
  * <p>
@@ -20,7 +21,7 @@ public abstract class Server {
 	/**
 	 * <p>
 	 * A logger storing server execution events.<br>
-	 * Cannot be <code>null</code>, {@link NullLogger} instance is used in such cases.
+	 * Cannot be <code>null</code>.
 	 * </p>
 	 *
 	 * <p>
@@ -53,31 +54,31 @@ public abstract class Server {
 	}
 
 	/**
-	 * Returns a new instance of the {@link DefaultLogger} initialized to use {@link System#out} as the output stream.
+	 * Returns a new instance of the {@link DefaultLogger} initialized to use a Logger "Hoka".
 	 *
-	 * @return a new instance of the {@link DefaultLogger} initialized to use {@link System#out} as the output stream
+	 * @return a new instance of the {@link DefaultLogger} initialized to use Logger "Hoka".
 	 */
 	protected Logger newLogger() {
-		return new DefaultLogger(System.out);
+		return new DefaultLogger(java.util.logging.Logger.getLogger("Hoka"));
 	}
 
 	/**
 	 * <p>
 	 * Set the <code>logger</code> as the current logger.<br>
-	 * If the value of the <code>logger</code> argument is <code>null</code> the value of
-	 * {@link NullLogger#getInstance()} is set as the current logger.
+	 * If the value of the <code>logger</code> argument is <code>null</code> the value of mute Logger is set as the
+	 * current logger.
 	 * </p>
 	 *
 	 * @param logger
 	 *            the logger to be used (<code>null</code> indicates that logging is turned off)
 	 * @see #getLogger()
 	 * @see Logger
-	 * @see NullLogger
 	 * @see DefaultLogger
 	 */
 	public void setLogger(Logger logger) {
 		if (logger == null) {
-			logger = NullLogger.getInstance();
+			logger = newLogger();
+			logger.getLogger().setLevel(Level.OFF);
 		}
 		this.logger = logger;
 	}
