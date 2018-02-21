@@ -1,13 +1,14 @@
 /*
  * Java
  *
- * Copyright 2009-2016 IS2T. All rights reserved.
+ * Copyright 2009-2018 IS2T. All rights reserved.
  * IS2T PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
 package ej.hoka.log;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.logging.Level;
 
 import ej.hoka.http.HTTPServer;
 import ej.hoka.http.HTTPSession;
@@ -18,6 +19,29 @@ import ej.hoka.http.HTTPSession;
  * </p>
  */
 public interface Logger {
+
+	/**
+	 * Gets the logger used.
+	 *
+	 * @return the logger.
+	 */
+	java.util.logging.Logger getLogger();
+
+	/**
+	 * Sets the level of the event logger.
+	 *
+	 * @param level
+	 *            the level.
+	 */
+	void setEventLevel(Level level);
+
+	/**
+	 * Sets the level of the error logger.
+	 *
+	 * @param level
+	 *            the level.
+	 */
+	void setErrorLevel(Level level);
 
 	/**
 	 * <p>
@@ -79,6 +103,7 @@ public interface Logger {
 	 * <p>
 	 * Called when {@link HTTPServer} is started.
 	 * </p>
+	 *
 	 */
 	void serverStarted();
 
@@ -86,6 +111,7 @@ public interface Logger {
 	 * <p>
 	 * Called when {@link HTTPServer} is stopped. This is the last event logged.
 	 * </p>
+	 *
 	 */
 	void serverStopped();
 

@@ -1,5 +1,12 @@
+<!--
+	Ivy
+	
+	Copyright 2017-2018 IS2T. All rights reserved.
+	For demonstration purpose only.
+	IS2T PROPRIETARY. Use is subject to license terms.
+-->
 <ivy-module version="2.0" xmlns:ea="http://www.easyant.org" xmlns:m="http://ant.apache.org/ivy/extra"> 
-	<info organisation="ej.library.iot" module="hoka-example" status="integration" revision="1.0.0">
+	<info organisation="ej.library.iot" module="hoka-example" status="integration" revision="1.0.1">
 		<ea:build organisation="com.is2t.easyant.buildtypes" module="build-microej-javalib" revision="4.+">
 		</ea:build>
 	</info>
@@ -24,7 +31,7 @@
 		-->
 		<dependency conf="provided->*" org="ej.api" name="edc" rev="[1.2.0-RC0,2.0.0-RC0["/>
 		<dependency conf="provided->*" org="ej.api" name="net" rev="[1.0.0-RC0,2.0.0-RC0["/>
-		<dependency org="ej.library.iot" name="hoka" rev="[3.0.0-RC0, 4.0.0-RC0["/>
+		<dependency org="ej.library.iot" name="hoka" rev="[4.0.0-RC0, 5.0.0-RC0["/>
 
 	</dependencies>
 </ivy-module>
