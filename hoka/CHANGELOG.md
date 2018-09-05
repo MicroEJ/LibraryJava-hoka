@@ -1,9 +1,9 @@
-<!--
-	Markdown
-	Copyright 2016-2018 IS2T. All rights reserved.
-	IS2T PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
--->
 
+## 4.1.0 (2018-09-04)
+
+Features:
+  - J0153H-4 Use buffer input stream to optimize speed.
+  
 ## 4.0.0 (2018-02-16)
 Bug fix:
   - J0153H-2 Use a standard logger.
@@ -25,3 +25,9 @@ Features:
 ## 2.0.0 (2016-10-12)
 Features:
   - Initial  revision.
+  
+<!--
+	Markdown
+	Copyright 2016-2018 IS2T. All rights reserved.
+	IS2T PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+-->

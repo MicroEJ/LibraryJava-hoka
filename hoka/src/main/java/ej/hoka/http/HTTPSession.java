@@ -6,6 +6,7 @@
  */
 package ej.hoka.http;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -27,7 +28,15 @@ import ej.hoka.log.Logger;
  */
 public abstract class HTTPSession {
 
-	private static final int READ_BUFFER_SIZE = 5120;
+	/**
+	 * This size is used for the request and answer buffer size (two buffers will be created).
+	 */
+	private static final int BUFFER_SIZE = 2048;
+
+	/**
+	 * Property to set a custom buffer size.
+	 */
+	private static final String BUFFER_SIZE_PROPERTY = "hoka.buffer.size";
 
 	/**
 	 * The HTTP/1.1 version String.
@@ -214,7 +223,8 @@ public abstract class HTTPSession {
 					logger.processConnection(streamConnection);
 
 					HTTPResponse response = null;
-					try (InputStream inputStream = streamConnection.getInputStream()) {
+					try (InputStream inputStream = new BufferedInputStream(streamConnection.getInputStream(),
+							getBufferSize())) {
 
 						// TODO handling persistent connection
 						// long connectionStartTime = -server.keepAliveDuration;
@@ -241,8 +251,6 @@ public abstract class HTTPSession {
 							sendError(HTTPConstants.HTTP_STATUS_NOTIMPLEMENTED, e.field + RESPONSE_COLON + e.encoding);
 							continue runloop;
 						}
-
-						System.out.println("------------------------");
 
 						try {
 							// Build response or return a 304 status given to
@@ -319,7 +327,7 @@ public abstract class HTTPSession {
 						// processed request (maybe according to an error level
 						// in logger)
 						if (checkHTTPError(response)) {
-							logger.httpError(streamConnection, response.getStatus(), null);
+							logger.httpError(streamConnection, response.getStatus(), request.getURI());
 						}
 
 						sendResponse(response, handler);
@@ -527,7 +535,7 @@ public abstract class HTTPSession {
 					if (encodingHandler != null) {
 						dataOutput = encodingHandler.open(dataOutput);
 					}
-					final byte[] readBuffer = new byte[READ_BUFFER_SIZE];
+					final byte[] readBuffer = new byte[getBufferSize()];
 					while (true) {
 						int len = dataStream.read(readBuffer);
 
@@ -577,5 +585,9 @@ public abstract class HTTPSession {
 	 */
 	public void setBodyParserFactory(BodyParserFactory bodyParserFactory) {
 		this.bodyParserFactory = bodyParserFactory;
+	}
+
+	private int getBufferSize() {
+		return Integer.getInteger(BUFFER_SIZE_PROPERTY, BUFFER_SIZE).intValue();
 	}
 }
