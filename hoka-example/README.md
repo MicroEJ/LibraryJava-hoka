@@ -1,9 +1,3 @@
-<!--
-	Markdown
-	Copyright 2017 IS2T. All rights reserved.
-	IS2T PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
--->
-
 # Overview
 This example of use of the Hoka HTTP Server sets up a simple HTTP server to display pages or serve resources.
 
@@ -29,3 +23,10 @@ N.A.
 
 # Restrictions
 None.
+
+<!--
+	Markdown
+	Copyright 2017-2018 IS2T. All rights reserved.
+	For demonstration purpose only.
+	IS2T PROPRIETARY. Use is subject to license terms.
+-->
