@@ -21,7 +21,6 @@ import ej.hoka.http.support.MIMEUtils;
  */
 public class StringBodyParser implements BodyParser {
 
-	private static final String BOUNDARY = "boundary=";
 	private static final int BUFFSIZE = 512;
 	private String body;
 
@@ -36,7 +35,8 @@ public class StringBodyParser implements BodyParser {
 		if ((contentType != null) && contentType.startsWith(MIMEUtils.MIME_MULTIPART_FORM_ENCODED_DATA)) {
 			String boundary = contentType.substring(contentType.indexOf(';') + 1);
 
-			boundary = boundary.substring(boundary.indexOf(BOUNDARY) + BOUNDARY.length());
+			boundary = boundary
+					.substring(boundary.indexOf(MultiPartBodyParser.BOUNDARY) + MultiPartBodyParser.BOUNDARY.length());
 			String multipartBody = read(inputStream);
 			this.parts = split(multipartBody, boundary);
 			this.isMultipartFormEncoded = true;

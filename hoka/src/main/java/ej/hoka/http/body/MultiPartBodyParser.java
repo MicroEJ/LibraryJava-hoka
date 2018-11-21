@@ -19,7 +19,11 @@ import ej.hoka.http.support.MIMEUtils;
 public class MultiPartBodyParser implements BodyParser {
 
 	private static final int SIZE = 512;
-	private static final String BOUNDARY = "boundary="; //$NON-NLS-1$
+	/**
+	 * The boundary delimiter;
+	 */
+	public static final String BOUNDARY = "boundary="; //$NON-NLS-1$
+
 	private MultiPartBuffer buffer;
 
 	/**
@@ -32,8 +36,8 @@ public class MultiPartBodyParser implements BodyParser {
 		if ((contentType != null) && contentType.startsWith(MIMEUtils.MIME_MULTIPART_FORM_ENCODED_DATA)) {
 			String boundary = contentType.substring(contentType.indexOf(';') + 1);
 			this.buffer = new MultiPartBuffer();
-			this.buffer.boundary = ("\r\n--" + boundary.substring(boundary.indexOf(BOUNDARY) + BOUNDARY.length())) //$NON-NLS-1$
-					.getBytes();
+			this.buffer.boundary = (HTTPConstants.END_OF_LINE + "--" //$NON-NLS-1$
+					+ boundary.substring(boundary.indexOf(BOUNDARY) + BOUNDARY.length())).getBytes();
 			this.buffer.stream = httpRequest.getStream();
 			this.buffer.buffer = new byte[SIZE];
 			/**

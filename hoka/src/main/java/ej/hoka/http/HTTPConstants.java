@@ -176,6 +176,11 @@ public final class HTTPConstants {
 	 */
 	public static final String CONNECTION_FIELD_VALUE_CLOSE = "close"; //$NON-NLS-1$
 
+	/**
+	 * The "end of line" CR + LF.
+	 */
+	public static final String END_OF_LINE = "\r\n"; //$NON-NLS-1$
+
 	private HTTPConstants() {
 		// Forbid instantiation.
 	}

@@ -11,6 +11,8 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+import ej.hoka.http.HTTPConstants;
+
 /**
  * A part of a multipart HTTP request.
  */
@@ -19,7 +21,7 @@ public class HTTPPart extends InputStream {
 	private static final String APPOSTROPHE = "\""; //$NON-NLS-1$
 	private static final String VALUE_ESCAPE = ";\r"; //$NON-NLS-1$
 	private static final String KEY_ESCAPE = ":="; //$NON-NLS-1$
-	private static final String ESCAPE = "\n\r\n"; //$NON-NLS-1$
+	private static final String ESCAPE = '\n' + HTTPConstants.END_OF_LINE;
 	private final Map<String, String> headers;
 	private final MultiPartBodyParser.MultiPartBuffer multiPart;
 	private boolean isFinished;
@@ -82,11 +84,8 @@ public class HTTPPart extends InputStream {
 						if (VALUE_ESCAPE.indexOf(doRead) != -1) {
 							isKey = true;
 							String valueString = value.toString().trim();
-							if (valueString.startsWith(APPOSTROPHE)) {
-								valueString = valueString.substring(1);
-							}
-							if (valueString.endsWith(APPOSTROPHE)) {
-								valueString = valueString.substring(0, valueString.length() - 1);
+							if (valueString.startsWith(APPOSTROPHE) && valueString.endsWith(APPOSTROPHE)) {
+								valueString = valueString.substring(1, valueString.length() - 1);
 							}
 							this.headers.put(key.toString().trim(), valueString.trim());
 							key = new StringBuilder();

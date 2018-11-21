@@ -11,7 +11,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 import ej.hoka.http.body.BodyParserFactory;
+import ej.hoka.log.Messages;
 import ej.hoka.tcp.TCPServer;
+import ej.util.message.Level;
 
 /**
  * <p>
@@ -231,7 +233,7 @@ public abstract class HTTPServer extends TCPServer {
 			this.streamConnections[this.lastAddedPtr = nextPtr] = connection;
 			this.streamConnections.notify();
 		}
-		this.logger.newConnection(connection);
+		Messages.LOGGER.log(Level.INFO, Messages.CATEGORY, Messages.NEW_CONNECTION);
 		// FIXME for memory usage only
 		// r.gc();
 		// System.out.println((new Date()).getTime()+", "+(r.totalMemory() -
@@ -431,7 +433,7 @@ public abstract class HTTPServer extends TCPServer {
 			this.jobs[i] = job;
 			job.start();
 		}
-		this.logger.serverStarted();
+		Messages.LOGGER.log(Level.INFO, Messages.CATEGORY, Messages.SERVER_STARTED);
 	}
 
 	/**
@@ -455,7 +457,7 @@ public abstract class HTTPServer extends TCPServer {
 				// nothing to do on interrupted exception
 			}
 		}
-		this.logger.serverStopped();
+		Messages.LOGGER.log(Level.INFO, Messages.CATEGORY, Messages.SERVER_STOPPED);
 	}
 
 	/**
@@ -465,11 +467,12 @@ public abstract class HTTPServer extends TCPServer {
 	 *            {@link Socket} that can not be added
 	 */
 	protected void tooManyOpenConnections(Socket connection) {
-		this.logger.tooManyOpenConnections(this.maxOpenedConnections, connection);
+		Messages.LOGGER.log(Level.SEVERE, Messages.CATEGORY, Messages.TOO_MANY_CONNECTION,
+				connection.getInetAddress().toString(), Integer.valueOf(this.maxOpenedConnections));
 		try {
 			connection.close();
 		} catch (IOException e) {
-			this.logger.unexpectedError(e);
+			Messages.LOGGER.log(Level.SEVERE, Messages.CATEGORY, Messages.ERROR_UNKNOWN, e);
 		}
 	}
 

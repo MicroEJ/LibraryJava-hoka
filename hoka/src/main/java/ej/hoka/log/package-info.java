@@ -5,6 +5,6 @@
  * IS2T PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
 /**
- * Implementation of a logger.
+ * Logger management.
  */
-package ej.hoka.log.impl;
+package ej.hoka.log;
