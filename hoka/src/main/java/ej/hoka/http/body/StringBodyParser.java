@@ -1,7 +1,7 @@
 /*
  * Java
  *
- * Copyright 2017 IS2T. All rights reserved.
+ * Copyright 2017-2018 IS2T. All rights reserved.
  * IS2T PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
 package ej.hoka.http.body;
@@ -9,30 +9,39 @@ package ej.hoka.http.body;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.LinkedList;
+import java.util.List;
+
+import ej.hoka.http.HTTPConstants;
+import ej.hoka.http.HTTPRequest;
+import ej.hoka.http.support.MIMEUtils;
 
 /**
- * A body parser reading the full body and storing it in a string.
+ * A body parser reading the full body and storing it in a string. The raw buffer of the body is appended into a String.
  */
 public class StringBodyParser implements BodyParser {
 
 	private static final int BUFFSIZE = 512;
 	private String body;
 
-	@Override
-	public void parseBody(InputStream stream) throws IOException {
-		StringBuilder builder = new StringBuilder(stream.available());
-		InputStreamReader reader = new InputStreamReader(stream);
+	private String[] parts;
+	private boolean isMultipartFormEncoded;
 
-		char[] buf = new char[BUFFSIZE];
-		int read = Math.min(BUFFSIZE, stream.available());
-		while (read > 0) {
-			read = reader.read(buf, 0, read);
-			if (read != -1) {
-				builder.append(buf, 0, read);
-			}
-			read = Math.min(BUFFSIZE, stream.available());
+	@Override
+	public void parseBody(HTTPRequest httpRequest) throws IOException {
+		InputStream inputStream = httpRequest.getStream();
+		String contentType = httpRequest.getHeaderField(HTTPConstants.FIELD_CONTENT_TYPE);
+		// 3. the body contains a multipart form encoded
+		if ((contentType != null) && contentType.startsWith(MIMEUtils.MIME_MULTIPART_FORM_ENCODED_DATA)) {
+			String boundary = contentType.substring(contentType.indexOf(';') + 1);
+
+			boundary = boundary.substring(boundary.indexOf("boundary=") + 9); //$NON-NLS-1$
+			String multipartBody = read(inputStream);
+			this.parts = split(multipartBody, boundary);
+			this.isMultipartFormEncoded = true;
+		} else {
+			this.body = read(inputStream);
 		}
-		this.body = builder.toString();
 	}
 
 	/**
@@ -44,8 +53,63 @@ public class StringBodyParser implements BodyParser {
 		return this.body;
 	}
 
+	/**
+	 * The request contains multipart form encoded
+	 *
+	 * @return true if the request has some form encoded multiparts
+	 */
+	public boolean isMultipartFormEncoded() {
+		return this.isMultipartFormEncoded;
+	}
+
+	/**
+	 * The multiparts
+	 *
+	 * @return the parts if the request has some form encoded multiparts, null otherwise
+	 */
+	public String[] parts() {
+		return this.parts;
+	}
+
 	@Override
 	public String toString() {
 		return this.body;
+	}
+
+	private static String read(InputStream stream) throws IOException {
+		StringBuilder body = new StringBuilder(stream.available());
+
+		int readLen = -1;
+		char[] buff = new char[BUFFSIZE];
+		try (InputStreamReader reader = new InputStreamReader(stream)) {
+			while (true) {
+				readLen = reader.read(buff);
+				if (readLen == -1) {
+					break;
+				}
+
+				body.append(buff, 0, readLen);
+			}
+		}
+		buff = null;
+		return body.toString();
+	}
+
+	private static String[] split(String toSplit, String separator) {
+		int index = toSplit.indexOf(separator);
+		List<String> parts = new LinkedList<String>();
+
+		while (index > -1) {
+			int indexEnd = toSplit.indexOf(separator, index + separator.length());
+
+			if (indexEnd != -1) {
+				parts.add(toSplit.substring(index + separator.length() + 2, indexEnd - 4));
+			} else {
+				parts.add(toSplit.substring(index + separator.length() + 2, toSplit.length() - 2));
+			}
+			index = indexEnd;
+		}
+
+		return parts.toArray(new String[parts.size()]);
 	}
 }

@@ -1,17 +1,14 @@
 /*
  * Java
  *
- * Copyright 2009-2017 IS2T. All rights reserved.
+ * Copyright 2009-2018 IS2T. All rights reserved.
  * IS2T PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
 package ej.hoka.http;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.Hashtable;
-import java.util.LinkedList;
-import java.util.List;
 
 import ej.hoka.http.body.BodyParser;
 import ej.hoka.http.body.BodyParserFactory;
@@ -372,16 +369,6 @@ public class HTTPRequest {
 	}
 
 	/**
-	 * IS2T-API Is the request containing multipart form encoded.
-	 */
-	private boolean isMultipartFormEncoded = false;
-
-	/**
-	 * IS2T-API The multiparts.
-	 */
-	private String[] parts;
-
-	/**
 	 * Request method code.
 	 *
 	 * @see HTTPRequest#GET
@@ -479,34 +466,8 @@ public class HTTPRequest {
 			}
 		}
 
-		// 3. the body contains a multipart form encoded
-		if ((contentType != null) && contentType.startsWith(MIMEUtils.MIME_MULTIPART_FORM_ENCODED_DATA)) {
-			String boundary = contentType.substring(contentType.indexOf(';') + 1);
-
-			boundary = boundary.substring(boundary.indexOf("boundary=") + 9); //$NON-NLS-1$
-			String multipartBody = ""; //$NON-NLS-1$
-
-			int readLen = -1;
-			char[] buff = new char[512];
-			try (InputStreamReader reader = new InputStreamReader(this.stream)) {
-				while (true) {
-					readLen = reader.read(buff);
-					if (readLen == -1) {
-						break;
-					}
-
-					multipartBody += String.valueOf(buff, 0, readLen);
-				}
-			}
-
-			buff = null;
-			this.parts = split(multipartBody, boundary);
-			this.isMultipartFormEncoded = true;
-		} else {
-			if (bodyParserFactory != null) {
-				this.bodyParser = bodyParserFactory.newBodyParser(this);
-			}
-			readBody(this.stream);
+		if (bodyParserFactory != null) {
+			this.bodyParser = bodyParserFactory.newBodyParser(this);
 		}
 	}
 
@@ -526,24 +487,6 @@ public class HTTPRequest {
 	 */
 	protected HTTPRequest(HTTPServer server, InputStream inputStream) throws IOException, IllegalArgumentException {
 		this(server, inputStream, null);
-	}
-
-	private String[] split(String toSplit, String separator) {
-		int index = toSplit.indexOf(separator);
-		List<String> parts = new LinkedList<String>();
-
-		while (index > -1) {
-			int indexEnd = toSplit.indexOf(separator, index + separator.length());
-
-			if (indexEnd != -1) {
-				parts.add(toSplit.substring(index + separator.length() + 2, indexEnd - 4));
-			} else {
-				parts.add(toSplit.substring(index + separator.length() + 2, toSplit.length() - 2));
-			}
-			index = indexEnd;
-		}
-
-		return parts.toArray(new String[parts.size()]);
 	}
 
 	/**
@@ -676,15 +619,6 @@ public class HTTPRequest {
 	 */
 	public String getVersion() {
 		return this.version;
-	}
-
-	/**
-	 * The request contains multipart form encoded
-	 *
-	 * @return true if the request has some form encoded multiparts
-	 */
-	public boolean isMultipartFormEncoded() {
-		return this.isMultipartFormEncoded;
 	}
 
 	/**
@@ -944,29 +878,6 @@ public class HTTPRequest {
 	}
 
 	/**
-	 * The multiparts
-	 *
-	 * @return the parts if the request has some form encoded multiparts, null otherwise
-	 */
-	public String[] parts() {
-		return this.parts;
-	}
-
-	/**
-	 * Read the body.
-	 *
-	 * @param stream
-	 *            the {@link InputStream} to read the body of the HTTP request
-	 * @throws IOException
-	 *             if an error occured during processing
-	 */
-	protected void readBody(InputStream stream) throws IOException {
-		if (this.bodyParser != null) {
-			this.bodyParser.parseBody(stream);
-		}
-	}
-
-	/**
 	 * Gets the stream.
 	 *
 	 * @return the stream.
@@ -982,5 +893,25 @@ public class HTTPRequest {
 	 */
 	public BodyParser getBodyParser() {
 		return this.bodyParser;
+	}
+
+	/**
+	 * Sets the bodyParser.
+	 *
+	 * @param bodyParser
+	 *            the bodyParser to set.
+	 */
+	public void setBodyParser(BodyParser bodyParser) {
+		this.bodyParser = bodyParser;
+	}
+
+	/**
+	 * @throws IOException
+	 */
+	public void parseBody() throws IOException {
+		BodyParser bodyParser = this.bodyParser;
+		if (bodyParser != null) {
+			bodyParser.parseBody(this);
+		}
 	}
 }
