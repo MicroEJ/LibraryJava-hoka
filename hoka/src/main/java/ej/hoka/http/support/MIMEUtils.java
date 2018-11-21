@@ -1,7 +1,7 @@
 /*
  * Java
  *
- * Copyright 2009-2016 IS2T. All rights reserved.
+ * Copyright 2009-2018 IS2T. All rights reserved.
  * IS2T PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
 package ej.hoka.http.support;
@@ -15,19 +15,29 @@ import java.util.Hashtable;
  */
 public class MIMEUtils {
 
+	private static final String GIF = "gif";
+	private static final String JPEG = "jpeg";
+	private static final String XML = "xml";
+	private static final String HTML = "html";
+	private static final String PNG = "png";
+	private static final String CSS = "css";
+	private static final String IMAGE = "image/";
+	private static final String TEXT = "text/";
+	private static final String APPLICATION = "application/";
+
 	/**
 	 * <p>
 	 * Standard text MIME type.
 	 * </p>
 	 */
-	public static final String MIME_PLAINTEXT = "text/plain"; //$NON-NLS-1$
+	public static final String MIME_PLAINTEXT = TEXT + "plain"; //$NON-NLS-1$
 
 	/**
 	 * <p>
 	 * HTML code MIME type.
 	 * </p>
 	 */
-	public static final String MIME_HTML = "text/html"; //$NON-NLS-1$
+	public static final String MIME_HTML = TEXT + HTML;
 
 	// MIME types.
 
@@ -36,49 +46,49 @@ public class MIMEUtils {
 	 * XML code MIME type.
 	 * </p>
 	 */
-	public static final String MIME_XML = "text/xml"; //$NON-NLS-1$
+	public static final String MIME_XML = TEXT + XML;
 	/**
 	 * <p>
 	 * Binary code MIME type.
 	 * </p>
 	 */
-	public static final String MIME_DEFAULT_BINARY = "application/octet-stream"; //$NON-NLS-1$
+	public static final String MIME_DEFAULT_BINARY = APPLICATION + "octet-stream"; //$NON-NLS-1$
 	/**
 	 * <p>
 	 * CSS code MIME type.
 	 * </p>
 	 */
-	public static final String MIME_CSS = "text/css"; //$NON-NLS-1$
+	public static final String MIME_CSS = TEXT + CSS;
 	/**
 	 * <p>
 	 * PNG files MIME type.
 	 * </p>
 	 */
-	public static final String MIME_PNG = "image/png"; //$NON-NLS-1$
+	public static final String MIME_PNG = IMAGE + PNG;
 	/**
 	 * <p>
 	 * JPEG files MIME type.
 	 * </p>
 	 */
-	public static final String MIME_JPEG = "image/jpeg"; //$NON-NLS-1$
+	public static final String MIME_JPEG = IMAGE + JPEG;
 	/**
 	 * <p>
 	 * GIF files MIME type.
 	 * </p>
 	 */
-	public static final String MIME_GIF = "image/gif"; //$NON-NLS-1$
+	public static final String MIME_GIF = IMAGE + GIF;
 	/**
 	 * <p>
 	 * JavaScript code MIME type.
 	 * </p>
 	 */
-	public static final String MIME_JS = "application/x-javascript"; //$NON-NLS-1$
+	public static final String MIME_JS = APPLICATION + "x-javascript"; //$NON-NLS-1$
 	/**
 	 * <p>
 	 * Form Encoded Data MIME type.
 	 * </p>
 	 */
-	public static final String MIME_FORM_ENCODED_DATA = "application/x-www-form-urlencoded"; //$NON-NLS-1$
+	public static final String MIME_FORM_ENCODED_DATA = APPLICATION + "x-www-form-urlencoded"; //$NON-NLS-1$
 	/**
 	 * <p>
 	 * Multipart Form Encoded Data MIME type.
@@ -93,16 +103,16 @@ public class MIMEUtils {
 		// fill well known MIME descriptors
 		FILE_EXTENSION_TO_MIME_TYPE = new Hashtable<String, String>();
 
-		mapFileExtensionToMIMEType(".png", MIME_PNG); //$NON-NLS-1$
-		mapFileExtensionToMIMEType(".css", MIME_CSS); //$NON-NLS-1$
-		mapFileExtensionToMIMEType(".gif", MIME_GIF); //$NON-NLS-1$
-		mapFileExtensionToMIMEType(".jpeg", MIME_JPEG); //$NON-NLS-1$
+		mapFileExtensionToMIMEType('.' + PNG, MIME_PNG);
+		mapFileExtensionToMIMEType('.' + CSS, MIME_CSS);
+		mapFileExtensionToMIMEType('.' + GIF, MIME_GIF);
+		mapFileExtensionToMIMEType('.' + JPEG, MIME_JPEG);
 		mapFileExtensionToMIMEType(".jpg", MIME_JPEG); //$NON-NLS-1$
-		mapFileExtensionToMIMEType(".html", MIME_HTML); //$NON-NLS-1$
+		mapFileExtensionToMIMEType('.' + HTML, MIME_HTML);
 		mapFileExtensionToMIMEType(".htm", MIME_HTML); //$NON-NLS-1$
 		mapFileExtensionToMIMEType(".js", MIME_JS); //$NON-NLS-1$
 		mapFileExtensionToMIMEType(".txt", MIME_PLAINTEXT); //$NON-NLS-1$
-		mapFileExtensionToMIMEType(".xml", MIME_XML); //$NON-NLS-1$
+		mapFileExtensionToMIMEType('.' + XML, MIME_XML);
 	}
 
 	/**
