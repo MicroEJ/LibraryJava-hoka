@@ -134,7 +134,7 @@ public class DefaultLogger implements Logger {
 	public void httpError(Socket c, String status, String message) {
 		String msg = status;
 		if (message != null) {
-			StringBuffer sb = new StringBuffer();
+			StringBuilder sb = new StringBuilder();
 			msg = sb.append(msg).append(": ").append(message).toString(); //$NON-NLS-1$
 		}
 		dumpConnectionEvent(c, msg);
@@ -154,7 +154,7 @@ public class DefaultLogger implements Logger {
 	public void newConnection(Socket c) {
 		String message = "New connection"; //$NON-NLS-1$
 		String address;
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 		address = c.getInetAddress().toString();
 		message = sb.append(message).append(" from ").append(address).toString(); //$NON-NLS-1$
 		dumpConnectionEvent(c, message);

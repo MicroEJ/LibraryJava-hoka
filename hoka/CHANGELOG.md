@@ -1,4 +1,13 @@
 
+## 5.0.0 (2018-11-21)
+
+Features:
+  - Add multi part body parser.
+  - Move previous multipart parsing into StringBodyParser
+  - Use Map instead of Hashtable
+  - Use StrngBuilder instead of string buffer.
+  - Sonar review
+  
 ## 4.1.0 (2018-09-04)
 
 Features:

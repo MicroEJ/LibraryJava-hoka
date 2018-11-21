@@ -94,19 +94,12 @@ public class MultiPartBodyParser implements BodyParser {
 		 * Checks whether more data is available in the input stream.
 		 *
 		 * @return <code>true</code> if more data is available in the input stream.
+		 * @throws IOException
+		 *             if an {@link IOException} happens.
 		 */
-		public boolean hasData() {
-			boolean isInit = this.buffer != null && this.boundary != null;
-			boolean hasData = false;
-			if (isInit) {
-				try {
-					hasData = (this.stream != null && this.stream.available() > 0);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-				hasData |= this.lengthAvailable > 0;
-			}
-			return hasData && isInit;
+		public boolean hasData() throws IOException {
+			return this.buffer != null && this.boundary != null
+					&& (this.lengthAvailable > 0 || (this.stream != null && this.stream.available() > 0));
 		}
 
 		/**

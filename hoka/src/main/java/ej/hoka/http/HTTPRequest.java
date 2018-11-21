@@ -8,7 +8,8 @@ package ej.hoka.http;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.Map;
 
 import ej.hoka.http.body.BodyParser;
 import ej.hoka.http.body.BodyParserFactory;
@@ -101,9 +102,9 @@ public class HTTPRequest {
 	 */
 	private static final char QUESTION_MARK_CHAR = '?';
 	/**
-	 * Error Message Malformed HTTP Request
+	 * Error Message Malformed HTTP Request.
 	 */
-	private final static String MALFORMED_HTTP_REQUEST = "Malformed HTTP Request"; //$NON-NLS-1$
+	private static final String MALFORMED_HTTP_REQUEST = "Malformed HTTP Request"; //$NON-NLS-1$
 
 	/**
 	 * EOF marker (-1).
@@ -114,6 +115,126 @@ public class HTTPRequest {
 	 * Hexadecimal base (16).
 	 */
 	private static final int HEXA = 16;
+
+	/**
+	 * The {@link InputStream} to use.
+	 */
+	private final InputStream stream;
+
+	/**
+	 * The {@link HTTPServer} instance.
+	 */
+	private final HTTPServer server;
+
+	/**
+	 * Parsed request parameters.
+	 */
+	private final HashMap<String, String> parameters;
+
+	/**
+	 * Request method code.
+	 *
+	 * @see HTTPRequest#GET
+	 * @see HTTPRequest#POST
+	 * @see HTTPRequest#PUT
+	 * @see HTTPRequest#DELETE
+	 */
+	private int method;
+
+	/**
+	 * Request URI.
+	 */
+	private String uri;
+
+	/**
+	 * HTTP Request version String.
+	 */
+	private String version;
+
+	/**
+	 * Parsed request headers.
+	 */
+	private HashMap<String, String> header;
+
+	/**
+	 * The {@link BodyParser}.
+	 */
+	private BodyParser bodyParser;
+
+	/**
+	 * Constructs a new instance of HTTPRequest.
+	 *
+	 * @param server
+	 *            the {@link HTTPServer} instance
+	 * @param inputStream
+	 *            the input stream for the request
+	 * @param bodyParserFactory
+	 *            the {@link BodyParserFactory} to use
+	 * @throws IOException
+	 *             if connection is lost during processing the request
+	 * @throws IllegalArgumentException
+	 *             if parsing the request header or body failed
+	 * @throws UnsupportedHTTPEncodingException
+	 *             when an unsupported HTTP encoding encountered
+	 */
+	protected HTTPRequest(HTTPServer server, InputStream inputStream, BodyParserFactory bodyParserFactory)
+			throws IOException, IllegalArgumentException {
+		this.server = server;
+
+		this.parameters = new HashMap<String, String>(10); // reasonable size for HTTP
+		// Parameters (50 in our default HashMap implementation)
+
+		// FIXME WI 4419, when Persistence will be implemented, this way of
+		// request computing may move in another place but quite in the same way
+
+		// process the request entirely by reading:
+		// 1. method (get/post/put/delete), uri (my/resource.html), query
+		// strings (?a=b&c=d), and HTTP header fields
+		if (!parseRequestHeader(inputStream)) {
+			throw new IllegalArgumentException(MALFORMED_HTTP_REQUEST);
+		}
+
+		// the content-type may have been parsed by parseRequestHeader
+		String contentType = getHeaderField(HTTPConstants.FIELD_CONTENT_TYPE);
+
+		/*
+		 * if (contentType == null) { // If HTTP 1.1 and no content type, it's not the exact HTTP 1.1 // spec. // Spec
+		 * says: Content-Type header field SHOULD be specified }
+		 */
+
+		// Modify InputStream in case header specifies content encoding
+		this.stream = getContentEncodingStream(inputStream);
+
+		// 2. the body (potentially containing additional parameters if
+		// Content-Type is x-www-form-urlencoded)
+		if (MIMEUtils.MIME_FORM_ENCODED_DATA.equalsIgnoreCase(contentType)) {
+			if (!parseRequestBody(this.stream)) {
+				throw new IllegalArgumentException(MALFORMED_HTTP_REQUEST);
+			}
+		}
+
+		if (bodyParserFactory != null) {
+			this.bodyParser = bodyParserFactory.newBodyParser(this);
+		}
+	}
+
+	/**
+	 * Constructs a new instance of HTTPRequest.
+	 *
+	 * @param server
+	 *            the {@link HTTPServer} instance
+	 * @param inputStream
+	 *            the input stream for the request
+	 * @throws IOException
+	 *             if connection is lost during processing the request
+	 * @throws IllegalArgumentException
+	 *             if parsing the request header or body failed
+	 * @throws UnsupportedHTTPEncodingException
+	 *             when an unsupported HTTP encoding encountered
+	 */
+	protected HTTPRequest(HTTPServer server, InputStream inputStream) throws IOException, IllegalArgumentException {
+		this(server, inputStream, null);
+	}
 
 	/**
 	 * Returns the character from the stream, which encode as "%ab" (single byte UTF-8) or "%ab%cd" (two byte ). The
@@ -222,17 +343,17 @@ public class HTTPRequest {
 	/**
 	 * When a percentage encoded UTF-16 Surrogate Pair is encountered (integer value above 0xFFFF) this method
 	 * calculates the head and trail surrogate code point for the Unicode character. The head code point is inserted
-	 * into the {@link StringBuffer} and the tail surrogate is returned. If the code doesn't denote a surrogate pair
+	 * into the {@link StringBuilder} and the tail surrogate is returned. If the code doesn't denote a surrogate pair
 	 * (value is less than 0xFFFF) simply return it.
 	 *
 	 * @param code
 	 *            the Unicode character value in the range 0x0-0x10FFFF)
 	 * @param sb
-	 *            The {@link StringBuffer}
+	 *            The {@link StringBuilder}
 	 * @return the original code (if code's value less than 0xFFFF) or the tail surrogate code point of the surrogate
 	 *         pair.
 	 */
-	private static int handleSurrogatePair(int code, StringBuffer sb) {
+	private static int handleSurrogatePair(int code, StringBuilder sb) {
 		if (code > 0xffff) {
 			/**
 			 * 1. 0x10000 is subtracted from the code point, leaving a 20 bit number in the range 0..0xFFFFF. 2. The top
@@ -257,22 +378,22 @@ public class HTTPRequest {
 
 	/**
 	 * Parses URL query parameters. This method can be called in {@link AbstractHTTPSession#answer(HTTPRequest)} method
-	 * implementation to parse POST parameters in message body. Returns the parameters in a hashtable or
-	 * <code>null</code> if the parameters cannot be read (EOF reached).
+	 * implementation to parse POST parameters in message body. Returns the parameters in a map or <code>null</code> if
+	 * the parameters cannot be read (EOF reached).
 	 *
 	 * @param parameters
-	 *            the hashtable to populate with the parsed parameters
+	 *            the map to populate with the parsed parameters
 	 * @param is
 	 *            the input stream from which parameters should be parsed
 	 * @return <code>true</code> if all parameters has been read <code>false</code> if EOF or any error detected
 	 * @throws IOException
 	 *             if an error occurs while reading the input stream.
 	 */
-	private static boolean parserParameters(Hashtable<String, String> parameters, InputStream is) throws IOException {
+	private static boolean parserParameters(Map<String, String> parameters, InputStream is) throws IOException {
 		boolean end = false;
-		StringBuffer sbKey = new StringBuffer(16);
-		StringBuffer sbValue = new StringBuffer(4);
-		StringBuffer curBuffer = sbKey;
+		StringBuilder sbKey = new StringBuilder(16);
+		StringBuilder sbValue = new StringBuilder(4);
+		StringBuilder curBuffer = sbKey;
 		// parameters is a hash table
 		// the stream looks like
 		// "foo=bar&zorg=baz<white space (space, newline, carriage return, tabulation>"
@@ -369,127 +490,6 @@ public class HTTPRequest {
 	}
 
 	/**
-	 * Request method code.
-	 *
-	 * @see HTTPRequest#GET
-	 * @see HTTPRequest#POST
-	 * @see HTTPRequest#PUT
-	 * @see HTTPRequest#DELETE
-	 */
-	private int method;
-
-	/**
-	 * Request URI.
-	 */
-	private String uri;
-
-	/**
-	 * HTTP Request version String.
-	 */
-	private String version;
-
-	/**
-	 * Parsed request parameters.
-	 */
-	private final Hashtable<String, String> parameters;
-
-	/**
-	 * Parsed request headers.
-	 */
-	private Hashtable<String, String> header;
-
-	/**
-	 * The {@link InputStream} to use.
-	 */
-	private final InputStream stream;
-
-	/**
-	 * The {@link HTTPServer} instance.
-	 */
-	private final HTTPServer server;
-
-	/**
-	 * The {@link BodyParser}.
-	 */
-	private BodyParser bodyParser;
-
-	/**
-	 * Constructs a new instance of HTTPRequest.
-	 *
-	 * @param server
-	 *            the {@link HTTPServer} instance
-	 * @param inputStream
-	 *            the input stream for the request
-	 * @param bodyParserFactory
-	 *            the {@link BodyParserFactory} to use
-	 * @throws IOException
-	 *             if connection is lost during processing the request
-	 * @throws IllegalArgumentException
-	 *             if parsing the request header or body failed
-	 * @throws UnsupportedHTTPEncodingException
-	 *             when an unsupported HTTP encoding encountered
-	 */
-	protected HTTPRequest(HTTPServer server, InputStream inputStream, BodyParserFactory bodyParserFactory)
-			throws IOException, IllegalArgumentException {
-		this.server = server;
-
-		this.parameters = new Hashtable<String, String>(10); // reasonable size for HTTP
-		// Parameters (50 in our default
-		// Hashtable implementation)
-
-		// FIXME WI 4419, when Persistence will be implemented, this way of
-		// request computing may move in another place but quite in the same way
-
-		// process the request entirely by reading:
-		// 1. method (get/post/put/delete), uri (my/resource.html), query
-		// strings (?a=b&c=d), and HTTP header fields
-		if (!parseRequestHeader(inputStream)) {
-			throw new IllegalArgumentException(MALFORMED_HTTP_REQUEST);
-		}
-
-		// the content-type may have been parsed by parseRequestHeader
-		String contentType = getHeaderField(HTTPConstants.FIELD_CONTENT_TYPE);
-
-		/*
-		 * if (contentType == null) { // If HTTP 1.1 and no content type, it's not the exact HTTP 1.1 // spec. // Spec
-		 * says: Content-Type header field SHOULD be specified }
-		 */
-
-		// Modify InputStream in case header specifies content encoding
-		this.stream = getContentEncodingStream(inputStream);
-
-		// 2. the body (potentially containing additional parameters if
-		// Content-Type is x-www-form-urlencoded)
-		if (MIMEUtils.MIME_FORM_ENCODED_DATA.equalsIgnoreCase(contentType)) {
-			if (!parseRequestBody(this.stream)) {
-				throw new IllegalArgumentException(MALFORMED_HTTP_REQUEST);
-			}
-		}
-
-		if (bodyParserFactory != null) {
-			this.bodyParser = bodyParserFactory.newBodyParser(this);
-		}
-	}
-
-	/**
-	 * Constructs a new instance of HTTPRequest.
-	 *
-	 * @param server
-	 *            the {@link HTTPServer} instance
-	 * @param inputStream
-	 *            the input stream for the request
-	 * @throws IOException
-	 *             if connection is lost during processing the request
-	 * @throws IllegalArgumentException
-	 *             if parsing the request header or body failed
-	 * @throws UnsupportedHTTPEncodingException
-	 *             when an unsupported HTTP encoding encountered
-	 */
-	protected HTTPRequest(HTTPServer server, InputStream inputStream) throws IOException, IllegalArgumentException {
-		this(server, inputStream, null);
-	}
-
-	/**
 	 * Not implemented(empty method).
 	 */
 	protected void finish() {
@@ -553,10 +553,10 @@ public class HTTPRequest {
 	 * Returns all HTTP Header fields of the request.
 	 * </p>
 	 *
-	 * @return a {@link Hashtable} of (String,String) representing the HTTP Header Fields (may be empty).
+	 * @return a {@link Map} of (String,String) representing the HTTP Header Fields (may be empty).
 	 */
-	public Hashtable<String, String> getHeader() {
-		return this.header;
+	public Map<String, String> getHeader() {
+		return (Map<String, String>) this.header.clone();
 	}
 
 	/**
@@ -590,13 +590,13 @@ public class HTTPRequest {
 
 	/**
 	 * <p>
-	 * Returns the query parameters as {@link Hashtable}.
+	 * Returns the query parameters as {@link Map}.
 	 * </p>
 	 *
-	 * @return a {@link Hashtable} of (String,String) representing the HTTP Query Parameters.
+	 * @return a {@link Map} of (String,String) representing the HTTP Query Parameters.
 	 */
-	public Hashtable<String, String> getParameters() {
-		return this.parameters;
+	public Map<String, String> getParameters() {
+		return (Map<String, String>) this.parameters.clone();
 	}
 
 	/**
@@ -631,14 +631,14 @@ public class HTTPRequest {
 	 *             if connection has been lost
 	 */
 	private boolean parseHeaderFields(InputStream input) throws IOException {
-		// headers is a hashtable
+		// headers is a hashmap
 		// the stream look like "foo:bar zor:zorvalue "
-		Hashtable<String, String> header = new Hashtable<String, String>(10); // most HTTP requests have less
+		HashMap<String, String> header = new HashMap<>(10); // most HTTP requests have less
 		// than 10 header fields
 
-		StringBuffer sbKey = new StringBuffer(16);
-		StringBuffer sbValue = new StringBuffer(16);
-		StringBuffer curBuffer = sbKey;
+		StringBuilder sbKey = new StringBuilder(16);
+		StringBuilder sbValue = new StringBuilder(16);
+		StringBuilder curBuffer = sbKey;
 		boolean pendingSpace = false;
 		// read char before entering the loop. This allows to loop without
 		// reading a new character and so process an already read character
@@ -820,7 +820,7 @@ public class HTTPRequest {
 	 *             if connection has been lost
 	 */
 	private boolean parseURI(InputStream input) throws IOException {
-		StringBuffer sb = new StringBuffer(Math.min(64, input.available()));
+		StringBuilder sb = new StringBuilder(Math.min(64, input.available()));
 		// main loop
 		loop: while (true) {
 			// the stream should now be something like
@@ -906,7 +906,10 @@ public class HTTPRequest {
 	}
 
 	/**
+	 * Request the body to be parsed.
+	 * 
 	 * @throws IOException
+	 *             if an {@link IOException} occurs durring parsing.
 	 */
 	public void parseBody() throws IOException {
 		BodyParser bodyParser = this.bodyParser;

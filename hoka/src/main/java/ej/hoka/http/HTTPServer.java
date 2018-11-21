@@ -86,7 +86,7 @@ public abstract class HTTPServer extends TCPServer {
 	private static final long DEFAULT_KEEP_ALIVE_DURATION = 60000; // 60s in
 
 	/**
-	 * Non growable circular queue of opened connections
+	 * Non growable circular queue of opened connections.
 	 */
 	private Socket[] streamConnections;
 
@@ -362,7 +362,7 @@ public abstract class HTTPServer extends TCPServer {
 	 */
 	public void registerEncodingHandler(IHTTPEncodingHandler handler) {
 		if (!isStopped()) {
-			throw new RuntimeException();
+			throw new IllegalStateException();
 		}
 		if (this.encodingHandlers == null) {
 			this.encodingHandlers = new IHTTPEncodingHandler[] { handler };

@@ -1,7 +1,7 @@
 /*
  * Java
  *
- * Copyright 2009-2016 IS2T. All rights reserved.
+ * Copyright 2009-2018 IS2T. All rights reserved.
  * IS2T PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
 package ej.hoka.tcp;
@@ -79,7 +79,7 @@ public abstract class TCPServer extends Server {
 	}
 
 	/**
-	 * Returns a new Server process as {@link Thread}
+	 * Returns a new Server process as {@link Thread}.
 	 *
 	 * @return a new Server process as {@link Thread}
 	 */
@@ -125,7 +125,7 @@ public abstract class TCPServer extends Server {
 	 */
 	public void start() {
 		if (this.thread != null) {
-			throw new RuntimeException("No multiple start allowed"); //$NON-NLS-1$
+			throw new IllegalStateException("No multiple start allowed"); //$NON-NLS-1$
 		}
 		this.thread = newProcess();
 		this.thread.start();

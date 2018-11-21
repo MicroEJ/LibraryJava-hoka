@@ -6,7 +6,8 @@
  */
 package ej.hoka.http.support;
 
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * <p>
@@ -15,15 +16,15 @@ import java.util.Hashtable;
  */
 public class MIMEUtils {
 
-	private static final String GIF = "gif";
-	private static final String JPEG = "jpeg";
-	private static final String XML = "xml";
-	private static final String HTML = "html";
-	private static final String PNG = "png";
-	private static final String CSS = "css";
-	private static final String IMAGE = "image/";
-	private static final String TEXT = "text/";
-	private static final String APPLICATION = "application/";
+	private static final String GIF = "gif"; //$NON-NLS-1$
+	private static final String JPEG = "jpeg"; //$NON-NLS-1$
+	private static final String XML = "xml"; //$NON-NLS-1$
+	private static final String HTML = "html"; //$NON-NLS-1$
+	private static final String PNG = "png"; //$NON-NLS-1$
+	private static final String CSS = "css"; //$NON-NLS-1$
+	private static final String IMAGE = "image/"; //$NON-NLS-1$
+	private static final String TEXT = "text/"; //$NON-NLS-1$
+	private static final String APPLICATION = "application/"; //$NON-NLS-1$
 
 	/**
 	 * <p>
@@ -98,10 +99,11 @@ public class MIMEUtils {
 	/**
 	 * File extension mappings to MIME types.
 	 */
-	private static final Hashtable<String, String> FILE_EXTENSION_TO_MIME_TYPE;
+	private static final Map<String, String> FILE_EXTENSION_TO_MIME_TYPE;
+
 	static {
 		// fill well known MIME descriptors
-		FILE_EXTENSION_TO_MIME_TYPE = new Hashtable<String, String>();
+		FILE_EXTENSION_TO_MIME_TYPE = new HashMap<String, String>();
 
 		mapFileExtensionToMIMEType('.' + PNG, MIME_PNG);
 		mapFileExtensionToMIMEType('.' + CSS, MIME_CSS);
@@ -113,6 +115,10 @@ public class MIMEUtils {
 		mapFileExtensionToMIMEType(".js", MIME_JS); //$NON-NLS-1$
 		mapFileExtensionToMIMEType(".txt", MIME_PLAINTEXT); //$NON-NLS-1$
 		mapFileExtensionToMIMEType('.' + XML, MIME_XML);
+	}
+
+	private MIMEUtils() {
+		// Forbid instantiation.
 	}
 
 	/**

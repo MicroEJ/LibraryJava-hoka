@@ -11,8 +11,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import ej.hoka.http.body.BodyParserFactory;
 import ej.hoka.http.support.AcceptEncoding;
@@ -59,42 +59,6 @@ public abstract class HTTPSession {
 	private static final String RESPONSE_CONTENTTYPE = "Content-Type" + RESPONSE_COLON; //$NON-NLS-1$
 
 	/**
-	 * Create a {@link HTTPResponse} to write the <code>msg</code> for the given <code>status</code>.
-	 *
-	 * @param status
-	 *            the error status. One of <code>HTTP_STATUS_*</code> constant of the {@link HTTPConstants} interface.
-	 * @param msg
-	 *            an optional error message to add in response.
-	 * @return a {@link HTTPResponse} that represent the error.
-	 * @see HTTPConstants#HTTP_STATUS_BADREQUEST
-	 * @see HTTPConstants#HTTP_STATUS_FORBIDDEN
-	 * @see HTTPConstants#HTTP_STATUS_INTERNALERROR
-	 * @see HTTPConstants#HTTP_STATUS_MEDIA_TYPE
-	 * @see HTTPConstants#HTTP_STATUS_METHOD
-	 * @see HTTPConstants#HTTP_STATUS_NOTACCEPTABLE
-	 * @see HTTPConstants#HTTP_STATUS_NOTFOUND
-	 * @see HTTPConstants#HTTP_STATUS_NOTIMPLEMENTED
-	 * @see HTTPConstants#HTTP_STATUS_NOTMODIFIED
-	 * @see HTTPConstants#HTTP_STATUS_OK
-	 * @see HTTPConstants#HTTP_STATUS_REDIRECT
-	 */
-	public static HTTPResponse createErrorResponse(String status, String msg) {
-		StringBuffer buffer = new StringBuffer();
-		buffer.append("<html><head><title>"); //$NON-NLS-1$
-		buffer.append(status);
-		buffer.append("</title></head><body><h1>"); //$NON-NLS-1$
-		buffer.append(status);
-		buffer.append("</h1><p>"); //$NON-NLS-1$
-		buffer.append(msg);
-		buffer.append("</p></body></html>"); //$NON-NLS-1$
-
-		HTTPResponse response = new HTTPResponse(buffer.toString());
-		response.setMimeType(MIMEUtils.MIME_HTML);
-		response.setStatus(status);
-		return response;
-	}
-
-	/**
 	 * {@link HTTPServer} instance.
 	 */
 	private final HTTPServer server;
@@ -116,6 +80,42 @@ public abstract class HTTPSession {
 	 */
 	public HTTPSession(HTTPServer server) {
 		this.server = server;
+	}
+
+	/**
+	 * Create a {@link HTTPResponse} to write the <code>msg</code> for the given <code>status</code>.
+	 *
+	 * @param status
+	 *            the error status. One of <code>HTTP_STATUS_*</code> constant of the {@link HTTPConstants} interface.
+	 * @param msg
+	 *            an optional error message to add in response.
+	 * @return a {@link HTTPResponse} that represent the error.
+	 * @see HTTPConstants#HTTP_STATUS_BADREQUEST
+	 * @see HTTPConstants#HTTP_STATUS_FORBIDDEN
+	 * @see HTTPConstants#HTTP_STATUS_INTERNALERROR
+	 * @see HTTPConstants#HTTP_STATUS_MEDIA_TYPE
+	 * @see HTTPConstants#HTTP_STATUS_METHOD
+	 * @see HTTPConstants#HTTP_STATUS_NOTACCEPTABLE
+	 * @see HTTPConstants#HTTP_STATUS_NOTFOUND
+	 * @see HTTPConstants#HTTP_STATUS_NOTIMPLEMENTED
+	 * @see HTTPConstants#HTTP_STATUS_NOTMODIFIED
+	 * @see HTTPConstants#HTTP_STATUS_OK
+	 * @see HTTPConstants#HTTP_STATUS_REDIRECT
+	 */
+	public static HTTPResponse createErrorResponse(String status, String msg) {
+		StringBuilder buffer = new StringBuilder();
+		buffer.append("<html><head><title>"); //$NON-NLS-1$
+		buffer.append(status);
+		buffer.append("</title></head><body><h1>"); //$NON-NLS-1$
+		buffer.append(status);
+		buffer.append("</h1><p>"); //$NON-NLS-1$
+		buffer.append(msg);
+		buffer.append("</p></body></html>"); //$NON-NLS-1$
+
+		HTTPResponse response = new HTTPResponse(buffer.toString());
+		response.setMimeType(MIMEUtils.MIME_HTML);
+		response.setStatus(status);
+		return response;
 	}
 
 	/**
@@ -457,11 +457,10 @@ public abstract class HTTPSession {
 		}
 
 		// add header parameters
-		Hashtable<String, String> header = response.getHeader();
-		Enumeration<String> e = header.keys();
-		while (e.hasMoreElements()) {
-			String key = e.nextElement();
-			String value = header.get(key);
+		Map<String, String> header = response.getHeader();
+		for (Entry<String, String> entry : header.entrySet()) {
+			String key = entry.getKey();
+			String value = entry.getValue();
 			output.write(key.getBytes());
 			output.write(RESPONSE_COLON.getBytes());
 			output.write(value.getBytes());

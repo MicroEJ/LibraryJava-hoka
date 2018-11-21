@@ -1,7 +1,7 @@
 /*
  * Java
  *
- * Copyright 2009-2016 IS2T. All rights reserved.
+ * Copyright 2009-2018 IS2T. All rights reserved.
  * IS2T PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
 package ej.hoka.http.support;
@@ -34,17 +34,6 @@ public abstract class CharacterSeparatedList {
 	protected static final char SP = 32;
 
 	/**
-	 * Returns true if the character <code>c</code> is a white space. See RFC HTTP/1.1 RFC2616 2.2.
-	 *
-	 * @param c
-	 *            the character to check
-	 * @return true if the character <code>c</code> is a white space.
-	 */
-	private static boolean isLWS(char c) {
-		return (c == SP) || (c == CR) || (c == LF) || (c == HT);
-	}
-
-	/**
 	 * Current string being parsed.
 	 */
 	protected String currentString;
@@ -68,6 +57,17 @@ public abstract class CharacterSeparatedList {
 	}
 
 	/**
+	 * Returns true if the character <code>c</code> is a white space. See RFC HTTP/1.1 RFC2616 2.2.
+	 *
+	 * @param c
+	 *            the character to check
+	 * @return true if the character <code>c</code> is a white space.
+	 */
+	private static boolean isLWS(char c) {
+		return (c == SP) || (c == CR) || (c == LF) || (c == HT);
+	}
+
+	/**
 	 * <p>
 	 * End instructions of the string parsing.
 	 * </p>
@@ -85,7 +85,7 @@ public abstract class CharacterSeparatedList {
 	 *            the {@link StringBuffer}
 	 * @return {@link StringBuffer}
 	 */
-	protected abstract StringBuffer generate(StringBuffer sb);
+	protected abstract StringBuilder generate(StringBuilder sb);
 
 	/**
 	 * <p>

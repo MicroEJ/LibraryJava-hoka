@@ -9,7 +9,7 @@ package ej.hoka.http.body;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 import ej.hoka.http.HTTPConstants;
@@ -21,6 +21,7 @@ import ej.hoka.http.support.MIMEUtils;
  */
 public class StringBodyParser implements BodyParser {
 
+	private static final String BOUNDARY = "boundary=";
 	private static final int BUFFSIZE = 512;
 	private String body;
 
@@ -35,7 +36,7 @@ public class StringBodyParser implements BodyParser {
 		if ((contentType != null) && contentType.startsWith(MIMEUtils.MIME_MULTIPART_FORM_ENCODED_DATA)) {
 			String boundary = contentType.substring(contentType.indexOf(';') + 1);
 
-			boundary = boundary.substring(boundary.indexOf("boundary=") + 9); //$NON-NLS-1$
+			boundary = boundary.substring(boundary.indexOf(BOUNDARY) + BOUNDARY.length());
 			String multipartBody = read(inputStream);
 			this.parts = split(multipartBody, boundary);
 			this.isMultipartFormEncoded = true;
@@ -54,18 +55,18 @@ public class StringBodyParser implements BodyParser {
 	}
 
 	/**
-	 * The request contains multipart form encoded
+	 * The request contains multipart form encoded.
 	 *
-	 * @return true if the request has some form encoded multiparts
+	 * @return true if the request has some form encoded multiparts.
 	 */
 	public boolean isMultipartFormEncoded() {
 		return this.isMultipartFormEncoded;
 	}
 
 	/**
-	 * The multiparts
+	 * The multiparts. The parts should not be modified.
 	 *
-	 * @return the parts if the request has some form encoded multiparts, null otherwise
+	 * @return the parts if the request has some form encoded multiparts, null otherwise.
 	 */
 	public String[] parts() {
 		return this.parts;
@@ -97,7 +98,7 @@ public class StringBodyParser implements BodyParser {
 
 	private static String[] split(String toSplit, String separator) {
 		int index = toSplit.indexOf(separator);
-		List<String> parts = new LinkedList<String>();
+		List<String> parts = new ArrayList<String>();
 
 		while (index > -1) {
 			int indexEnd = toSplit.indexOf(separator, index + separator.length());

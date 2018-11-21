@@ -36,7 +36,7 @@ public abstract class Server {
 	/**
 	 * <p>
 	 * Creates a new instance of {@link Server}, sets the current logger using the result of calling the method
-	 * {@link #newLogger()}
+	 * {@link #newLogger()}.
 	 */
 	public Server() {
 		setLogger(newLogger());
