@@ -1,7 +1,7 @@
 /*
  * Java
  *
- * Copyright 2009-2017 IS2T. All rights reserved.
+ * Copyright 2009-2018 IS2T. All rights reserved.
  * IS2T PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
 package ej.hoka.http.support;
@@ -40,7 +40,7 @@ public abstract class ParameterizedArgument extends CharacterSeparatedList {
 	 * Current argument.
 	 * </p>
 	 */
-	public String argument;
+	protected String argument;
 
 	/**
 	 * <p>
@@ -61,7 +61,7 @@ public abstract class ParameterizedArgument extends CharacterSeparatedList {
 	 *            the {@link StringBuffer} to append the argument
 	 */
 	@Override
-	public StringBuffer generate(StringBuffer sb) {
+	public StringBuilder generate(StringBuilder sb) {
 		return sb.append(this.argument);
 	}
 

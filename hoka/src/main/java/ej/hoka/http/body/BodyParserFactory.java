@@ -1,7 +1,7 @@
 /*
  * Java
  *
- * Copyright 2017 IS2T. All rights reserved.
+ * Copyright 2017-2018 IS2T. All rights reserved.
  * IS2T PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
 package ej.hoka.http.body;

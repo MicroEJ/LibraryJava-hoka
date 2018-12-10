@@ -1,7 +1,7 @@
 /*
  * Java
  *
- * Copyright 2009-2016 IS2T. All rights reserved.
+ * Copyright 2009-2018 IS2T. All rights reserved.
  * IS2T PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
 package ej.hoka.tcp;
@@ -10,14 +10,15 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import ej.hoka.ip.Server;
+import ej.hoka.log.Messages;
+import ej.util.message.Level;
 
 /**
  * <p>
  * Abstract TCP/IP server.
  * </p>
  */
-public abstract class TCPServer extends Server {
+public abstract class TCPServer {
 
 	/**
 	 * The thread used by this server.
@@ -64,7 +65,7 @@ public abstract class TCPServer extends Server {
 	 * @return the string "TCPServer"
 	 */
 	protected String getName() {
-		return "TCPServer"; //$NON-NLS-1$
+		return TCPServer.class.getSimpleName();
 	}
 
 	/**
@@ -79,7 +80,7 @@ public abstract class TCPServer extends Server {
 	}
 
 	/**
-	 * Returns a new Server process as {@link Thread}
+	 * Returns a new Server process as {@link Thread}.
 	 *
 	 * @return a new Server process as {@link Thread}
 	 */
@@ -107,7 +108,7 @@ public abstract class TCPServer extends Server {
 						// It may happen if too many requests are made
 						// simultaneously
 
-						TCPServer.this.logger.unexpectedError(e);
+						Messages.LOGGER.log(Level.SEVERE, Messages.CATEGORY, Messages.ERROR_UNKNOWN, e);
 
 						continue;
 					}
@@ -125,7 +126,8 @@ public abstract class TCPServer extends Server {
 	 */
 	public void start() {
 		if (this.thread != null) {
-			throw new RuntimeException("No multiple start allowed"); //$NON-NLS-1$
+			throw new IllegalStateException(
+					Messages.BUILDER.buildMessage(Level.SEVERE, Messages.CATEGORY, Messages.MULTIPLE_START_FORBIDDEN));
 		}
 		this.thread = newProcess();
 		this.thread.start();

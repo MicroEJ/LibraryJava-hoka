@@ -1,7 +1,7 @@
 /*
  * Java
  *
- * Copyright 2009-2016 IS2T. All rights reserved.
+ * Copyright 2009-2018 IS2T. All rights reserved.
  * IS2T PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
 package ej.hoka.http.support;
@@ -77,15 +77,15 @@ public class ContentType extends ParameterizedArgument {
 	/**
 	 * <p>
 	 * Appends the current character set to the {@link StringBuffer} <code>sb</code> in the following form:
-	 * <code>;charset=&lt;character-set-string&gt;</code>
+	 * <code>;charset=&lt;character-set-string&gt;</code>.
 	 * </p>
 	 *
 	 * @param sb
 	 *            the {@link StringBuffer}
-	 * @return the {@link StringBuffer} <code>sb</code>
+	 * @return the {@link StringBuffer} <code>sb</code>.
 	 */
 	@Override
-	public StringBuffer generate(StringBuffer sb) {
+	public StringBuilder generate(StringBuilder sb) {
 		super.generate(sb);
 		if (this.charset != null) {
 			sb.append(PARAMETER_SEP).append(KEY_CHARSET).append(TOKEN_SEP).append(this.charset);

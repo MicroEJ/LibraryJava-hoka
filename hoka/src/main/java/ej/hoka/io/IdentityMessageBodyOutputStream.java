@@ -1,7 +1,7 @@
 /*
  * Java
  *
- * Copyright 2009-2016 IS2T. All rights reserved.
+ * Copyright 2009-2018 IS2T. All rights reserved.
  * IS2T PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
 package ej.hoka.io;
@@ -20,12 +20,12 @@ import ej.hoka.http.HTTPSession;
 public class IdentityMessageBodyOutputStream extends OutputStream {
 	/**
 	 * if true this output stream is considered to be closed and all further calls on this output stream will result in
-	 * IOException
+	 * IOException.
 	 */
 	private boolean closed = false;
 
 	/**
-	 * The underlying output stream
+	 * The underlying output stream.
 	 */
 	private final OutputStream os;
 

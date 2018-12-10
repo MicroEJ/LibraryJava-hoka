@@ -1,7 +1,7 @@
 /*
  * Java
  *
- * Copyright 2009-2016 IS2T. All rights reserved.
+ * Copyright 2009-2018 IS2T. All rights reserved.
  * IS2T PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
 package ej.hoka.http;
@@ -26,6 +26,13 @@ public class ChunkedTransferCodingHandler implements IHTTPTransferCodingHandler 
 	private static ChunkedTransferCodingHandler Instance;
 
 	/**
+	 * Private default constructor to avoid direct instantiation.
+	 */
+	private ChunkedTransferCodingHandler() {
+		// private constructor, because of singleton behaviour
+	}
+
+	/**
 	 * <p>
 	 * Factory method to create an instance of ChunkedTransferCodingHandler.
 	 * </p>
@@ -37,13 +44,6 @@ public class ChunkedTransferCodingHandler implements IHTTPTransferCodingHandler 
 			Instance = new ChunkedTransferCodingHandler();
 		}
 		return Instance;
-	}
-
-	/**
-	 * Private default constructor to avoid direct instantiation.
-	 */
-	private ChunkedTransferCodingHandler() {
-		// private constructor, because of singleton behaviour
 	}
 
 	// NOTES:

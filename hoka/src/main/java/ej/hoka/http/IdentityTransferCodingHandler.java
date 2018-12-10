@@ -1,7 +1,7 @@
 /*
  * Java
  *
- * Copyright 2009-2016 IS2T. All rights reserved.
+ * Copyright 2009-2018 IS2T. All rights reserved.
  * IS2T PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
 package ej.hoka.http;
@@ -26,6 +26,13 @@ public class IdentityTransferCodingHandler implements IHTTPTransferCodingHandler
 	private static IdentityTransferCodingHandler Instance;
 
 	/**
+	 * The private constructor to prevent direct instantiation.
+	 */
+	private IdentityTransferCodingHandler() {
+		// private constructor, because of singleton behaviour
+	}
+
+	/**
 	 * <p>
 	 * Returns an instance of {@link IdentityTransferCodingHandler}.
 	 * </p>
@@ -37,13 +44,6 @@ public class IdentityTransferCodingHandler implements IHTTPTransferCodingHandler
 			Instance = new IdentityTransferCodingHandler();
 		}
 		return Instance;
-	}
-
-	/**
-	 * The private constructor to prevent direct instantiation.
-	 */
-	private IdentityTransferCodingHandler() {
-		// private constructor, because of singleton behaviour
 	}
 
 	/**

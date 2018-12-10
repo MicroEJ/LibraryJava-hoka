@@ -1,13 +1,15 @@
 /*
  * Java
  *
- * Copyright 2009-2016 IS2T. All rights reserved.
+ * Copyright 2009-2018 IS2T. All rights reserved.
  * IS2T PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
 package ej.hoka.io;
 
 import java.io.IOException;
 import java.io.OutputStream;
+
+import ej.hoka.http.HTTPConstants;
 
 /**
  * <p>
@@ -22,7 +24,7 @@ public class ChunkedMessageBodyOutputStream extends OutputStream {
 	/**
 	 * CR LF.
 	 */
-	private static final byte[] CRLF = { '\r', '\n' };
+	private static final byte[] CRLF = HTTPConstants.END_OF_LINE.getBytes();
 
 	/**
 	 * Size of the pending bytes array.
