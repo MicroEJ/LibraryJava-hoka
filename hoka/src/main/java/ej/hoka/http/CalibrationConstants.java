@@ -1,7 +1,7 @@
 /*
  * Java
  *
- * Copyright 2009-2016 IS2T. All rights reserved.
+ * Copyright 2009-2018 IS2T. All rights reserved.
  * IS2T PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
 package ej.hoka.http;
@@ -11,7 +11,7 @@ package ej.hoka.http;
  * Configuration for {@link HTTPSession}.
  * </p>
  */
-public class CalibrationConstants {
+public final class CalibrationConstants {
 
 	/**
 	 * <p>
@@ -22,4 +22,8 @@ public class CalibrationConstants {
 	 * @see HTTPServer#registerEncodingHandler(ej.hoka.http.IHTTPEncodingHandler)
 	 */
 	public static final boolean STRICT_ACCEPT_ENCODING_COMPLIANCE = false;
+
+	private CalibrationConstants() {
+		// Forbid instanciation.
+	}
 }

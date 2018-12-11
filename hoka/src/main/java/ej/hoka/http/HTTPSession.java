@@ -11,14 +11,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import ej.hoka.http.body.BodyParserFactory;
 import ej.hoka.http.support.AcceptEncoding;
 import ej.hoka.http.support.MIMEUtils;
 import ej.hoka.http.support.QualityArgument;
-import ej.hoka.log.Logger;
+import ej.hoka.log.Messages;
+import ej.util.message.Level;
 
 /**
  * <p>
@@ -36,7 +37,7 @@ public abstract class HTTPSession {
 	/**
 	 * Property to set a custom buffer size.
 	 */
-	private static final String BUFFER_SIZE_PROPERTY = "hoka.buffer.size";
+	private static final String BUFFER_SIZE_PROPERTY = "hoka.buffer.size"; //$NON-NLS-1$
 
 	/**
 	 * The HTTP/1.1 version String.
@@ -49,50 +50,9 @@ public abstract class HTTPSession {
 	private static final String RESPONSE_COLON = ": "; //$NON-NLS-1$
 
 	/**
-	 * The "end of header" CR + LF.
-	 */
-	private static final String RESPONSE_ENDOFHEADER = "\r\n"; //$NON-NLS-1$
-
-	/**
 	 * The Content-Type: String.
 	 */
-	private static final String RESPONSE_CONTENTTYPE = "Content-Type" + RESPONSE_COLON; //$NON-NLS-1$
-
-	/**
-	 * Create a {@link HTTPResponse} to write the <code>msg</code> for the given <code>status</code>.
-	 *
-	 * @param status
-	 *            the error status. One of <code>HTTP_STATUS_*</code> constant of the {@link HTTPConstants} interface.
-	 * @param msg
-	 *            an optional error message to add in response.
-	 * @return a {@link HTTPResponse} that represent the error.
-	 * @see HTTPConstants#HTTP_STATUS_BADREQUEST
-	 * @see HTTPConstants#HTTP_STATUS_FORBIDDEN
-	 * @see HTTPConstants#HTTP_STATUS_INTERNALERROR
-	 * @see HTTPConstants#HTTP_STATUS_MEDIA_TYPE
-	 * @see HTTPConstants#HTTP_STATUS_METHOD
-	 * @see HTTPConstants#HTTP_STATUS_NOTACCEPTABLE
-	 * @see HTTPConstants#HTTP_STATUS_NOTFOUND
-	 * @see HTTPConstants#HTTP_STATUS_NOTIMPLEMENTED
-	 * @see HTTPConstants#HTTP_STATUS_NOTMODIFIED
-	 * @see HTTPConstants#HTTP_STATUS_OK
-	 * @see HTTPConstants#HTTP_STATUS_REDIRECT
-	 */
-	public static HTTPResponse createErrorResponse(String status, String msg) {
-		StringBuffer buffer = new StringBuffer();
-		buffer.append("<html><head><title>"); //$NON-NLS-1$
-		buffer.append(status);
-		buffer.append("</title></head><body><h1>"); //$NON-NLS-1$
-		buffer.append(status);
-		buffer.append("</h1><p>"); //$NON-NLS-1$
-		buffer.append(msg);
-		buffer.append("</p></body></html>"); //$NON-NLS-1$
-
-		HTTPResponse response = new HTTPResponse(buffer.toString());
-		response.setMimeType(MIMEUtils.MIME_HTML);
-		response.setStatus(status);
-		return response;
-	}
+	private static final String RESPONSE_CONTENTTYPE = HTTPConstants.FIELD_CONTENT_TYPE + RESPONSE_COLON;
 
 	/**
 	 * {@link HTTPServer} instance.
@@ -116,6 +76,42 @@ public abstract class HTTPSession {
 	 */
 	public HTTPSession(HTTPServer server) {
 		this.server = server;
+	}
+
+	/**
+	 * Create a {@link HTTPResponse} to write the <code>msg</code> for the given <code>status</code>.
+	 *
+	 * @param status
+	 *            the error status. One of <code>HTTP_STATUS_*</code> constant of the {@link HTTPConstants} interface.
+	 * @param msg
+	 *            an optional error message to add in response.
+	 * @return a {@link HTTPResponse} that represent the error.
+	 * @see HTTPConstants#HTTP_STATUS_BADREQUEST
+	 * @see HTTPConstants#HTTP_STATUS_FORBIDDEN
+	 * @see HTTPConstants#HTTP_STATUS_INTERNALERROR
+	 * @see HTTPConstants#HTTP_STATUS_MEDIA_TYPE
+	 * @see HTTPConstants#HTTP_STATUS_METHOD
+	 * @see HTTPConstants#HTTP_STATUS_NOTACCEPTABLE
+	 * @see HTTPConstants#HTTP_STATUS_NOTFOUND
+	 * @see HTTPConstants#HTTP_STATUS_NOTIMPLEMENTED
+	 * @see HTTPConstants#HTTP_STATUS_NOTMODIFIED
+	 * @see HTTPConstants#HTTP_STATUS_OK
+	 * @see HTTPConstants#HTTP_STATUS_REDIRECT
+	 */
+	public static HTTPResponse createErrorResponse(String status, String msg) {
+		StringBuilder buffer = new StringBuilder();
+		buffer.append("<html><head><title>"); //$NON-NLS-1$
+		buffer.append(status);
+		buffer.append("</title></head><body><h1>"); //$NON-NLS-1$
+		buffer.append(status);
+		buffer.append("</h1><p>"); //$NON-NLS-1$
+		buffer.append(msg);
+		buffer.append("</p></body></html>"); //$NON-NLS-1$
+
+		HTTPResponse response = new HTTPResponse(buffer.toString());
+		response.setMimeType(MIMEUtils.MIME_HTML);
+		response.setStatus(status);
+		return response;
 	}
 
 	/**
@@ -209,9 +205,6 @@ public abstract class HTTPSession {
 			@Override
 			public void run() {
 				runloop: while (true) { // loop and process open connections
-					Logger logger = HTTPSession.this.server.getLogger(); // never null, at least
-					// NullLogger
-
 					Socket streamConnection = HTTPSession.this.server.getNextStreamConnection();
 					setCurrentConnection(streamConnection);
 
@@ -220,7 +213,8 @@ public abstract class HTTPSession {
 						return;
 					}
 
-					logger.processConnection(streamConnection);
+					Messages.LOGGER.log(Level.FINE, Messages.CATEGORY, Messages.PROCESS_CONNECTION,
+							Integer.valueOf(streamConnection.hashCode()), streamConnection.getInetAddress().toString());
 
 					HTTPResponse response = null;
 					try (InputStream inputStream = new BufferedInputStream(streamConnection.getInputStream(),
@@ -263,8 +257,10 @@ public abstract class HTTPSession {
 								try {
 									response = answer(request);
 								} catch (Throwable e) {
+									Messages.LOGGER.log(Level.SEVERE, Messages.CATEGORY, Messages.ERROR_UNKNOWN, e,
+											Integer.valueOf(streamConnection.hashCode()),
+											streamConnection.getInetAddress().toString());
 									// An unexpected error occurred
-									logger.unexpectedError(e);
 									response = null; // ensures next error
 									// handling is done
 									// fall down
@@ -327,7 +323,10 @@ public abstract class HTTPSession {
 						// processed request (maybe according to an error level
 						// in logger)
 						if (checkHTTPError(response)) {
-							logger.httpError(streamConnection, response.getStatus(), request.getURI());
+							Messages.LOGGER.log(Level.INFO, Messages.CATEGORY, Messages.HTTP_ERROR,
+									Integer.valueOf(streamConnection.hashCode()),
+									streamConnection.getInetAddress().toString(), response.getStatus(),
+									request.getURI());
 						}
 
 						sendResponse(response, handler);
@@ -341,7 +340,9 @@ public abstract class HTTPSession {
 
 					} catch (IOException e) {
 						// connection lost
-						logger.connectionLost(streamConnection, e);
+						Messages.LOGGER.log(Level.INFO, Messages.CATEGORY, Messages.CONNECTION_LOST, e,
+								Integer.valueOf(streamConnection.hashCode()),
+								streamConnection.getInetAddress().toString());
 						continue runloop;
 					} finally {
 						// close response if needed (only if response has
@@ -356,7 +357,9 @@ public abstract class HTTPSession {
 
 						closeConnection();
 
-						logger.connectionClosed(streamConnection);
+						Messages.LOGGER.log(Level.FINE, Messages.CATEGORY, Messages.CONNECTION_CLOSED,
+								Integer.valueOf(streamConnection.hashCode()),
+								streamConnection.getInetAddress().toString());
 					}
 				}
 			}
@@ -379,8 +382,7 @@ public abstract class HTTPSession {
 	 */
 
 	/**
-	 * Sends a HTTP response with given status and optional message. The information is also logged using
-	 * {@link Logger#httpError(Socket, String, String)}
+	 * Sends a HTTP response with given status and optional message. The information is also logged.
 	 *
 	 * @param msg
 	 *            the message, could be <code>null</code>
@@ -390,9 +392,7 @@ public abstract class HTTPSession {
 	 * @see #sendResponse(HTTPResponse, IHTTPEncodingHandler)
 	 */
 	protected void sendError(String status, String msg) {
-		Logger logger = this.server.getLogger(); // never null, at least NullLogger
-		logger.httpError(this.streamConnection, status, msg);
-
+		Messages.LOGGER.log(Level.INFO, Messages.CATEGORY, Messages.HTTP_ERROR, status, msg);
 		sendResponse(createErrorResponse(status, msg), (IHTTPEncodingHandler) null);
 	}
 
@@ -416,7 +416,7 @@ public abstract class HTTPSession {
 		} catch (IOException e) {
 			// an error occurred when sending the response: can't do anything
 			// more
-			this.server.getLogger().unexpectedError(e);
+			Messages.LOGGER.log(Level.SEVERE, Messages.CATEGORY, Messages.ERROR_UNKNOWN, e);
 		}
 	}
 
@@ -442,7 +442,7 @@ public abstract class HTTPSession {
 	 *             when the connection is lost
 	 */
 	private void writeHTTPHeader(HTTPResponse response, OutputStream output) throws IOException {
-		final byte[] eofHeader = RESPONSE_ENDOFHEADER.getBytes();
+		final byte[] eofHeader = HTTPConstants.END_OF_LINE.getBytes();
 
 		output.write(RESPONSE_HTTP11.getBytes());
 		output.write(response.getStatus().getBytes());
@@ -457,11 +457,10 @@ public abstract class HTTPSession {
 		}
 
 		// add header parameters
-		Hashtable<String, String> header = response.getHeader();
-		Enumeration<String> e = header.keys();
-		while (e.hasMoreElements()) {
-			String key = e.nextElement();
-			String value = header.get(key);
+		Map<String, String> header = response.getHeader();
+		for (Entry<String, String> entry : header.entrySet()) {
+			String key = entry.getKey();
+			String value = entry.getValue();
 			output.write(key.getBytes());
 			output.write(RESPONSE_COLON.getBytes());
 			output.write(value.getBytes());
@@ -500,63 +499,59 @@ public abstract class HTTPSession {
 		// but if the specialization evolves to a more and more
 		// specific way, do it!
 		byte[] rawData = response.getRawData();
-		InputStream dataStream = response.getData();
-		long length = response.getLength();
+		try (InputStream dataStream = response.getData()) {
+			long length = response.getLength();
 
-		if (length < 0) {
-			// data will be transmitted using chunked transfer coding
-			// only when dataStream is used, the size is known otherwise
-			response.addHeaderField(HTTPConstants.FIELD_TRANSFER_ENCODING,
-					this.server.getChunkedTransferCodingHandler().getId());
-		} // else the length is already defined in a header by the response
+			if (length < 0) {
+				// data will be transmitted using chunked transfer coding
+				// only when dataStream is used, the size is known otherwise
+				response.addHeaderField(HTTPConstants.FIELD_TRANSFER_ENCODING,
+						this.server.getChunkedTransferCodingHandler().getId());
+			} // else the length is already defined in a header by the response
 
-		writeHTTPHeader(response, output);
+			writeHTTPHeader(response, output);
 
-		if (rawData != null) {
-			try (OutputStream dataOutput = this.server.getIdentityTransferCodingHandler().open(response, output)) {
-				if (encodingHandler != null) {
-					try (OutputStream encodedDataOutput = encodingHandler.open(dataOutput)) {
-						writeAndFlush(rawData, encodedDataOutput);
-					}
-				} else {
-					writeAndFlush(rawData, dataOutput);
-				}
-				response.setDataStreamClosed();
-			}
-		} else if (dataStream != null) {
-			try {
-				OutputStream dataOutput;
-				if (length == -1) {
-					dataOutput = this.server.getChunkedTransferCodingHandler().open(response, output);
-				} else {
-					dataOutput = this.server.getIdentityTransferCodingHandler().open(response, output);
-				}
-				try {
+			if (rawData != null) {
+				try (OutputStream dataOutput = this.server.getIdentityTransferCodingHandler().open(response, output)) {
 					if (encodingHandler != null) {
-						dataOutput = encodingHandler.open(dataOutput);
-					}
-					final byte[] readBuffer = new byte[getBufferSize()];
-					while (true) {
-						int len = dataStream.read(readBuffer);
-
-						if (len < 0) { // read until EOF is reached
-							break;
+						try (OutputStream encodedDataOutput = encodingHandler.open(dataOutput)) {
+							writeAndFlush(rawData, encodedDataOutput);
 						}
-						// store read data
-						dataOutput.write(readBuffer, 0, len);
-						dataOutput.flush();
+					} else {
+						writeAndFlush(rawData, dataOutput);
+					}
+					response.setDataStreamClosed();
+				}
+			} else if (dataStream != null) {
+				try (OutputStream dataOutput = (length == -1)
+						? this.server.getChunkedTransferCodingHandler().open(response, output)
+						: this.server.getIdentityTransferCodingHandler().open(response, output)) {
+					try (OutputStream ecodedOutput = (encodingHandler != null) ? encodingHandler.open(dataOutput)
+							: null) {
+						OutputStream outputStream = (ecodedOutput != null) ? ecodedOutput : dataOutput;
+						final byte[] readBuffer = new byte[getBufferSize()];
+						while (true) {
+							int len = dataStream.read(readBuffer);
+
+							if (len < 0) { // read until EOF is reached
+								break;
+							}
+							// store read data
+							outputStream.write(readBuffer, 0, len);
+							outputStream.flush();
+						}
 					}
 				} catch (Throwable t) {
-					this.server.getLogger().unexpectedError(t);
+					Messages.LOGGER.log(Level.SEVERE, Messages.CATEGORY, Messages.ERROR_UNKNOWN, t);
 				} finally {
 					// close data output stream. This does not close underlying
 					// TCP connection since transfer output stream does not
 					// close its underlying output stream
-					dataOutput.close();
+					// if (dataOutput != null) {
+					// dataOutput.close();
+					// }
 					response.setDataStreamClosed();
 				}
-			} finally {
-				dataStream.close();
 			}
 		}
 		output.flush();

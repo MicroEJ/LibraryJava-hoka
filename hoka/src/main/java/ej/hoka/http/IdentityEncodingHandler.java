@@ -1,7 +1,7 @@
 /*
  * Java
  *
- * Copyright 2009-2016 IS2T. All rights reserved.
+ * Copyright 2009-2018 IS2T. All rights reserved.
  * IS2T PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
 package ej.hoka.http;
@@ -23,6 +23,13 @@ public final class IdentityEncodingHandler implements IHTTPEncodingHandler {
 	private static IdentityEncodingHandler Instance;
 
 	/**
+	 * Private constructor to avoid direct instantiation.
+	 */
+	private IdentityEncodingHandler() {
+		// private constructor, because of singleton behaviour
+	}
+
+	/**
 	 * <p>
 	 * Returns an instance of {@link IdentityEncodingHandler}.
 	 * </p>
@@ -34,13 +41,6 @@ public final class IdentityEncodingHandler implements IHTTPEncodingHandler {
 			Instance = new IdentityEncodingHandler();
 		}
 		return Instance;
-	}
-
-	/**
-	 * Private constructor to avoid direct instantiation.
-	 */
-	private IdentityEncodingHandler() {
-		// private constructor, because of singleton behaviour
 	}
 
 	/**

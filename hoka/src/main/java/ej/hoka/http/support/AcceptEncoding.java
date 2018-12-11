@@ -1,7 +1,7 @@
 /*
  * Java
  *
- * Copyright 2009-2016 IS2T. All rights reserved.
+ * Copyright 2009-2018 IS2T. All rights reserved.
  * IS2T PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
 package ej.hoka.http.support;
@@ -37,7 +37,7 @@ public class AcceptEncoding extends CharacterSeparatedList {
 	 * @return throws a {@link RuntimeException} to signal that the function is not implemented.
 	 */
 	@Override
-	public StringBuffer generate(StringBuffer sb) {
+	public StringBuilder generate(StringBuilder sb) {
 		throw new RuntimeException(); // TODO if necessary
 	}
 

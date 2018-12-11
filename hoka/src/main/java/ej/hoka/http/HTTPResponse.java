@@ -1,7 +1,7 @@
 /*
  * Java
  *
- * Copyright 2009-2016 IS2T. All rights reserved.
+ * Copyright 2009-2018 IS2T. All rights reserved.
  * IS2T PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
 package ej.hoka.http;
@@ -10,7 +10,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.Map;
 
 /**
  * <p>
@@ -94,7 +96,7 @@ public class HTTPResponse {
 	/**
 	 * HTTP Response headers.
 	 */
-	private final Hashtable<String, String> header = new Hashtable<String, String>(5);
+	private final HashMap<String, String> header = new HashMap<>(5);
 
 	/**
 	 * true if the {@link OutputStream} is closed.
@@ -103,13 +105,6 @@ public class HTTPResponse {
 	 * @see #close()
 	 */
 	private boolean dataStreamClosed = false;
-
-	private static HTTPResponse createResponseFromStatus(String status) {
-		HTTPResponse response = new HTTPResponse();
-		response.setStatus(status);
-		response.addHeaderField(HTTPConstants.FIELD_CONNECTION, HTTPConstants.CONNECTION_FIELD_VALUE_CLOSE);
-		return response;
-	}
 
 	/**
 	 * <p>
@@ -182,6 +177,13 @@ public class HTTPResponse {
 		this(data == null ? new byte[] {} : data.getBytes(encoding));
 	}
 
+	private static HTTPResponse createResponseFromStatus(String status) {
+		HTTPResponse response = new HTTPResponse();
+		response.setStatus(status);
+		response.addHeaderField(HTTPConstants.FIELD_CONNECTION, HTTPConstants.CONNECTION_FIELD_VALUE_CLOSE);
+		return response;
+	}
+
 	/**
 	 * <p>
 	 * Adds a response header field.
@@ -236,8 +238,8 @@ public class HTTPResponse {
 	 *
 	 * @return a {@link Hashtable} of (String,String) representing the HTTP Header Fields (may be empty).
 	 */
-	public Hashtable<String, String> getHeader() {
-		return this.header;
+	public Map<String, String> getHeader() {
+		return (Map<String, String>) this.header.clone();
 	}
 
 	/**
