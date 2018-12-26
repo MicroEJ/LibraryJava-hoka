@@ -292,7 +292,7 @@ public abstract class HTTPServer extends TCPServer {
 	 */
 	protected Socket getNextStreamConnection() {
 		synchronized (this.streamConnections) {
-			if (this.lastAddedPtr == this.lastReadPtr) {
+			while (this.lastAddedPtr == this.lastReadPtr) {
 				if (isStopped()) {
 					return null;
 				}
@@ -300,9 +300,6 @@ public abstract class HTTPServer extends TCPServer {
 					this.streamConnections.wait();
 				} catch (InterruptedException e) {
 					// nothing to do on interrupted exception
-				}
-				if (isStopped()) {
-					return null; // notifyAll from close()
 				}
 			}
 
