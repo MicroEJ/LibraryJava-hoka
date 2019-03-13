@@ -1,4 +1,3 @@
-
 ## 5.0.0 (2018-11-21)
 
 Features:
@@ -8,6 +7,11 @@ Features:
   - Use StrngBuilder instead of string buffer.
   - Sonar review
   
+## 4.1.1 (2018-12-26)
+
+Features:
+  - J0153H-8 Hoka jobs should wait until a new connection is added.
+
 ## 4.1.0 (2018-09-04)
 
 Features:
