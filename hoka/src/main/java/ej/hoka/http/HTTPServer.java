@@ -1,8 +1,9 @@
 /*
  * Java
  *
- * Copyright 2009-2018 IS2T. All rights reserved.
- * IS2T PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ * Copyright 2009-2019 MicroEJ Corp. All rights reserved.
+ * This library is provided in source code for use, modification and test, subject to license terms.
+ * Any modification of the source code will break MicroEJ Corp. warranties on the whole library.
  */
 package ej.hoka.http;
 
@@ -294,7 +295,7 @@ public abstract class HTTPServer extends TCPServer {
 	 */
 	protected Socket getNextStreamConnection() {
 		synchronized (this.streamConnections) {
-			if (this.lastAddedPtr == this.lastReadPtr) {
+			while (this.lastAddedPtr == this.lastReadPtr) {
 				if (isStopped()) {
 					return null;
 				}
@@ -302,9 +303,6 @@ public abstract class HTTPServer extends TCPServer {
 					this.streamConnections.wait();
 				} catch (InterruptedException e) {
 					// nothing to do on interrupted exception
-				}
-				if (isStopped()) {
-					return null; // notifyAll from close()
 				}
 			}
 
