@@ -25,19 +25,19 @@ public class SimpleHTTPSServer {
 	private static final String CA_CERTIFICATE_PATH = "/com/microej/example/hoka/ca.crt";
 
 	public static void main(String[] args) throws Exception {
-		// Create the https server factory with our custom http session
-		HTTPSServerFactory httpsServerFactory = new HTTPSServerFactory() {
-			@Override
-			protected HTTPSession newHTTPSession(HTTPServer server) {
-				return new SimpleHTTPSession(server);
-			}
-		};
-
-		// Initializes the ssl context used for https
-		httpsServerFactory.initSSLContext(KEY_PATH, "123456", CERTIFICATE_PATH, CA_CERTIFICATE_PATH);
+		// Create the HTTPS server factory with the private key and the associated
+		// certificates
+		HTTPSServerFactory httpsServerFactory = new HTTPSServerFactory(KEY_PATH, "123456", CERTIFICATE_PATH,
+				CA_CERTIFICATE_PATH);
 
 		// Creates the https server with our configuration
-		HTTPServer server = httpsServerFactory.create(PORT, 10, 1);
+		HTTPServer server = httpsServerFactory.create(PORT, 10, 2);
+		server.setHTTPSessionFactory(new HTTPServer.HTTPSessionFactory() {
+			@Override
+			public HTTPSession create(HTTPServer server) {
+				return new SimpleHTTPSession(server);
+			}
+		});
 		server.setBodyParserFactory(new StringBodyParserFactory());
 
 		// Once started the server is accessible on https://localhost:8443

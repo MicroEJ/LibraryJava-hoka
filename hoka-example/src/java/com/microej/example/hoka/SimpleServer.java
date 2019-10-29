@@ -28,13 +28,13 @@ public class SimpleServer {
 		ServerSocket serverSocket = new ServerSocket(PORT);
 
 		//create the http server with our custom http session
-		HTTPServer server = new HTTPServer(serverSocket, 10, 1) {
-
+		HTTPServer server = new HTTPServer(serverSocket, 10, 1);
+		server.setHTTPSessionFactory(new HTTPServer.HTTPSessionFactory() {
 			@Override
-			protected HTTPSession newHTTPSession() {
-				return new SimpleHTTPSession(this);
+			public HTTPSession create(HTTPServer server) {
+				return new SimpleHTTPSession(server);
 			}
-		};
+		});
 		server.setBodyParserFactory(new StringBodyParserFactory());
 
 		//once started the server is accessible on

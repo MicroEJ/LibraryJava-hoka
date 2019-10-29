@@ -18,8 +18,7 @@ import ej.util.message.Level;
 
 /**
  * <p>
- * Abstract HTTP Server. Subclasses should override the {@link HTTPServer#newHTTPSession()} method to add specific
- * session handling behavior.
+ * HTTP Server.
  * </p>
  *
  * <p>
@@ -46,18 +45,21 @@ import ej.util.message.Level;
  * </p>
  *
  * <pre>
- * // get a new server which handle a Default HTTP Session
- * HTTPServer server = new HTTPServer(serverSocket, 10, 1) {
- * 	protected HTTPSession newHTTPSession() {
- * 		return new DefaultHTTPSession(this);
+ * // get a new server
+ * HTTPServer server = new HTTPServer(serverSocket, 10, 1);
+ *
+ * // set the HTTP Session
+ * server.setHTTPSessionFactory(new HTTPServer.HTTPSessionFactory({
+ * 	HTTPSession create(HTTPServer server) {
+ * 		return new DefaultHTTPSession(server);
  * 	}
- * };
+ * }));
  *
  * // start the server
  * server.start();
  * </pre>
  */
-public abstract class HTTPServer extends TCPServer {
+public class HTTPServer extends TCPServer {
 	/*
 	 * Implementation notes (some informations may be extracted in documentation or example) <p><b>Features +
 	 * limitations: </b><ul>
@@ -132,6 +134,11 @@ public abstract class HTTPServer extends TCPServer {
 	 * Array of {@link IHTTPTransferCodingHandler}s.
 	 */
 	private IHTTPTransferCodingHandler[] transferCodingHandlers;
+
+	/**
+	 * The HTTP session factory.
+	 */
+	private HTTPSessionFactory httpSessionFactory;
 
 	/**
 	 * The body parser factory.
@@ -339,15 +346,18 @@ public abstract class HTTPServer extends TCPServer {
 	}
 
 	/**
-	 * <p>
-	 * This method should be overridden by subclasses to add functionality to the {@link HTTPServer}.
-	 * </p>
-	 *
-	 * @return the newly created {@link HTTPSession}
-	 * @see HTTPSession
-	 * @see DefaultHTTPSession
+	 * HTTPSession factory used to instantiate sessions for jobs.
 	 */
-	protected abstract HTTPSession newHTTPSession();
+	public static interface HTTPSessionFactory {
+		/**
+		 * Creates the HTTPSession.
+		 *
+		 * @param server
+		 *            the server which handle the session.
+		 * @return the HTTPSession.
+		 */
+		HTTPSession create(HTTPServer server);
+	}
 
 	/**
 	 * <p>
@@ -420,7 +430,7 @@ public abstract class HTTPServer extends TCPServer {
 		// System.out.println((new Date()).getTime()+", "+(r.totalMemory() -
 		// r.freeMemory())+", beginning of server.start()" );
 		for (int i = this.sessionJobsCount; --i >= 0;) {
-			HTTPSession session = newHTTPSession();
+			HTTPSession session = this.httpSessionFactory.create(this);
 			session.setBodyParserFactory(this.bodyParserFactory);
 			Thread job = new Thread(session.getRunnable(), "HTTP-JOB-" + i); //$NON-NLS-1$
 			// FIXME for mem test only
@@ -472,6 +482,25 @@ public abstract class HTTPServer extends TCPServer {
 		} catch (IOException e) {
 			Messages.LOGGER.log(Level.SEVERE, Messages.CATEGORY, Messages.ERROR_UNKNOWN, e);
 		}
+	}
+
+	/**
+	 * Gets the httpSessionFactory.
+	 *
+	 * @return the httpSessionFactory.
+	 */
+	public HTTPSessionFactory getHTTPSessionFactory() {
+		return this.httpSessionFactory;
+	}
+
+	/**
+	 * Sets the httpSessionFactory.
+	 *
+	 * @param httpSessionFactory
+	 *            the httpSessionFactory to set.
+	 */
+	public void setHTTPSessionFactory(HTTPSessionFactory httpSessionFactory) {
+		this.httpSessionFactory = httpSessionFactory;
 	}
 
 	/**

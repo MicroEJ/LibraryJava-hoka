@@ -6,7 +6,7 @@
 	Any modification of the source code will break MicroEJ Corp. warranties on the whole library.
 -->
 <ivy-module version="2.0" xmlns:ea="http://www.easyant.org" xmlns:m="http://ant.apache.org/ivy/extra" xmlns:ej="https://developer.microej.com" ej:version="2.0.0"> 
-	<info organisation="ej.library.iot" module="hoka" status="integration" revision="5.1.0">
+	<info organisation="ej.library.iot" module="hoka" status="integration" revision="5.2.0">
 		<ea:build organisation="com.is2t.easyant.buildtypes" module="build-microej-javalib" revision="4.+">
 		</ea:build>
 	</info>
@@ -37,6 +37,6 @@
 		<dependency org="ej.library.eclasspath" name="io" rev="1.1.0"/>
 		<dependency org="ej.library.runtime" name="basictool" rev="1.2.2"/>
 		<dependency org="ej.library.runtime" name="message" rev="2.1.0"/>
-		<dependency org="ej.library.iot" name="ssl-util" rev="2.0.0"/>
+		<dependency org="ej.library.iot" name="ssl-util" rev="2.2.0"/>
 	</dependencies>
 </ivy-module>
