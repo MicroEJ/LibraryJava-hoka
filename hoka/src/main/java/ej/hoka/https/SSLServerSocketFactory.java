@@ -15,13 +15,12 @@ import java.security.GeneralSecurityException;
 import javax.net.ServerSocketFactory;
 import javax.net.ssl.SSLContext;
 
-import ej.hoka.http.HTTPServer;
 import ej.net.util.ssl.SslContextBuilder;
 
 /**
- * Helps to create a HTTPS server.
+ * Helps to create a server socket in a SSL tunnel.
  */
-public class HTTPSServerFactory {
+public class SSLServerSocketFactory {
 
 	private final SSLContext sslContext;
 
@@ -43,22 +42,23 @@ public class HTTPSServerFactory {
 	 * @throws GeneralSecurityException
 	 *             if an exception occurs during the initialization of the SSL context.
 	 */
-	public HTTPSServerFactory(String keyPath, String password, String certificatePath,
+	public SSLServerSocketFactory(String keyPath, String password, String certificatePath,
 			String... certificationChainPaths) throws IOException, GeneralSecurityException {
 		InputStream[] certificationChain = null;
-		try (InputStream key = getClass().getResourceAsStream(keyPath);
-				InputStream certificate = getClass().getResourceAsStream(certificatePath)) {
+		try (InputStream key = loadResource(keyPath); InputStream certificate = loadResource(certificatePath)) {
 			if (certificationChainPaths != null) {
 				certificationChain = new InputStream[certificationChainPaths.length];
 				for (int i = 0; i < certificationChainPaths.length; i++) {
-					certificationChain[i] = getClass().getResourceAsStream(certificationChainPaths[i]);
+					certificationChain[i] = loadResource(certificationChainPaths[i]);
 				}
 			}
 			this.sslContext = initSSLContext(key, password, certificate, certificationChain);
 		} finally {
 			if (certificationChain != null) {
 				for (int i = 0; i < certificationChain.length; i++) {
-					certificationChain[i].close();
+					if (certificationChain[i] != null) {
+						certificationChain[i].close();
+					}
 				}
 			}
 		}
@@ -80,9 +80,17 @@ public class HTTPSServerFactory {
 	 * @throws GeneralSecurityException
 	 *             if an exception occurs during the initialization of the SSL context.
 	 */
-	public HTTPSServerFactory(InputStream key, String password, InputStream certificate,
+	public SSLServerSocketFactory(InputStream key, String password, InputStream certificate,
 			InputStream... certificationChain) throws IOException, GeneralSecurityException {
 		this.sslContext = initSSLContext(key, password, certificate, certificationChain);
+	}
+
+	private InputStream loadResource(String path) {
+		InputStream is = getClass().getResourceAsStream(path);
+		if (is == null) {
+			throw new IllegalArgumentException("Cannot load " + path); //$NON-NLS-1$
+		}
+		return is;
 	}
 
 	private SSLContext initSSLContext(InputStream key, String password, InputStream certificate,
@@ -98,18 +106,13 @@ public class HTTPSServerFactory {
 	 *
 	 * @param port
 	 *            the port to connect on.
-	 * @param maxSimultaneousConnection
-	 *            the maximum number of simultaneous connections to handle.
-	 * @param jobCountBySession
-	 *            the number of jobs to use.
 	 * @return the created HTTPS server.
 	 * @throws IOException
 	 *             if an exception occurs during the creation of the connection.
 	 */
-	public HTTPServer create(int port, int maxSimultaneousConnection, int jobCountBySession) throws IOException {
+	public ServerSocket createConnection(int port) throws IOException {
 		ServerSocketFactory serverSocketFactory = this.sslContext.getServerSocketFactory();
-		ServerSocket serverSocket = serverSocketFactory.createServerSocket(port);
-		return new HTTPServer(serverSocket, maxSimultaneousConnection, jobCountBySession);
+		return serverSocketFactory.createServerSocket(port);
 	}
 
 }

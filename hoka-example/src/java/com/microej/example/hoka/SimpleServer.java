@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 
 import ej.hoka.http.HTTPServer;
+import ej.hoka.http.HTTPServer.HTTPSessionFactory;
 import ej.hoka.http.HTTPSession;
 import ej.hoka.http.body.StringBodyParserFactory;
 
@@ -28,13 +29,12 @@ public class SimpleServer {
 		ServerSocket serverSocket = new ServerSocket(PORT);
 
 		//create the http server with our custom http session
-		HTTPServer server = new HTTPServer(serverSocket, 10, 1);
-		server.setHTTPSessionFactory(new HTTPServer.HTTPSessionFactory() {
+		HTTPServer server = new HTTPServer(serverSocket, new HTTPSessionFactory() {
 			@Override
-			public HTTPSession create(HTTPServer server) {
+			public HTTPSession newHttpSession(HTTPServer server) {
 				return new SimpleHTTPSession(server);
 			}
-		});
+		}, 10, 1);
 		server.setBodyParserFactory(new StringBodyParserFactory());
 
 		//once started the server is accessible on

@@ -46,7 +46,7 @@ import ej.util.message.Level;
  *
  * <pre>
  * // get a new server
- * HTTPServer server = new HTTPServer(serverSocket, 10, 1);
+ * HTTPServer server = new HTTPServer(serverSocket, new HTTPSession 10, 1);
  *
  * // set the HTTP Session
  * server.setHTTPSessionFactory(new HTTPServer.HTTPSessionFactory({
@@ -138,7 +138,7 @@ public class HTTPServer extends TCPServer {
 	/**
 	 * The HTTP session factory.
 	 */
-	private HTTPSessionFactory httpSessionFactory;
+	private final HTTPSessionFactory httpSessionFactory;
 
 	/**
 	 * The body parser factory.
@@ -165,8 +165,9 @@ public class HTTPServer extends TCPServer {
 	 *            the number of parallel jobs to process by opened sessions. if <code>jobCountBySession</code> == 1, the
 	 *            jobs are processed sequentially.
 	 */
-	public HTTPServer(ServerSocket connection, int maxSimultaneousConnection, int jobCountBySession) {
-		this(connection, maxSimultaneousConnection, jobCountBySession, DEFAULT_KEEP_ALIVE_DURATION);
+	public HTTPServer(ServerSocket connection, HTTPSessionFactory httpSessionFactory, int maxSimultaneousConnection,
+			int jobCountBySession) {
+		this(connection, httpSessionFactory, maxSimultaneousConnection, jobCountBySession, DEFAULT_KEEP_ALIVE_DURATION);
 	}
 
 	/**
@@ -191,8 +192,8 @@ public class HTTPServer extends TCPServer {
 	 *             <li><code>keepAliveDuration</code><=0
 	 *             </ul>
 	 */
-	private HTTPServer(ServerSocket connection, int maxSimultaneousConnection, int jobCountBySession,
-			long keepAliveDuration) {
+	private HTTPServer(ServerSocket connection, HTTPSessionFactory httpSessionFactory, int maxSimultaneousConnection,
+			int jobCountBySession, long keepAliveDuration) {
 		super(connection);
 
 		if ((maxSimultaneousConnection <= 0) || (jobCountBySession <= 0) || (keepAliveDuration <= 0)) {
@@ -202,6 +203,7 @@ public class HTTPServer extends TCPServer {
 		// FIXME for memory usage only
 		// r = Runtime.getRuntime();
 
+		this.httpSessionFactory = httpSessionFactory;
 		this.maxOpenedConnections = maxSimultaneousConnection;
 		this.sessionJobsCount = jobCountBySession;
 		this.keepAliveDuration = keepAliveDuration; // TODO handling persistent
@@ -346,20 +348,6 @@ public class HTTPServer extends TCPServer {
 	}
 
 	/**
-	 * HTTPSession factory used to instantiate sessions for jobs.
-	 */
-	public static interface HTTPSessionFactory {
-		/**
-		 * Creates the HTTPSession.
-		 *
-		 * @param server
-		 *            the server which handle the session.
-		 * @return the HTTPSession.
-		 */
-		HTTPSession create(HTTPServer server);
-	}
-
-	/**
 	 * <p>
 	 * Registers a new HTTP content encoding handler.
 	 * </p>
@@ -430,7 +418,7 @@ public class HTTPServer extends TCPServer {
 		// System.out.println((new Date()).getTime()+", "+(r.totalMemory() -
 		// r.freeMemory())+", beginning of server.start()" );
 		for (int i = this.sessionJobsCount; --i >= 0;) {
-			HTTPSession session = this.httpSessionFactory.create(this);
+			HTTPSession session = this.httpSessionFactory.newHttpSession(this);
 			session.setBodyParserFactory(this.bodyParserFactory);
 			Thread job = new Thread(session.getRunnable(), "HTTP-JOB-" + i); //$NON-NLS-1$
 			// FIXME for mem test only
@@ -484,23 +472,8 @@ public class HTTPServer extends TCPServer {
 		}
 	}
 
-	/**
-	 * Gets the httpSessionFactory.
-	 *
-	 * @return the httpSessionFactory.
-	 */
-	public HTTPSessionFactory getHTTPSessionFactory() {
-		return this.httpSessionFactory;
-	}
-
-	/**
-	 * Sets the httpSessionFactory.
-	 *
-	 * @param httpSessionFactory
-	 *            the httpSessionFactory to set.
-	 */
-	public void setHTTPSessionFactory(HTTPSessionFactory httpSessionFactory) {
-		this.httpSessionFactory = httpSessionFactory;
+	public interface HTTPSessionFactory {
+		HTTPSession newHttpSession(HTTPServer server);
 	}
 
 	/**

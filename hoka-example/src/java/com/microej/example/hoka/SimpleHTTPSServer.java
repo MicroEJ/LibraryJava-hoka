@@ -7,10 +7,13 @@
  */
 package com.microej.example.hoka;
 
+import java.net.ServerSocket;
+
 import ej.hoka.http.HTTPServer;
+import ej.hoka.http.HTTPServer.HTTPSessionFactory;
 import ej.hoka.http.HTTPSession;
 import ej.hoka.http.body.StringBodyParserFactory;
-import ej.hoka.https.HTTPSServerFactory;
+import ej.hoka.https.SSLServerSocketFactory;
 
 /*
  * This simple server exposes resources from the src/resources folder
@@ -25,19 +28,20 @@ public class SimpleHTTPSServer {
 	private static final String CA_CERTIFICATE_PATH = "/com/microej/example/hoka/ca.crt";
 
 	public static void main(String[] args) throws Exception {
-		// Create the HTTPS server factory with the private key and the associated
-		// certificates
-		HTTPSServerFactory httpsServerFactory = new HTTPSServerFactory(KEY_PATH, "123456", CERTIFICATE_PATH,
-				CA_CERTIFICATE_PATH);
 
-		// Creates the https server with our configuration
-		HTTPServer server = httpsServerFactory.create(PORT, 10, 2);
-		server.setHTTPSessionFactory(new HTTPServer.HTTPSessionFactory() {
+		// retrieve the SSL socket connector with our private key and associated
+		// certification
+		SSLServerSocketFactory sslServerSocketFactory = new SSLServerSocketFactory(KEY_PATH, "123456", CERTIFICATE_PATH,
+				CA_CERTIFICATE_PATH);
+		ServerSocket serverSocket = sslServerSocketFactory.createConnection(PORT);
+
+		// create the http server with our custom http session
+		HTTPServer server = new HTTPServer(serverSocket, new HTTPSessionFactory() {
 			@Override
-			public HTTPSession create(HTTPServer server) {
+			public HTTPSession newHttpSession(HTTPServer server) {
 				return new SimpleHTTPSession(server);
 			}
-		});
+		}, 10, 1);
 		server.setBodyParserFactory(new StringBodyParserFactory());
 
 		// Once started the server is accessible on https://localhost:8443
