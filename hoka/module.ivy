@@ -37,6 +37,5 @@
 		<dependency org="ej.library.eclasspath" name="io" rev="1.1.0"/>
 		<dependency org="ej.library.runtime" name="basictool" rev="1.2.2"/>
 		<dependency org="ej.library.runtime" name="message" rev="2.1.0"/>
-		<dependency org="ej.library.iot" name="ssl-util" rev="2.2.0"/>
 	</dependencies>
 </ivy-module>
