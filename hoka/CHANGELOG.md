@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-  - Replace abstract method HTTPServer#newHTTPSession(HTTPSession) with a factory attribute.
+  - Replace abstract method HTTPServer#newHTTPSession(HTTPSession) with an abstract factory inner class to HTTPSession that subclasses can implement.
 
 ## 5.1.0 - 2019-03-13
 

@@ -7,13 +7,11 @@
  */
 package com.microej.example.hoka;
 
-import java.net.ServerSocket;
+import javax.net.ssl.SSLContext;
 
 import ej.hoka.http.HTTPServer;
-import ej.hoka.http.HTTPServer.HTTPSessionFactory;
-import ej.hoka.http.HTTPSession;
 import ej.hoka.http.body.StringBodyParserFactory;
-import ej.hoka.https.SSLServerSocketFactory;
+import ej.net.util.ssl.SslContextBuilder;
 
 /*
  * This simple server exposes resources from the src/resources folder
@@ -29,19 +27,14 @@ public class SimpleHTTPSServer {
 
 	public static void main(String[] args) throws Exception {
 
-		// retrieve the SSL socket connector with our private key and associated
-		// certification
-		SSLServerSocketFactory sslServerSocketFactory = new SSLServerSocketFactory(KEY_PATH, "123456", CERTIFICATE_PATH,
-				CA_CERTIFICATE_PATH);
-		ServerSocket serverSocket = sslServerSocketFactory.createConnection(PORT);
+		// Setup the SSL context
+		SslContextBuilder sslContextBuilder = new SslContextBuilder();
+		sslContextBuilder.addClientKey(KEY_PATH, CERTIFICATE_PATH, CA_CERTIFICATE_PATH);
+		SSLContext sslContext = sslContextBuilder.build("123456"); // password
 
 		// create the http server with our custom http session
-		HTTPServer server = new HTTPServer(serverSocket, new HTTPSessionFactory() {
-			@Override
-			public HTTPSession newHttpSession(HTTPServer server) {
-				return new SimpleHTTPSession(server);
-			}
-		}, 10, 1);
+		HTTPServer server = new HTTPServer(PORT, 10, 1, new SimpleHTTPSession.Factory(),
+				sslContext.getServerSocketFactory());
 		server.setBodyParserFactory(new StringBodyParserFactory());
 
 		// Once started the server is accessible on https://localhost:8443

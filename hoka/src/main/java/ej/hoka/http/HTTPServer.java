@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import javax.net.ServerSocketFactory;
+
 import ej.hoka.http.body.BodyParserFactory;
 import ej.hoka.log.Messages;
 import ej.hoka.tcp.TCPServer;
@@ -45,15 +47,8 @@ import ej.util.message.Level;
  * </p>
  *
  * <pre>
- * // get a new server
- * HTTPServer server = new HTTPServer(serverSocket, new HTTPSession 10, 1);
- *
- * // set the HTTP Session
- * server.setHTTPSessionFactory(new HTTPServer.HTTPSessionFactory({
- * 	HTTPSession create(HTTPServer server) {
- * 		return new DefaultHTTPSession(server);
- * 	}
- * }));
+ * // get a new server which handle a Default HTTP Session
+ * HTTPServer server = new HTTPServer(serverSocket, new DefaultHTTPSession.Factory(), 10, 1);
  *
  * // start the server
  * server.start();
@@ -138,12 +133,67 @@ public class HTTPServer extends TCPServer {
 	/**
 	 * The HTTP session factory.
 	 */
-	private final HTTPSessionFactory httpSessionFactory;
+	private final HTTPSession.Factory httpSessionFactory;
 
 	/**
 	 * The body parser factory.
 	 */
 	private BodyParserFactory bodyParserFactory;
+
+	/**
+	 * <p>
+	 * Creates a {@link HTTPServer} on the given port with the {@link DefaultHTTPSession}.
+	 * </p>
+	 * <p>
+	 * The default encoding to be used is the identity encoding. Further encodings may be registered using
+	 * {@link #registerEncodingHandler(IHTTPEncodingHandler)}.
+	 * </p>
+	 * <p>
+	 * Server is not started until {@link #start()} is called.
+	 * </p>
+	 *
+	 * @param port
+	 *            the port.
+	 * @param maxSimultaneousConnection
+	 *            the maximal number of simultaneously opened connections.
+	 * @param jobCountBySession
+	 *            the number of parallel jobs to process by opened sessions. if <code>jobCountBySession</code> == 1, the
+	 *            jobs are processed sequentially.
+	 * @throws IOException
+	 *             if server cannot be bind to given port.
+	 */
+	public HTTPServer(int port, int maxSimultaneousConnection, int jobCountBySession) throws IOException {
+		this(port, maxSimultaneousConnection, jobCountBySession, new DefaultHTTPSession.Factory());
+	}
+
+	/**
+	 * <p>
+	 * Creates a {@link HTTPServer} on the given port.
+	 * </p>
+	 * <p>
+	 * The default encoding to be used is the identity encoding. Further encodings may be registered using
+	 * {@link #registerEncodingHandler(IHTTPEncodingHandler)}.
+	 * </p>
+	 * <p>
+	 * Server is not started until {@link #start()} is called.
+	 * </p>
+	 *
+	 * @param port
+	 *            the port.
+	 * @param httpSessionFactory
+	 *            the HTTP session factory.
+	 * @param maxSimultaneousConnection
+	 *            the maximal number of simultaneously opened connections.
+	 * @param jobCountBySession
+	 *            the number of parallel jobs to process by opened sessions. if <code>jobCountBySession</code> == 1, the
+	 *            jobs are processed sequentially.
+	 * @throws IOException
+	 *             if server cannot be bind to given port.
+	 */
+	public HTTPServer(int port, int maxSimultaneousConnection, int jobCountBySession,
+			HTTPSession.Factory httpSessionFactory) throws IOException {
+		this(port, maxSimultaneousConnection, jobCountBySession, httpSessionFactory, ServerSocketFactory.getDefault());
+	}
 
 	/**
 	 * <p>
@@ -157,17 +207,24 @@ public class HTTPServer extends TCPServer {
 	 * Server is not started until {@link #start()} is called.
 	 * </p>
 	 *
-	 * @param connection
-	 *            the {@link ServerSocket} connection used by the server
+	 * @param port
+	 *            the port.
 	 * @param maxSimultaneousConnection
 	 *            the maximal number of simultaneously opened connections.
 	 * @param jobCountBySession
 	 *            the number of parallel jobs to process by opened sessions. if <code>jobCountBySession</code> == 1, the
 	 *            jobs are processed sequentially.
+	 * @param httpSessionFactory
+	 *            the HTTP session factory.
+	 * @param serverSocketFactory
+	 *            the serverSocketFactory to use.
+	 * @throws IOException
+	 *             if server cannot be bind to given port.
 	 */
-	public HTTPServer(ServerSocket connection, HTTPSessionFactory httpSessionFactory, int maxSimultaneousConnection,
-			int jobCountBySession) {
-		this(connection, httpSessionFactory, maxSimultaneousConnection, jobCountBySession, DEFAULT_KEEP_ALIVE_DURATION);
+	public HTTPServer(int port, int maxSimultaneousConnection, int jobCountBySession,
+			HTTPSession.Factory httpSessionFactory, ServerSocketFactory serverSocketFactory) throws IOException {
+		this(port, maxSimultaneousConnection, jobCountBySession, httpSessionFactory, serverSocketFactory,
+				DEFAULT_KEEP_ALIVE_DURATION);
 	}
 
 	/**
@@ -175,14 +232,21 @@ public class HTTPServer extends TCPServer {
 	 * The encoding handler will be {@link IdentityEncodingHandler}. The transfer coding handler will be
 	 * {@link IdentityTransferCodingHandler}
 	 *
-	 * @param connection
-	 *            the {@link IServerSocketConnection}
+	 * @param port
+	 *            the port.
 	 * @param maxSimultaneousConnection
-	 *            number of maximum simultaneous connections the server can handle
+	 *            the maximal number of simultaneously opened connections.
 	 * @param jobCountBySession
-	 *            the number of jobs per session
+	 *            the number of parallel jobs to process by opened sessions. if <code>jobCountBySession</code> == 1, the
+	 *            jobs are processed sequentially.
+	 * @param httpSessionFactory
+	 *            the HTTP session factory.
+	 * @param serverSocketFactory
+	 *            the serverSocketFactory to use.
 	 * @param keepAliveDuration
 	 *            the keep alive duration (not used)
+	 * @throws IOException
+	 *             if server cannot be bind to given port.
 	 * @throws IllegalArgumentException
 	 *             when any of the following is true:
 	 *             <ul>
@@ -192,9 +256,10 @@ public class HTTPServer extends TCPServer {
 	 *             <li><code>keepAliveDuration</code><=0
 	 *             </ul>
 	 */
-	private HTTPServer(ServerSocket connection, HTTPSessionFactory httpSessionFactory, int maxSimultaneousConnection,
-			int jobCountBySession, long keepAliveDuration) {
-		super(connection);
+	private HTTPServer(int port, int maxSimultaneousConnection, int jobCountBySession,
+			HTTPSession.Factory httpSessionFactory, ServerSocketFactory serverSocketFactory, long keepAliveDuration)
+			throws IOException {
+		super(serverSocketFactory.createServerSocket(port));
 
 		if ((maxSimultaneousConnection <= 0) || (jobCountBySession <= 0) || (keepAliveDuration <= 0)) {
 			throw new IllegalArgumentException();
@@ -418,7 +483,7 @@ public class HTTPServer extends TCPServer {
 		// System.out.println((new Date()).getTime()+", "+(r.totalMemory() -
 		// r.freeMemory())+", beginning of server.start()" );
 		for (int i = this.sessionJobsCount; --i >= 0;) {
-			HTTPSession session = this.httpSessionFactory.newHttpSession(this);
+			HTTPSession session = this.httpSessionFactory.newHTTPSession(this);
 			session.setBodyParserFactory(this.bodyParserFactory);
 			Thread job = new Thread(session.getRunnable(), "HTTP-JOB-" + i); //$NON-NLS-1$
 			// FIXME for mem test only
@@ -470,10 +535,6 @@ public class HTTPServer extends TCPServer {
 		} catch (IOException e) {
 			Messages.LOGGER.log(Level.SEVERE, Messages.CATEGORY, Messages.ERROR_UNKNOWN, e);
 		}
-	}
-
-	public interface HTTPSessionFactory {
-		HTTPSession newHttpSession(HTTPServer server);
 	}
 
 	/**
