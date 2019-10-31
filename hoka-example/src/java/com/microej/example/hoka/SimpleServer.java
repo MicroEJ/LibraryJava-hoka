@@ -8,10 +8,8 @@
 package com.microej.example.hoka;
 
 import java.io.IOException;
-import java.net.ServerSocket;
 
 import ej.hoka.http.HTTPServer;
-import ej.hoka.http.HTTPSession;
 import ej.hoka.http.body.StringBodyParserFactory;
 
 /*
@@ -23,18 +21,8 @@ public class SimpleServer {
 	private static final int PORT = 8080;
 
 	public static void main(String[] args) throws IOException {
-
-		// retrieve the socket connector implementation of the platform
-		ServerSocket serverSocket = new ServerSocket(PORT);
-
 		//create the http server with our custom http session
-		HTTPServer server = new HTTPServer(serverSocket, 10, 1) {
-
-			@Override
-			protected HTTPSession newHTTPSession() {
-				return new SimpleHTTPSession(this);
-			}
-		};
+		HTTPServer server = new HTTPServer(PORT, 10, 1, new SimpleHTTPSession.Factory());
 		server.setBodyParserFactory(new StringBodyParserFactory());
 
 		//once started the server is accessible on
