@@ -77,4 +77,14 @@ public class DefaultHTTPSession extends HTTPSession {
 		return response;
 	}
 
+	/**
+	 * This class makes the creation of HTTPServer easier.
+	 */
+	public static class Factory implements HTTPSession.Factory {
+		@Override
+		public HTTPSession newHTTPSession(HTTPServer server) {
+			return new DefaultHTTPSession(server);
+		}
+	}
+
 }

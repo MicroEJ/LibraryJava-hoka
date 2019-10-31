@@ -586,4 +586,22 @@ public abstract class HTTPSession {
 	private int getBufferSize() {
 		return Integer.getInteger(BUFFER_SIZE_PROPERTY, BUFFER_SIZE).intValue();
 	}
+
+	/**
+	 * This factory is used by the HTTPServer to create sessions for jobs. Sub-classes of HTTPSession can implement this
+	 * interface to make easier the creation of HTTPServer.
+	 *
+	 * An example of the implementation can be found at {@link DefaultHTTPSession.Factory}.
+	 */
+	public static interface Factory {
+		/**
+		 * Instantiate a new HTTP session.
+		 *
+		 * @param server
+		 *            the server that will handle the new session.
+		 * @return the HTTP session.
+		 */
+		HTTPSession newHTTPSession(HTTPServer server);
+	}
+
 }

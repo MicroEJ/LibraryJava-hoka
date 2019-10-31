@@ -15,6 +15,7 @@ import ej.hoka.http.HTTPConstants;
 import ej.hoka.http.HTTPRequest;
 import ej.hoka.http.HTTPResponse;
 import ej.hoka.http.HTTPServer;
+import ej.hoka.http.HTTPSession;
 import ej.hoka.http.body.BodyParser;
 import ej.hoka.http.body.StringBodyParser;
 import ej.hoka.http.support.MIMEUtils;
@@ -67,6 +68,13 @@ public class SimpleHTTPSession extends DefaultHTTPSession {
 			response = super.answer(request);
 		}
 		return response;
+	}
+
+	public static class Factory implements HTTPSession.Factory {
+		@Override
+		public HTTPSession newHTTPSession(HTTPServer server) {
+			return new SimpleHTTPSession(server);
+		}
 	}
 
 }
