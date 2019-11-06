@@ -35,6 +35,7 @@ public class SimpleHTTPSServer {
 		// create the http server with our custom http session
 		HTTPServer server = new HTTPServer(PORT, 10, 1, new SimpleHTTPSession.Factory(),
 				sslContext.getServerSocketFactory());
+		server.setRequestTimeoutDuration(20000);
 		server.setBodyParserFactory(new StringBodyParserFactory());
 
 		// Once started the server is accessible on https://localhost:8443

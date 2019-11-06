@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -244,6 +245,9 @@ public abstract class HTTPSession {
 							// (Unimplemented),
 							// and close the connection.
 							sendError(HTTPConstants.HTTP_STATUS_NOTIMPLEMENTED, e.field + RESPONSE_COLON + e.encoding);
+							continue runloop;
+						} catch (SocketTimeoutException e) {
+							sendError(HTTPConstants.HTTP_STATUS_REQUESTTIMEOUT);
 							continue runloop;
 						}
 

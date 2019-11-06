@@ -19,7 +19,7 @@ Moreover a custom behaviour is added when asking for the root of the server. The
 
 # Dependencies
 
-  - HOKA 6.0.0 or later
+  - HOKA 6
   
 # Source
 

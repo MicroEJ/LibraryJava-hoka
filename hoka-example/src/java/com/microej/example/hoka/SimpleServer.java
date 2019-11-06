@@ -23,6 +23,7 @@ public class SimpleServer {
 	public static void main(String[] args) throws IOException {
 		//create the http server with our custom http session
 		HTTPServer server = new HTTPServer(PORT, 10, 1, new SimpleHTTPSession.Factory());
+		server.setRequestTimeoutDuration(20000);
 		server.setBodyParserFactory(new StringBodyParserFactory());
 
 		//once started the server is accessible on
