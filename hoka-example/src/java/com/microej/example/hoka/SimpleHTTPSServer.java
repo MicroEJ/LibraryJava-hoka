@@ -35,6 +35,7 @@ public class SimpleHTTPSServer {
 		// create the http server with our custom http session
 		HTTPServer server = new HTTPServer(PORT, 10, 1, new SimpleHTTPSession.Factory(),
 				sslContext.getServerSocketFactory());
+		// Set a timeout to close automatically pending HTTP inactive connections
 		server.setRequestTimeoutDuration(20000);
 		server.setBodyParserFactory(new StringBodyParserFactory());
 

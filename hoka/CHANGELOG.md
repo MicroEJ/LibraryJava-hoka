@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-  - Add timeout mechanism.
+  - Add timeout mechanism to cleanup HTTP inactive connections.
   - Add HTTP error 401.
 
 ## 6.0.0 - 2019-10-31
