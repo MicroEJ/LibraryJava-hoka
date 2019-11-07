@@ -36,6 +36,12 @@ public final class HTTPConstants {
 	public static final String HTTP_STATUS_NOTMODIFIED = "304 Not Modified"; //$NON-NLS-1$
 	/**
 	 * <p>
+	 * HTTP code 401: the requested resources require valid authentication credentials.
+	 * </p>
+	 */
+	public static final String HTTP_STATUS_UNAUTHORIZED = "401 Unauthorized"; //$NON-NLS-1$
+	/**
+	 * <p>
 	 * HTTP code 403: the client doesn't have the permission to access the requested URL.
 	 * </p>
 	 */
@@ -58,6 +64,12 @@ public final class HTTPConstants {
 	 * </p>
 	 */
 	public static final String HTTP_STATUS_NOTACCEPTABLE = "406 Not Acceptable"; //$NON-NLS-1$
+	/**
+	 * <p>
+	 * HTTP code 408: the client initiated the connection but didn't send the request (idle connection).
+	 * </p>
+	 */
+	public static final String HTTP_STATUS_REQUESTTIMEOUT = "408 Request Timeout"; //$NON-NLS-1$
 	/**
 	 * <p>
 	 * HTTP code 400: the request is not valid.

@@ -10,6 +10,7 @@ package ej.hoka.http;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 
 import javax.net.ServerSocketFactory;
 
@@ -109,6 +110,11 @@ public class HTTPServer extends TCPServer {
 	 * Number of jobs per sessions.
 	 */
 	private final int sessionJobsCount;
+
+	/**
+	 * The request timeout duration in ms, default = 0 (infinite).
+	 */
+	protected int requestTimeoutDuration;
 
 	/**
 	 * The keep-alive duration in ms (not used).
@@ -271,6 +277,7 @@ public class HTTPServer extends TCPServer {
 		this.httpSessionFactory = httpSessionFactory;
 		this.maxOpenedConnections = maxSimultaneousConnection;
 		this.sessionJobsCount = jobCountBySession;
+		this.requestTimeoutDuration = 0; // No timeout
 		this.keepAliveDuration = keepAliveDuration; // TODO handling persistent
 		// connection
 
@@ -303,6 +310,12 @@ public class HTTPServer extends TCPServer {
 			if (nextPtr == this.lastReadPtr) {
 				tooManyOpenConnections(connection);
 				return;
+			}
+
+			try {
+				connection.setSoTimeout(this.requestTimeoutDuration);
+			} catch (SocketException e) {
+				e.printStackTrace();
 			}
 
 			this.streamConnections[this.lastAddedPtr = nextPtr] = connection;
@@ -554,6 +567,25 @@ public class HTTPServer extends TCPServer {
 	 */
 	public void setBodyParserFactory(BodyParserFactory bodyParserFactory) {
 		this.bodyParserFactory = bodyParserFactory;
+	}
+
+	/**
+	 * Gets the requestTimeoutDuration.
+	 *
+	 * @return the requestTimeoutDuration in ms.
+	 */
+	public int getRequestTimeoutDuration() {
+		return this.requestTimeoutDuration;
+	}
+
+	/**
+	 * Sets the requestTimeoutDuration.
+	 *
+	 * @param requestTimeoutDuration
+	 *            the requestTimeoutDuration to set in ms.
+	 */
+	public void setRequestTimeoutDuration(int requestTimeoutDuration) {
+		this.requestTimeoutDuration = requestTimeoutDuration;
 	}
 
 }

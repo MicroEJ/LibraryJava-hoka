@@ -42,6 +42,11 @@ public class HTTPResponse {
 	public static final HTTPResponse RESPONSE_BAD_REQUEST = createResponseFromStatus(
 			HTTPConstants.HTTP_STATUS_BADREQUEST);
 	/**
+	 * An empty HTTP response with status code 401.
+	 */
+	public static final HTTPResponse RESPONSE_UNAUTHORIZED = createResponseFromStatus(
+			HTTPConstants.HTTP_STATUS_UNAUTHORIZED);
+	/**
 	 * An empty HTTP response with status code 403.
 	 */
 	public static final HTTPResponse RESPONSE_FORBIDDEN = createResponseFromStatus(HTTPConstants.HTTP_STATUS_FORBIDDEN);
