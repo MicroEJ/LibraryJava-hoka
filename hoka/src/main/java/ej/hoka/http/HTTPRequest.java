@@ -14,6 +14,10 @@ import java.util.Map;
 
 import ej.hoka.http.body.BodyParser;
 import ej.hoka.http.body.BodyParserFactory;
+import ej.hoka.http.encoding.HTTPEncodingRegister;
+import ej.hoka.http.encoding.IHTTPEncodingHandler;
+import ej.hoka.http.encoding.IHTTPTransferCodingHandler;
+import ej.hoka.http.encoding.UnsupportedHTTPEncodingException;
 import ej.hoka.http.support.MIMEUtils;
 
 /**

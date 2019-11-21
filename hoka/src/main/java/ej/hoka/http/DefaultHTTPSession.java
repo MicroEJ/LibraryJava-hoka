@@ -9,6 +9,7 @@ package ej.hoka.http;
 
 import java.io.InputStream;
 
+import ej.hoka.http.requesthandler.RequestHandler;
 import ej.hoka.http.support.MIMEUtils;
 
 /**

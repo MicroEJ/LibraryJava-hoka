@@ -5,7 +5,7 @@
  * This library is provided in source code for use, modification and test, subject to license terms.
  * Any modification of the source code will break MicroEJ Corp. warranties on the whole library.
  */
-package ej.hoka.http;
+package ej.hoka.http.encoding;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -30,7 +30,7 @@ public class HTTPEncodingRegister {
 	 * @return Return the {@link IHTTPEncodingHandler} corresponding to identity transfer coding (i.e. no transfer
 	 *         coding)
 	 */
-	protected IHTTPTransferCodingHandler getIdentityTransferCodingHandler() {
+	public IHTTPTransferCodingHandler getIdentityTransferCodingHandler() {
 		return IdentityTransferCodingHandler.getInstance();
 	}
 
@@ -39,7 +39,7 @@ public class HTTPEncodingRegister {
 	 *
 	 * @return Return the {@link IHTTPEncodingHandler} corresponding to chunked transfer coding
 	 */
-	protected IHTTPTransferCodingHandler getChunkedTransferCodingHandler() {
+	public IHTTPTransferCodingHandler getChunkedTransferCodingHandler() {
 		return ChunkedTransferCodingHandler.getInstance();
 	}
 
@@ -50,7 +50,7 @@ public class HTTPEncodingRegister {
 	 *            case insensitive (See RFC2616, 3.5)
 	 * @return null if no handler has been registered to match this encoding
 	 */
-	protected IHTTPEncodingHandler getEncodingHandler(String encoding) {
+	public IHTTPEncodingHandler getEncodingHandler(String encoding) {
 		if (encoding == null) {
 			return IdentityEncodingHandler.getInstance();
 		}
@@ -70,7 +70,7 @@ public class HTTPEncodingRegister {
 	 *            case insensitive (See RFC2616, 3.5)
 	 * @return null if no handler has been registered to match this encoding
 	 */
-	protected IHTTPTransferCodingHandler getTransferCodingHandler(String encoding) {
+	public IHTTPTransferCodingHandler getTransferCodingHandler(String encoding) {
 		if (encoding == null) {
 			return IdentityTransferCodingHandler.getInstance();
 		}

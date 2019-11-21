@@ -6,6 +6,6 @@
  * Any modification of the source code will break MicroEJ Corp. warranties on the whole library.
  */
 /**
- * Base HTTP handling classes.
+ * Classes used to manage encoding and transfer-coding of HTTP streams.
  */
 package ej.hoka.http;
