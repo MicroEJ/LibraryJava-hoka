@@ -10,7 +10,6 @@ package com.microej.example.hoka;
 import javax.net.ssl.SSLContext;
 
 import ej.hoka.http.HTTPServer;
-import ej.hoka.http.body.StringBodyParserFactory;
 import ej.net.util.ssl.SslContextBuilder;
 
 /*
@@ -33,11 +32,7 @@ public class SimpleHTTPSServer {
 		SSLContext sslContext = sslContextBuilder.build("123456"); // password
 
 		// create the http server with our custom http session
-		HTTPServer server = new HTTPServer(PORT, 10, 1, new SimpleHTTPSession.Factory(),
-				sslContext.getServerSocketFactory());
-		// Set a timeout to close automatically pending HTTP inactive connections
-		server.setRequestTimeoutDuration(20000);
-		server.setBodyParserFactory(new StringBodyParserFactory());
+		HTTPServer server = new HTTPServer(PORT, 10, 1, sslContext.getServerSocketFactory());
 
 		// Once started the server is accessible on https://localhost:8443
 		server.start();

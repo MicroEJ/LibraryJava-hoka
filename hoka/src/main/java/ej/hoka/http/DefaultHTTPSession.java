@@ -28,7 +28,7 @@ import ej.hoka.http.support.MIMEUtils;
  * {@link Class#getResourceAsStream(String)}).
  * </p>
  */
-public class DefaultHTTPSession extends HTTPSession {
+public class DefaultHTTPSession extends HTTPSession implements RequestHandler {
 
 	/**
 	 * <p>
@@ -85,6 +85,26 @@ public class DefaultHTTPSession extends HTTPSession {
 		public HTTPSession newHTTPSession(HTTPServer server) {
 			return new DefaultHTTPSession(server);
 		}
+	}
+
+	@Override
+	public HTTPResponse process(HTTPRequest request) {
+		String uri = request.getURI();
+
+		InputStream resourceStream = getClass().getResourceAsStream(uri);
+		if (resourceStream == null) {
+			return null;
+		}
+
+		HTTPResponse response = new HTTPResponse(resourceStream);
+
+		// Set content type
+		response.setMimeType(MIMEUtils.getMIMEType(uri));
+
+		// Set HTTP status
+		response.setStatus(HTTPConstants.HTTP_STATUS_OK); // Status is "200 OK"
+
+		return response;
 	}
 
 }

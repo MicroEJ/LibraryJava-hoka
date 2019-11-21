@@ -130,6 +130,8 @@ public class HTTPServer extends TCPServer {
 
 	private final HTTPEncodingRegister encodingRegister;
 
+	private final RequestHandlerComposite rootRequestHandler;
+
 	/**
 	 * Array of {@link Thread}s for the session jobs.
 	 */
@@ -253,6 +255,19 @@ public class HTTPServer extends TCPServer {
 		this.keepAliveDuration = keepAliveDuration;
 
 		this.encodingRegister = encodingRegister;
+
+		this.rootRequestHandler = new RequestHandlerComposite() {
+			@Override
+			public HTTPResponse process(HTTPRequest request) {
+				HTTPResponse response = super.process(request);
+				if (response == null) {
+					response = new HTTPResponse();
+					response.setStatus(HTTPConstants.HTTP_STATUS_NOTFOUND);
+				}
+				return response;
+			}
+		};
+		this.rootRequestHandler.addChild(new IfNoneMatchRequestHandler());
 	}
 
 	/**
@@ -295,6 +310,10 @@ public class HTTPServer extends TCPServer {
 				// nothing to do on interrupted exception
 			}
 		}
+	}
+
+	public void addRequestHandler(RequestHandler requestHandler) {
+		this.rootRequestHandler.addChild(requestHandler);
 	}
 
 	/**
@@ -362,7 +381,7 @@ public class HTTPServer extends TCPServer {
 
 								sendResponse(response, encodingHandler, connection);
 							} catch (Exception e) {
-								sendError(e.getMessage(), connection);
+								sendError("", connection);
 							}
 
 							// } // TODO handling persistent connection
@@ -534,8 +553,8 @@ public class HTTPServer extends TCPServer {
 	 *            the HTTP status
 	 * @see #sendError(String, String)
 	 */
-	protected void sendError(String status, Socket streamConnection) {
-		sendError(status, null, streamConnection);
+	protected void sendError(String status, Socket connection) {
+		sendError(status, null, connection);
 	}
 
 	/*
@@ -552,9 +571,10 @@ public class HTTPServer extends TCPServer {
 	 *            the error status
 	 * @see #sendResponse(HTTPResponse, IHTTPEncodingHandler)
 	 */
-	protected void sendError(String status, String msg, Socket streamConnection) {
-		Messages.LOGGER.log(Level.INFO, Messages.CATEGORY, Messages.HTTP_ERROR, status, msg);
-		sendResponse(createErrorResponse(status, msg), (IHTTPEncodingHandler) null, streamConnection);
+	protected void sendError(String status, String msg, Socket connection) {
+		Messages.LOGGER.log(Level.INFO, Messages.CATEGORY, Messages.HTTP_ERROR, Integer.valueOf(connection.hashCode()),
+				connection.getInetAddress().toString(), status, msg);
+		sendResponse(createErrorResponse(status, msg), (IHTTPEncodingHandler) null, connection);
 	}
 
 	/**
@@ -566,12 +586,12 @@ public class HTTPServer extends TCPServer {
 	 *            the encoding handler to be used to encode the response. If <code>null</code> the
 	 *            {@link IdentityEncodingHandler} is used to encode the response.
 	 */
-	protected void sendResponse(HTTPResponse response, IHTTPEncodingHandler encodingHandler, Socket streamConnection) {
+	protected void sendResponse(HTTPResponse response, IHTTPEncodingHandler encodingHandler, Socket connection) {
 		try {
 			if (encodingHandler != null) {
 				response.addHeaderField(HTTPConstants.FIELD_CONTENT_ENCODING, encodingHandler.getId());
 			}
-			try (OutputStream out = streamConnection.getOutputStream()) {
+			try (OutputStream out = connection.getOutputStream()) {
 				writeResponse(response, encodingHandler, out);
 			}
 		} catch (IOException e) {

@@ -10,7 +10,6 @@ package com.microej.example.hoka;
 import java.io.IOException;
 
 import ej.hoka.http.HTTPServer;
-import ej.hoka.http.body.StringBodyParserFactory;
 
 /*
  * This simple server exposes resources from the src/resources folder
@@ -22,10 +21,7 @@ public class SimpleServer {
 
 	public static void main(String[] args) throws IOException {
 		//create the http server with our custom http session
-		HTTPServer server = new HTTPServer(PORT, 10, 1, new SimpleHTTPSession.Factory());
-		// Set a timeout to close automatically pending HTTP inactive connections
-		server.setRequestTimeoutDuration(20000);
-		server.setBodyParserFactory(new StringBodyParserFactory());
+		HTTPServer server = new HTTPServer(PORT, 10, 1);
 
 		//once started the server is accessible on
 		// http://localhost:8080

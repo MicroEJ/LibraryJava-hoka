@@ -244,7 +244,8 @@ public abstract class TCPServer {
 			@Override
 			public void run() {
 				while (true) {
-					try (Socket connection = TCPServer.this.serverSocket.accept()) {
+					try {
+						Socket connection = TCPServer.this.serverSocket.accept();
 						addConnection(connection);
 					} catch (IOException e) {
 						if (isStopped()) {
