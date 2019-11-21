@@ -10,14 +10,10 @@ package ej.hoka.http;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketException;
 
 import javax.net.ServerSocketFactory;
 
-import ej.hoka.http.body.BodyParserFactory;
-import ej.hoka.log.Messages;
 import ej.hoka.tcp.TCPServer;
-import ej.util.message.Level;
 
 /**
  * <p>
@@ -87,34 +83,9 @@ public class HTTPServer extends TCPServer {
 	private static final long DEFAULT_KEEP_ALIVE_DURATION = 60000; // 60s in
 
 	/**
-	 * Non growable circular queue of opened connections.
-	 */
-	private Socket[] streamConnections;
-
-	/**
-	 * Pointer to the last added item.
-	 */
-	private int lastAddedPtr; // initialized to 0
-
-	/**
-	 * Pointer for the last read item.
-	 */
-	private int lastReadPtr; // initialized to 0
-
-	/**
-	 * Maximum number of opened connections.
-	 */
-	private final int maxOpenedConnections;
-
-	/**
 	 * Number of jobs per sessions.
 	 */
 	private final int sessionJobsCount;
-
-	/**
-	 * The request timeout duration in ms, default = 0 (infinite).
-	 */
-	protected int requestTimeoutDuration;
 
 	/**
 	 * The keep-alive duration in ms (not used).
@@ -135,42 +106,6 @@ public class HTTPServer extends TCPServer {
 	 * Array of {@link IHTTPTransferCodingHandler}s.
 	 */
 	private IHTTPTransferCodingHandler[] transferCodingHandlers;
-
-	/**
-	 * The HTTP session factory.
-	 */
-	private final HTTPSession.Factory httpSessionFactory;
-
-	/**
-	 * The body parser factory.
-	 */
-	private BodyParserFactory bodyParserFactory;
-
-	/**
-	 * <p>
-	 * Creates a {@link HTTPServer} on the given port with the {@link DefaultHTTPSession}.
-	 * </p>
-	 * <p>
-	 * The default encoding to be used is the identity encoding. Further encodings may be registered using
-	 * {@link #registerEncodingHandler(IHTTPEncodingHandler)}.
-	 * </p>
-	 * <p>
-	 * Server is not started until {@link #start()} is called.
-	 * </p>
-	 *
-	 * @param port
-	 *            the port.
-	 * @param maxSimultaneousConnection
-	 *            the maximal number of simultaneously opened connections.
-	 * @param jobCountBySession
-	 *            the number of parallel jobs to process by opened sessions. if <code>jobCountBySession</code> == 1, the
-	 *            jobs are processed sequentially.
-	 * @throws IOException
-	 *             if server cannot be bind to given port.
-	 */
-	public HTTPServer(int port, int maxSimultaneousConnection, int jobCountBySession) throws IOException {
-		this(port, maxSimultaneousConnection, jobCountBySession, new DefaultHTTPSession.Factory());
-	}
 
 	/**
 	 * <p>
@@ -196,9 +131,8 @@ public class HTTPServer extends TCPServer {
 	 * @throws IOException
 	 *             if server cannot be bind to given port.
 	 */
-	public HTTPServer(int port, int maxSimultaneousConnection, int jobCountBySession,
-			HTTPSession.Factory httpSessionFactory) throws IOException {
-		this(port, maxSimultaneousConnection, jobCountBySession, httpSessionFactory, ServerSocketFactory.getDefault());
+	public HTTPServer(int port, int maxSimultaneousConnection, int jobCountBySession) throws IOException {
+		this(port, maxSimultaneousConnection, jobCountBySession, ServerSocketFactory.getDefault());
 	}
 
 	/**
@@ -228,9 +162,8 @@ public class HTTPServer extends TCPServer {
 	 *             if server cannot be bind to given port.
 	 */
 	public HTTPServer(int port, int maxSimultaneousConnection, int jobCountBySession,
-			HTTPSession.Factory httpSessionFactory, ServerSocketFactory serverSocketFactory) throws IOException {
-		this(port, maxSimultaneousConnection, jobCountBySession, httpSessionFactory, serverSocketFactory,
-				DEFAULT_KEEP_ALIVE_DURATION);
+			ServerSocketFactory serverSocketFactory) throws IOException {
+		this(port, maxSimultaneousConnection, jobCountBySession, serverSocketFactory, DEFAULT_KEEP_ALIVE_DURATION, 0);
 	}
 
 	/**
@@ -263,23 +196,19 @@ public class HTTPServer extends TCPServer {
 	 *             </ul>
 	 */
 	private HTTPServer(int port, int maxSimultaneousConnection, int jobCountBySession,
-			HTTPSession.Factory httpSessionFactory, ServerSocketFactory serverSocketFactory, long keepAliveDuration)
+			ServerSocketFactory serverSocketFactory, long keepAliveDuration, int requestTimeoutDuration)
 			throws IOException {
-		super(serverSocketFactory.createServerSocket(port));
+		super(port, maxSimultaneousConnection, requestTimeoutDuration, serverSocketFactory);
 
-		if ((maxSimultaneousConnection <= 0) || (jobCountBySession <= 0) || (keepAliveDuration <= 0)) {
+		if ((jobCountBySession <= 0) || (keepAliveDuration <= 0)) {
 			throw new IllegalArgumentException();
 		}
 
 		// FIXME for memory usage only
 		// r = Runtime.getRuntime();
 
-		this.httpSessionFactory = httpSessionFactory;
-		this.maxOpenedConnections = maxSimultaneousConnection;
 		this.sessionJobsCount = jobCountBySession;
-		this.requestTimeoutDuration = 0; // No timeout
-		this.keepAliveDuration = keepAliveDuration; // TODO handling persistent
-		// connection
+		this.keepAliveDuration = keepAliveDuration;
 
 		// connect well known encoding handlers
 		this.encodingHandlers = new IHTTPEncodingHandler[] { IdentityEncodingHandler.getInstance() };
@@ -289,43 +218,45 @@ public class HTTPServer extends TCPServer {
 	}
 
 	/**
-	 * Add a connection to the list of current connections.
+	 * <p>
+	 * Start the {@link HTTPServer} (in a dedicated thread): start listening for connections and start jobs to process
+	 * opened connections.<br>
+	 * Multiple start is not allowed.
+	 * </p>
 	 *
-	 * @param connection
-	 *            {@link Socket} to add
+	 * @throws IOException
+	 *             if an error occurs during the creation of the socket.
 	 */
 	@Override
-	protected void addConnection(Socket connection) {
-		// FIXME for memory usage only
-		// r.gc();
-		// System.out.println((new Date()).getTime()+", "+(r.totalMemory() -
-		// r.freeMemory())+", start of addConnection");
+	public void start() throws IOException {
+		super.start();
 
-		synchronized (this.streamConnections) {
-			int nextPtr = this.lastAddedPtr + 1;
-			if (nextPtr == this.streamConnections.length) {
-				nextPtr = 0;
-			}
+		this.jobs = new Thread[this.sessionJobsCount];
 
-			if (nextPtr == this.lastReadPtr) {
-				tooManyOpenConnections(connection);
-				return;
-			}
-
-			try {
-				connection.setSoTimeout(this.requestTimeoutDuration);
-			} catch (SocketException e) {
-				e.printStackTrace();
-			}
-
-			this.streamConnections[this.lastAddedPtr = nextPtr] = connection;
-			this.streamConnections.notify();
+		for (int i = this.sessionJobsCount; --i >= 0;) {
+			Thread job = new Thread(newJob(), "HTTP-JOB-" + i); //$NON-NLS-1$
+			this.jobs[i] = job;
+			job.start();
 		}
-		Messages.LOGGER.log(Level.INFO, Messages.CATEGORY, Messages.NEW_CONNECTION);
-		// FIXME for memory usage only
-		// r.gc();
-		// System.out.println((new Date()).getTime()+", "+(r.totalMemory() -
-		// r.freeMemory())+", end of addConnection");
+	}
+
+	/**
+	 * <p>
+	 * Stops the {@link HTTPServer}. Stops listening for connections. This method blocks until all session jobs are
+	 * stopped.
+	 * </p>
+	 */
+	@Override
+	public void stop() {
+		super.stop();
+
+		for (int i = this.jobs.length; --i >= 0;) {
+			try {
+				this.jobs[i].join();
+			} catch (InterruptedException e) {
+				// nothing to do on interrupted exception
+			}
+		}
 	}
 
 	/**
@@ -368,42 +299,6 @@ public class HTTPServer extends TCPServer {
 		return IdentityTransferCodingHandler.getInstance();
 	}
 
-	// milliseconds
-	// TODO
-	// handling
-	// persistent
-	// connection
-
-	/**
-	 * Called by HTTPSession. Get a next {@link Socket} to process. Block until a new connection is available or server
-	 * is stopped.
-	 *
-	 * @return null if server is stopped
-	 */
-	protected Socket getNextStreamConnection() {
-		synchronized (this.streamConnections) {
-			while (this.lastAddedPtr == this.lastReadPtr) {
-				if (isStopped()) {
-					return null;
-				}
-				try {
-					this.streamConnections.wait();
-				} catch (InterruptedException e) {
-					// nothing to do on interrupted exception
-				}
-			}
-
-			int nextPtr = this.lastReadPtr + 1;
-			if (nextPtr == this.streamConnections.length) {
-				nextPtr = 0;
-			}
-			Socket connection = this.streamConnections[this.lastReadPtr = nextPtr];
-			// allow GC
-			this.streamConnections[nextPtr] = null;
-			return connection;
-		}
-	}
-
 	/**
 	 * Return the {@link IHTTPEncodingHandler} corresponding to the given encoding.
 	 *
@@ -430,7 +325,7 @@ public class HTTPServer extends TCPServer {
 	 * Registers a new HTTP content encoding handler.
 	 * </p>
 	 * <p>
-	 * Should be called before {@link #start()}, otherwise a {@link RuntimeException} is thrown.
+	 * Should be called before {@link #start()}, otherwise a {@link IllegalStateException} is thrown.
 	 * </p>
 	 *
 	 * @param handler
@@ -455,7 +350,7 @@ public class HTTPServer extends TCPServer {
 	 * Registers a new HTTP transfer coding handler.
 	 * </p>
 	 * <p>
-	 * Should be called before {@link #start()}, otherwise a {@link RuntimeException} is raised.
+	 * Should be called before {@link #start()}, otherwise a {@link IllegalStateException} is raised.
 	 * </p>
 	 *
 	 * @param handler
@@ -463,7 +358,7 @@ public class HTTPServer extends TCPServer {
 	 */
 	public void registerTransferCodingHandler(IHTTPTransferCodingHandler handler) {
 		if (!isStopped()) {
-			throw new RuntimeException();
+			throw new IllegalStateException();
 		}
 		if (this.transferCodingHandlers == null) {
 			this.transferCodingHandlers = new IHTTPTransferCodingHandler[] { handler };
@@ -476,116 +371,24 @@ public class HTTPServer extends TCPServer {
 	}
 
 	/**
-	 * <p>
-	 * Start the {@link HTTPServer} (in a dedicated thread): start listening for connections and start session jobs.<br>
-	 * Multiple start is not allowed.
-	 * </p>
+	 * Returns a new job process as {@link Runnable}.
+	 *
+	 * @return a new job process as {@link Runnable}
 	 */
-	@Override
-	public void start() {
-		this.streamConnections = new Socket[this.maxOpenedConnections + 1]; // always
-		// an empty index in order to distinguish between empty or full queue
-		super.start();
-		// start jobs
-
-		// FIXME for mem test only
-		// r = Runtime.getRuntime();
-
-		this.jobs = new Thread[this.sessionJobsCount];
-		// r.gc();
-		// System.out.println((new Date()).getTime()+", "+(r.totalMemory() -
-		// r.freeMemory())+", beginning of server.start()" );
-		for (int i = this.sessionJobsCount; --i >= 0;) {
-			HTTPSession session = this.httpSessionFactory.newHTTPSession(this);
-			session.setBodyParserFactory(this.bodyParserFactory);
-			Thread job = new Thread(session.getRunnable(), "HTTP-JOB-" + i); //$NON-NLS-1$
-			// FIXME for mem test only
-			// r.gc();
-			// System.out.println((new Date()).getTime()+", "+(r.totalMemory() -
-			// r.freeMemory())+", job no"+(nbSessionJobs-i));
-
-			this.jobs[i] = job;
-			job.start();
-		}
-		Messages.LOGGER.log(Level.INFO, Messages.CATEGORY, Messages.SERVER_STARTED);
-	}
-
-	/**
-	 * <p>
-	 * Stops the {@link HTTPServer}. Stops listening for connections. This method blocks until all session jobs are
-	 * stopped.
-	 * </p>
-	 */
-	@Override
-	public void stop() {
-		super.stop();
-		// awake all waiting threads
-		synchronized (this.streamConnections) {
-			this.streamConnections.notifyAll();
-		}
-
-		for (int i = this.jobs.length; --i >= 0;) {
-			try {
-				this.jobs[i].join();
-			} catch (InterruptedException e) {
-				// nothing to do on interrupted exception
+	private Runnable newJob() {
+		return new Runnable() {
+			@Override
+			public void run() {
+				while (true) {
+					try (Socket connection = HTTPServer.super.getNextStreamConnection()) {
+						// TODO Process request with request handlers
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
 			}
-		}
-		Messages.LOGGER.log(Level.INFO, Messages.CATEGORY, Messages.SERVER_STOPPED);
-	}
-
-	/**
-	 * Called when a connection cannot be added to the buffer. By default, an event is logged and connection is closed.
-	 *
-	 * @param connection
-	 *            {@link Socket} that can not be added
-	 */
-	protected void tooManyOpenConnections(Socket connection) {
-		Messages.LOGGER.log(Level.SEVERE, Messages.CATEGORY, Messages.TOO_MANY_CONNECTION,
-				connection.getInetAddress().toString(), Integer.valueOf(this.maxOpenedConnections));
-		try {
-			connection.close();
-		} catch (IOException e) {
-			Messages.LOGGER.log(Level.SEVERE, Messages.CATEGORY, Messages.ERROR_UNKNOWN, e);
-		}
-	}
-
-	/**
-	 * Gets the bodyParserFactory.
-	 *
-	 * @return the bodyParserFactory.
-	 */
-	public BodyParserFactory getBodyParserFactory() {
-		return this.bodyParserFactory;
-	}
-
-	/**
-	 * Sets the bodyParserFactory.
-	 *
-	 * @param bodyParserFactory
-	 *            the bodyParserFactory to set.
-	 */
-	public void setBodyParserFactory(BodyParserFactory bodyParserFactory) {
-		this.bodyParserFactory = bodyParserFactory;
-	}
-
-	/**
-	 * Gets the requestTimeoutDuration.
-	 *
-	 * @return the requestTimeoutDuration in ms.
-	 */
-	public int getRequestTimeoutDuration() {
-		return this.requestTimeoutDuration;
-	}
-
-	/**
-	 * Sets the requestTimeoutDuration.
-	 *
-	 * @param requestTimeoutDuration
-	 *            the requestTimeoutDuration to set in ms.
-	 */
-	public void setRequestTimeoutDuration(int requestTimeoutDuration) {
-		this.requestTimeoutDuration = requestTimeoutDuration;
+		};
 	}
 
 }
