@@ -122,10 +122,7 @@ public class HTTPRequest {
 	 */
 	private final InputStream stream;
 
-	/**
-	 * The {@link HTTPServer} instance.
-	 */
-	private final HTTPServer server;
+	private final HTTPEncodingRegister encodingRegister;
 
 	/**
 	 * Parsed request parameters.
@@ -178,9 +175,9 @@ public class HTTPRequest {
 	 * @throws UnsupportedHTTPEncodingException
 	 *             when an unsupported HTTP encoding encountered
 	 */
-	protected HTTPRequest(HTTPServer server, InputStream inputStream, BodyParserFactory bodyParserFactory)
+	protected HTTPRequest(InputStream inputStream, HTTPEncodingRegister encodingRegister)
 			throws IOException, IllegalArgumentException {
-		this.server = server;
+		this.encodingRegister = encodingRegister;
 
 		this.parameters = new HashMap<String, String>(10); // reasonable size for HTTP
 		// Parameters (50 in our default HashMap implementation)
@@ -213,28 +210,6 @@ public class HTTPRequest {
 				throw new IllegalArgumentException(MALFORMED_HTTP_REQUEST);
 			}
 		}
-
-		if (bodyParserFactory != null) {
-			this.bodyParser = bodyParserFactory.newBodyParser(this);
-		}
-	}
-
-	/**
-	 * Constructs a new instance of HTTPRequest.
-	 *
-	 * @param server
-	 *            the {@link HTTPServer} instance
-	 * @param inputStream
-	 *            the input stream for the request
-	 * @throws IOException
-	 *             if connection is lost during processing the request
-	 * @throws IllegalArgumentException
-	 *             if parsing the request header or body failed
-	 * @throws UnsupportedHTTPEncodingException
-	 *             when an unsupported HTTP encoding encountered
-	 */
-	protected HTTPRequest(HTTPServer server, InputStream inputStream) throws IOException, IllegalArgumentException {
-		this(server, inputStream, null);
 	}
 
 	/**
@@ -526,10 +501,10 @@ public class HTTPRequest {
 	 *             when no suitable {@link IHTTPEncodingHandler} is found
 	 */
 	private InputStream getContentEncodingStream(InputStream in) throws IOException {
-		HTTPServer server = this.server;
 		// 1) transfer encoding
 		String transferEncoding = getHeaderField(HTTPConstants.FIELD_TRANSFER_ENCODING);
-		IHTTPTransferCodingHandler transferCodingHandler = server.getTransferCodingHandler(transferEncoding);
+		IHTTPTransferCodingHandler transferCodingHandler = this.encodingRegister
+				.getTransferCodingHandler(transferEncoding);
 		if (transferCodingHandler == null) {
 			// unable to manage transfer encoding
 			throw new UnsupportedHTTPEncodingException(HTTPConstants.FIELD_TRANSFER_ENCODING, transferEncoding);
@@ -539,7 +514,7 @@ public class HTTPRequest {
 		// 2) content encoding
 		String contentEncoding = getHeaderField(HTTPConstants.FIELD_CONTENT_ENCODING);
 		if (contentEncoding != null) {
-			IHTTPEncodingHandler handler = server.getEncodingHandler(contentEncoding);
+			IHTTPEncodingHandler handler = this.encodingRegister.getEncodingHandler(contentEncoding);
 			if (handler == null) {
 				throw new UnsupportedHTTPEncodingException(HTTPConstants.FIELD_CONTENT_ENCODING, contentEncoding);
 			}
@@ -908,7 +883,7 @@ public class HTTPRequest {
 
 	/**
 	 * Request the body to be parsed.
-	 * 
+	 *
 	 * @throws IOException
 	 *             if an {@link IOException} occurs durring parsing.
 	 */

@@ -90,22 +90,14 @@ public class HTTPServer extends TCPServer {
 	/**
 	 * The keep-alive duration in ms (not used).
 	 */
-	protected final long keepAliveDuration;
+	private final long keepAliveDuration;
+
+	private final HTTPEncodingRegister encodingRegister;
 
 	/**
 	 * Array of {@link Thread}s for the session jobs.
 	 */
 	private Thread[] jobs;
-
-	/**
-	 * Array of {@link IHTTPEncodingHandler}s.
-	 */
-	private IHTTPEncodingHandler[] encodingHandlers;
-
-	/**
-	 * Array of {@link IHTTPTransferCodingHandler}s.
-	 */
-	private IHTTPTransferCodingHandler[] transferCodingHandlers;
 
 	/**
 	 * <p>
@@ -131,7 +123,7 @@ public class HTTPServer extends TCPServer {
 	 * @throws IOException
 	 *             if server cannot be bind to given port.
 	 */
-	public HTTPServer(int port, int maxSimultaneousConnection, int jobCountBySession) throws IOException {
+	public HTTPServer(int port, int maxSimultaneousConnection, int jobCountBySession) {
 		this(port, maxSimultaneousConnection, jobCountBySession, ServerSocketFactory.getDefault());
 	}
 
@@ -162,8 +154,22 @@ public class HTTPServer extends TCPServer {
 	 *             if server cannot be bind to given port.
 	 */
 	public HTTPServer(int port, int maxSimultaneousConnection, int jobCountBySession,
-			ServerSocketFactory serverSocketFactory) throws IOException {
-		this(port, maxSimultaneousConnection, jobCountBySession, serverSocketFactory, DEFAULT_KEEP_ALIVE_DURATION, 0);
+			ServerSocketFactory serverSocketFactory) {
+		this(port, maxSimultaneousConnection, jobCountBySession, serverSocketFactory, new HTTPEncodingRegister());
+	}
+
+	/**
+	 * @param port
+	 * @param maxSimultaneousConnection
+	 * @param jobCountBySession
+	 * @param serverSocketFactory
+	 * @param encodingRegister
+	 * @throws IOException
+	 */
+	public HTTPServer(int port, int maxSimultaneousConnection, int jobCountBySession,
+			ServerSocketFactory serverSocketFactory, HTTPEncodingRegister encodingRegister) {
+		this(port, maxSimultaneousConnection, jobCountBySession, serverSocketFactory, encodingRegister,
+				DEFAULT_KEEP_ALIVE_DURATION, 0);
 	}
 
 	/**
@@ -196,8 +202,8 @@ public class HTTPServer extends TCPServer {
 	 *             </ul>
 	 */
 	private HTTPServer(int port, int maxSimultaneousConnection, int jobCountBySession,
-			ServerSocketFactory serverSocketFactory, long keepAliveDuration, int requestTimeoutDuration)
-			throws IOException {
+			ServerSocketFactory serverSocketFactory, HTTPEncodingRegister encodingRegister, long keepAliveDuration,
+			int requestTimeoutDuration) {
 		super(port, maxSimultaneousConnection, requestTimeoutDuration, serverSocketFactory);
 
 		if ((jobCountBySession <= 0) || (keepAliveDuration <= 0)) {
@@ -210,11 +216,7 @@ public class HTTPServer extends TCPServer {
 		this.sessionJobsCount = jobCountBySession;
 		this.keepAliveDuration = keepAliveDuration;
 
-		// connect well known encoding handlers
-		this.encodingHandlers = new IHTTPEncodingHandler[] { IdentityEncodingHandler.getInstance() };
-
-		this.transferCodingHandlers = new IHTTPTransferCodingHandler[] { IdentityTransferCodingHandler.getInstance(),
-				ChunkedTransferCodingHandler.getInstance() };
+		this.encodingRegister = encodingRegister;
 	}
 
 	/**
@@ -256,117 +258,6 @@ public class HTTPServer extends TCPServer {
 			} catch (InterruptedException e) {
 				// nothing to do on interrupted exception
 			}
-		}
-	}
-
-	/**
-	 * Return the {@link IHTTPEncodingHandler} corresponding to chunked transfer coding.
-	 *
-	 * @return Return the {@link IHTTPEncodingHandler} corresponding to chunked transfer coding
-	 */
-	protected IHTTPTransferCodingHandler getChunkedTransferCodingHandler() {
-		return ChunkedTransferCodingHandler.getInstance();
-	}
-
-	/**
-	 * Return the {@link IHTTPEncodingHandler} corresponding to the given encoding.
-	 *
-	 * @param encoding
-	 *            case insensitive (See RFC2616, 3.5)
-	 * @return null if no handler has been registered to match this encoding
-	 */
-	protected IHTTPEncodingHandler getEncodingHandler(String encoding) {
-		if (encoding == null) {
-			return IdentityEncodingHandler.getInstance();
-		}
-		IHTTPEncodingHandler[] encodingHandlers = this.encodingHandlers;
-		for (int i = encodingHandlers.length; --i >= 0;) {
-			IHTTPEncodingHandler handler = encodingHandlers[i];
-			if (encoding.equalsIgnoreCase(handler.getId())) {
-				return handler;
-			}
-		}
-		return null;
-	}
-
-	/**
-	 * Return the {@link IHTTPEncodingHandler} corresponding to identity transfer coding (i.e. no transfer coding)
-	 *
-	 * @return Return the {@link IHTTPEncodingHandler} corresponding to identity transfer coding (i.e. no transfer
-	 *         coding)
-	 */
-	protected IHTTPTransferCodingHandler getIdentityTransferCodingHandler() {
-		return IdentityTransferCodingHandler.getInstance();
-	}
-
-	/**
-	 * Return the {@link IHTTPEncodingHandler} corresponding to the given encoding.
-	 *
-	 * @param encoding
-	 *            case insensitive (See RFC2616, 3.5)
-	 * @return null if no handler has been registered to match this encoding
-	 */
-	protected IHTTPTransferCodingHandler getTransferCodingHandler(String encoding) {
-		if (encoding == null) {
-			return IdentityTransferCodingHandler.getInstance();
-		}
-		IHTTPTransferCodingHandler[] transferCodingHandlers = this.transferCodingHandlers;
-		for (int i = transferCodingHandlers.length; --i >= 0;) {
-			IHTTPTransferCodingHandler handler = transferCodingHandlers[i];
-			if (encoding.equalsIgnoreCase(handler.getId())) {
-				return handler;
-			}
-		}
-		return null;
-	}
-
-	/**
-	 * <p>
-	 * Registers a new HTTP content encoding handler.
-	 * </p>
-	 * <p>
-	 * Should be called before {@link #start()}, otherwise a {@link IllegalStateException} is thrown.
-	 * </p>
-	 *
-	 * @param handler
-	 *            the {@link IHTTPEncodingHandler} to register
-	 */
-	public void registerEncodingHandler(IHTTPEncodingHandler handler) {
-		if (!isStopped()) {
-			throw new IllegalStateException();
-		}
-		if (this.encodingHandlers == null) {
-			this.encodingHandlers = new IHTTPEncodingHandler[] { handler };
-		} else {
-			int length = this.encodingHandlers.length;
-			System.arraycopy(this.encodingHandlers, 0, this.encodingHandlers = new IHTTPEncodingHandler[length + 1], 0,
-					length);
-			this.encodingHandlers[length] = handler;
-		}
-	}
-
-	/**
-	 * <p>
-	 * Registers a new HTTP transfer coding handler.
-	 * </p>
-	 * <p>
-	 * Should be called before {@link #start()}, otherwise a {@link IllegalStateException} is raised.
-	 * </p>
-	 *
-	 * @param handler
-	 *            the {@link IHTTPTransferCodingHandler} to register
-	 */
-	public void registerTransferCodingHandler(IHTTPTransferCodingHandler handler) {
-		if (!isStopped()) {
-			throw new IllegalStateException();
-		}
-		if (this.transferCodingHandlers == null) {
-			this.transferCodingHandlers = new IHTTPTransferCodingHandler[] { handler };
-		} else {
-			int length = this.transferCodingHandlers.length;
-			System.arraycopy(this.transferCodingHandlers, 0,
-					this.transferCodingHandlers = new IHTTPTransferCodingHandler[length + 1], 0, length);
-			this.transferCodingHandlers[length] = handler;
 		}
 	}
 
