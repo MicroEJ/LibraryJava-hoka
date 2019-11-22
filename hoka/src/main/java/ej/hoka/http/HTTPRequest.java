@@ -18,7 +18,9 @@ import ej.hoka.http.encoding.HTTPEncodingRegister;
 import ej.hoka.http.encoding.IHTTPEncodingHandler;
 import ej.hoka.http.encoding.IHTTPTransferCodingHandler;
 import ej.hoka.http.encoding.UnsupportedHTTPEncodingException;
+import ej.hoka.http.support.AcceptEncoding;
 import ej.hoka.http.support.MIMEUtils;
+import ej.hoka.http.support.QualityArgument;
 
 /**
  * Represents a HTTP Request.
@@ -192,9 +194,7 @@ public class HTTPRequest {
 		// process the request entirely by reading:
 		// 1. method (get/post/put/delete), uri (my/resource.html), query
 		// strings (?a=b&c=d), and HTTP header fields
-		if (!parseRequestHeader(inputStream)) {
-			throw new IllegalArgumentException(MALFORMED_HTTP_REQUEST);
-		}
+		parseRequestHeader(inputStream);
 
 		// the content-type may have been parsed by parseRequestHeader
 		String contentType = getHeaderField(HTTPConstants.FIELD_CONTENT_TYPE);
@@ -610,7 +610,7 @@ public class HTTPRequest {
 	 * @throws IOException
 	 *             if connection has been lost
 	 */
-	private boolean parseHeaderFields(InputStream input) throws IOException {
+	private void parseHeaderFields(InputStream input) throws IOException {
 		// headers is a hashmap
 		// the stream look like "foo:bar zor:zorvalue "
 		HashMap<String, String> header = new HashMap<>(10); // most HTTP requests have less
@@ -625,14 +625,14 @@ public class HTTPRequest {
 		int i = input.read();
 		loop: while (true) {
 			if (i == -1) {
-				return false;
+				throw new IllegalArgumentException(MALFORMED_HTTP_REQUEST);
 			}
 
 			switch (i) {
 			case PERCENTAGE_CHAR:
 				if (curBuffer == sbKey) {
 					// no percent encoding allowed in HTTP header field name
-					return false;
+					throw new IllegalArgumentException(MALFORMED_HTTP_REQUEST);
 				}
 				/*
 				 * RFC5987 is not implemented
@@ -661,7 +661,7 @@ public class HTTPRequest {
 			case CARRIAGE_RETURN_CHAR:
 				i = input.read();
 				if (i != NEWLINE_CHAR) {
-					return false;
+					throw new IllegalArgumentException(MALFORMED_HTTP_REQUEST);
 				}
 
 				// end of header
@@ -673,7 +673,7 @@ public class HTTPRequest {
 				// if next char is a white space, the header is not finished
 				i = input.read();
 				if (i == -1) {
-					return false;
+					throw new IllegalArgumentException(MALFORMED_HTTP_REQUEST);
 				}
 
 				if ((i == SPACE_CHAR) || (i == TABULATION_CHAR)) {
@@ -712,7 +712,6 @@ public class HTTPRequest {
 		}
 
 		this.header = header;
-		return true;
 	}
 
 	/**
@@ -725,7 +724,7 @@ public class HTTPRequest {
 	 * @throws IOException
 	 *             if connection has been lost
 	 */
-	private boolean parseMethod(InputStream input) throws IOException {
+	private void parseMethod(InputStream input) throws IOException {
 		StringBuilder builder = new StringBuilder();
 		int read = input.read();
 		while (read != -1 && read != ' ') {
@@ -737,18 +736,18 @@ public class HTTPRequest {
 		switch (inputMethod) {
 		case HTTPConstants.HTTP_METHOD_GET:
 			this.method = GET;
-			return true;
+			return;
 		case HTTPConstants.HTTP_METHOD_POST:
 			this.method = POST;
-			return true;
+			return;
 		case HTTPConstants.HTTP_METHOD_PUT:
 			this.method = PUT;
-			return true;
+			return;
 		case HTTPConstants.HTTP_METHOD_DELETE:
 			this.method = DELETE;
-			return true;
+			return;
 		default:
-			return false;
+			throw new IllegalArgumentException(MALFORMED_HTTP_REQUEST);
 		}
 	}
 
@@ -775,19 +774,10 @@ public class HTTPRequest {
 	 * @throws IOException
 	 *             if connection has been lost
 	 */
-	protected boolean parseRequestHeader(InputStream input) throws IOException {
-		if (!parseMethod(input)) {
-			return false;
-		}
-		if (!parseURI(input)) {
-			return false;
-		}
-
-		// extract header
-		if (!parseHeaderFields(input)) {
-			return false;
-		}
-		return true;
+	protected void parseRequestHeader(InputStream input) throws IOException {
+		parseMethod(input);
+		parseURI(input);
+		parseHeaderFields(input);
 	}
 
 	/**
@@ -799,7 +789,7 @@ public class HTTPRequest {
 	 * @throws IOException
 	 *             if connection has been lost
 	 */
-	private boolean parseURI(InputStream input) throws IOException {
+	private void parseURI(InputStream input) throws IOException {
 		StringBuilder sb = new StringBuilder(Math.min(64, input.available()));
 		// main loop
 		loop: while (true) {
@@ -807,7 +797,7 @@ public class HTTPRequest {
 			// "/resources/index.html?foo=bar " or "/resources/index "
 			int i = input.read();
 			if (i == -1) {
-				return false;
+				throw new IllegalArgumentException(MALFORMED_HTTP_REQUEST);
 			}
 
 			switch (i) {
@@ -815,7 +805,7 @@ public class HTTPRequest {
 				// parse parameters
 				if (!parserParameters(this.parameters, input)) {
 					// no parameters found after the '?', error
-					return false;
+					throw new IllegalArgumentException(MALFORMED_HTTP_REQUEST);
 				}
 			case SPACE_CHAR:
 				break loop; // if QUESTION_MARK_CHAR or SPACE_CHAR break loop
@@ -824,7 +814,7 @@ public class HTTPRequest {
 				i = decodePercentage(input);
 				if (i == -1) {
 					// encoding error
-					return false;
+					throw new IllegalArgumentException(MALFORMED_HTTP_REQUEST);
 				}
 
 				// in case i should be represented as a unicode surrogate pair
@@ -845,7 +835,7 @@ public class HTTPRequest {
 			int r = input.read(version, readBytes, 10 - readBytes);
 			if (r == -1) {
 				// EOF
-				return false;
+				throw new IllegalArgumentException(MALFORMED_HTTP_REQUEST);
 			}
 			readBytes += r;
 		}
@@ -854,7 +844,6 @@ public class HTTPRequest {
 		// the \r\n.
 		String tmp = new String(version);
 		this.version = tmp.substring(0, tmp.length() - 2);
-		return true;
 	}
 
 	/**
@@ -897,4 +886,73 @@ public class HTTPRequest {
 			bodyParser.parseBody(this);
 		}
 	}
+
+	public IHTTPEncodingHandler getEncodingHandler() throws HTTPErrorException {
+
+		// Send the response
+		String encoding = getHeaderField(HTTPConstants.FIELD_ACCEPT_ENCODING);
+		IHTTPEncodingHandler handler = null;
+		// if the Accept-Encoding header is not found, skip
+		// finding the handler
+		if (encoding != null) {
+			handler = getAcceptEncodingHandler(encoding);
+		}
+		if (handler == null) {
+			if (CalibrationConstants.STRICT_ACCEPT_ENCODING_COMPLIANCE) {
+				// RFC2616 14.3
+				throw new HTTPErrorException(HTTPConstants.HTTP_STATUS_NOTACCEPTABLE);
+			} /*
+				 * else { // continue with no encoding (null handler == // identity) // Example: Firefox 3.6 asks for //
+				 * Accept-Encoding=gzip,deflate by default. // If none of these encodings if present on this // embedded
+				 * server, send without encoding // instead of Error 406. This avoid to modify // default options
+				 * (about:config => // network.http.accept-encoding=gzip,deflate,identity }
+				 */
+		}
+
+		return handler;
+	}
+
+	/**
+	 * Returns the most suitable {@link IHTTPEncodingHandler} to match the encodings described in
+	 * <code>Accept-Encoding</code> header.
+	 *
+	 * @param encodingParam
+	 *            is on the form <code>gzip, identity</code> or <code>gzip; q=0.8, identity; q=0.2</code>
+	 * @return the {@link IHTTPEncodingHandler}, or <code>null</code> if no suitable handler can be found
+	 */
+	protected IHTTPEncodingHandler getAcceptEncodingHandler(String encodingParam) {
+
+		AcceptEncoding acceptEncoding = new AcceptEncoding();
+		acceptEncoding.parse(encodingParam);
+
+		// Try to return the most acceptable handler
+		QualityArgument[] encodings = acceptEncoding.getEncodings();
+		int nbEncodings = encodings.length;
+		boolean[] processed = new boolean[nbEncodings];
+		for (int pass = nbEncodings; --pass >= 0;) { // maximum number of passes
+			float localMax = 0;
+			int ptrMax = -1;
+			for (int i = nbEncodings; --i >= 0;) {
+				if (processed[i]) {
+					continue;
+				}
+				QualityArgument arg = encodings[i];
+				float qvalue = arg.getQuality();
+				if (qvalue > localMax) {
+					localMax = qvalue;
+					ptrMax = i;
+				}
+			}
+			processed[ptrMax] = true;
+
+			// Try to get the handler
+			IHTTPEncodingHandler handler = this.encodingRegister.getEncodingHandler(encodings[ptrMax].getArgument());
+			if (handler != null) {
+				return handler;
+			}
+		}
+
+		return null;
+	}
+
 }

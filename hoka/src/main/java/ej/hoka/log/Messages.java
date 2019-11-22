@@ -60,19 +60,24 @@ public final class Messages {
 	public static final int PROCESS_CONNECTION = 4;
 
 	/**
+	 * A response has been sent.
+	 */
+	public static final int HTTP_RESPONSE = 5;
+
+	/**
 	 * An HTTP error occured.
 	 */
-	public static final int HTTP_ERROR = 5;
+	public static final int HTTP_ERROR = 6;
 
 	/**
 	 * The connection is lost.
 	 */
-	public static final int CONNECTION_LOST = 6;
+	public static final int CONNECTION_LOST = 7;
 
 	/**
 	 * The connection is closed.
 	 */
-	public static final int CONNECTION_CLOSED = 7;
+	public static final int CONNECTION_CLOSED = 8;
 
 	/**
 	 * Category message.

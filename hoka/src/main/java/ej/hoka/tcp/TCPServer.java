@@ -10,7 +10,6 @@ package ej.hoka.tcp;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketException;
 
 import javax.net.ServerSocketFactory;
 
@@ -22,12 +21,16 @@ import ej.util.message.Level;
  * Abstract TCP/IP server.
  * </p>
  */
-public abstract class TCPServer {
+public class TCPServer {
+
+	// Default configuration
 
 	/**
-	 * The server socket factory used by this server.
+	 * By default, server is configured to keep connection open during one minute if possible.
 	 */
-	private final ServerSocketFactory serverSocketFactory;
+	private static final int DEFAULT_TIMEOUT_DURATION = 60000; // 60s
+
+	// Configuration
 
 	/**
 	 * The port used by this server.
@@ -35,14 +38,21 @@ public abstract class TCPServer {
 	private final int port;
 
 	/**
-	 * Maximum number of opened connections.
+	 * Maximum number of opened waiting connections.
 	 */
 	private final int maxOpenedConnections;
 
 	/**
-	 * The request timeout duration in ms, default = 0 (infinite).
+	 * The server socket factory used to start this server.
 	 */
-	private final int requestTimeoutDuration;
+	private final ServerSocketFactory serverSocketFactory;
+
+	/**
+	 * The request timeout duration in milliseconds, 0 means no timeout (infinite persistent connections).
+	 */
+	private final int timeout;
+
+	// State
 
 	/**
 	 * The server socket used by this server.
@@ -76,40 +86,55 @@ public abstract class TCPServer {
 	 *
 	 * @param port
 	 *            the port to use.
-	 * @param maxOpenedConnection
+	 * @param maxOpenedConnections
 	 *            the maximal number of simultaneously opened connections.
-	 * @param requestTimeoutDuration
-	 *            the request timeout in milliseconds.
 	 */
-	public TCPServer(int port, int maxOpenedConnection, int requestTimeoutDuration) {
-		this(port, maxOpenedConnection, requestTimeoutDuration, ServerSocketFactory.getDefault());
+	public TCPServer(int port, int maxOpenedConnections) {
+		this(port, maxOpenedConnections, ServerSocketFactory.getDefault());
 	}
 
 	/**
 	 * <p>
-	 * Constructs a new instance of {@link TCPServer} that use {@link Socket} created by the {@link ServerSocketFactory}
-	 * as the underlying connection.
+	 * Constructs a new instance of {@link TCPServer} using the {@link ServerSocketFactory}
+	 * <code>serverSocketFactory</code>.
 	 * </p>
 	 *
 	 * @param port
 	 *            the port to use.
+	 * @param maxOpenedConnections
+	 *            the maximal number of simultaneously opened connections.
 	 * @param serverSocketFactory
 	 *            the {@link ServerSocketFactory}.
-	 * @param maxOpenedConnection
-	 *            the maximal number of simultaneously opened connections.
-	 * @param requestTimeoutDuration
-	 *            the request timeout in milliseconds.
 	 */
-	public TCPServer(int port, int maxOpenedConnection, int requestTimeoutDuration,
-			ServerSocketFactory serverSocketFactory) {
-		if ((maxOpenedConnection <= 0) || (requestTimeoutDuration < 0)) {
+	public TCPServer(int port, int maxOpenedConnections, ServerSocketFactory serverSocketFactory) {
+		this(port, maxOpenedConnections, serverSocketFactory, DEFAULT_TIMEOUT_DURATION);
+	}
+
+	/**
+	 * <p>
+	 * Constructs a new instance of {@link TCPServer} using the {@link ServerSocketFactory}
+	 * <code>serverSocketFactory</code>.
+	 * </p>
+	 *
+	 * @param port
+	 *            the port to use.
+	 * @param maxOpenedConnections
+	 *            the maximal number of simultaneously opened connections.
+	 * @param serverSocketFactory
+	 *            the {@link ServerSocketFactory}.
+	 * @param timeout
+	 *            the timeout of opened connections.
+	 * @see Socket#setSoTimeout(int)
+	 */
+	public TCPServer(int port, int maxOpenedConnections, ServerSocketFactory serverSocketFactory, int timeout) {
+		if (maxOpenedConnections <= 0 || timeout < 0) {
 			throw new IllegalArgumentException();
 		}
 
 		this.port = port;
+		this.maxOpenedConnections = maxOpenedConnections;
 		this.serverSocketFactory = serverSocketFactory;
-		this.maxOpenedConnections = maxOpenedConnection;
-		this.requestTimeoutDuration = requestTimeoutDuration;
+		this.timeout = timeout;
 	}
 
 	/**
@@ -172,23 +197,31 @@ public abstract class TCPServer {
 	}
 
 	/**
-	 * <p>
-	 * Returns <code>true</code> if the {@link TCPServer} is stopped.
-	 * </p>
+	 * Add a connection to the list of current connections.
 	 *
-	 * @return <code>true</code> if the {@link TCPServer} is stopped, <code>false</code> otherwise
+	 * @param connection
+	 *            {@link Socket} to add
 	 */
-	public boolean isStopped() {
-		return this.serverSocket == null || this.thread == null;
-	}
+	public void addConnection(Socket connection) {
+		synchronized (this.streamConnections) {
+			int nextPtr = this.lastAddedPtr + 1;
+			if (nextPtr == this.streamConnections.length) {
+				nextPtr = 0;
+			}
 
-	/**
-	 * Returns the name of this TCPServer.
-	 *
-	 * @return the string "TCPServer"
-	 */
-	protected String getName() {
-		return TCPServer.class.getSimpleName();
+			if (nextPtr == this.lastReadPtr) {
+				Messages.LOGGER.log(Level.SEVERE, Messages.CATEGORY, Messages.TOO_MANY_CONNECTION,
+						connection.getInetAddress().toString(), Integer.valueOf(this.maxOpenedConnections));
+				tooManyOpenConnections(connection);
+				return;
+			}
+
+			Messages.LOGGER.log(Level.INFO, Messages.CATEGORY, Messages.NEW_CONNECTION,
+					Integer.valueOf(connection.hashCode()), connection.getInetAddress().toString());
+
+			this.streamConnections[this.lastAddedPtr = nextPtr] = connection;
+			this.streamConnections.notify();
+		}
 	}
 
 	/**
@@ -196,7 +229,7 @@ public abstract class TCPServer {
 	 *
 	 * @return null if server is stopped
 	 */
-	protected Socket getNextStreamConnection() {
+	public Socket getNextStreamConnection() {
 		synchronized (this.streamConnections) {
 			while (this.lastAddedPtr == this.lastReadPtr) {
 				if (isStopped()) {
@@ -218,6 +251,26 @@ public abstract class TCPServer {
 			this.streamConnections[nextPtr] = null;
 			return connection;
 		}
+	}
+
+	/**
+	 * <p>
+	 * Returns <code>true</code> if the {@link TCPServer} is stopped.
+	 * </p>
+	 *
+	 * @return <code>true</code> if the {@link TCPServer} is stopped, <code>false</code> otherwise
+	 */
+	public boolean isStopped() {
+		return this.serverSocket == null || this.thread == null;
+	}
+
+	/**
+	 * Returns the name of this TCPServer.
+	 *
+	 * @return the string "TCPServer"
+	 */
+	protected String getName() {
+		return TCPServer.class.getSimpleName();
 	}
 
 	/**
@@ -246,6 +299,7 @@ public abstract class TCPServer {
 				while (true) {
 					try {
 						Socket connection = TCPServer.this.serverSocket.accept();
+						connection.setSoTimeout(TCPServer.this.timeout);
 						addConnection(connection);
 					} catch (IOException e) {
 						if (isStopped()) {
@@ -260,38 +314,6 @@ public abstract class TCPServer {
 				}
 			}
 		};
-	}
-
-	/**
-	 * Add a connection to the list of current connections.
-	 *
-	 * @param connection
-	 *            {@link Socket} to add
-	 * @throws SocketException
-	 *             if there is an error in the underlying protocol, such as a TCP error.
-	 */
-	private void addConnection(Socket connection) throws SocketException {
-		synchronized (this.streamConnections) {
-			int nextPtr = this.lastAddedPtr + 1;
-			if (nextPtr == this.streamConnections.length) {
-				nextPtr = 0;
-			}
-
-			if (nextPtr == this.lastReadPtr) {
-				Messages.LOGGER.log(Level.SEVERE, Messages.CATEGORY, Messages.TOO_MANY_CONNECTION,
-						connection.getInetAddress().toString(), Integer.valueOf(this.maxOpenedConnections));
-				tooManyOpenConnections(connection);
-				return;
-			}
-
-			connection.setSoTimeout(this.requestTimeoutDuration);
-
-			this.streamConnections[this.lastAddedPtr = nextPtr] = connection;
-			this.streamConnections.notify();
-		}
-
-		Messages.LOGGER.log(Level.INFO, Messages.CATEGORY, Messages.NEW_CONNECTION,
-				Integer.valueOf(connection.hashCode()), connection.getInetAddress().toString());
 	}
 
 }

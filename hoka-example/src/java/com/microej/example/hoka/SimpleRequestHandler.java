@@ -10,29 +10,23 @@ package com.microej.example.hoka;
 import java.io.IOException;
 import java.io.InputStream;
 
-import ej.hoka.http.DefaultHTTPSession;
 import ej.hoka.http.HTTPConstants;
 import ej.hoka.http.HTTPRequest;
 import ej.hoka.http.HTTPResponse;
-import ej.hoka.http.HTTPServer;
-import ej.hoka.http.HTTPSession;
 import ej.hoka.http.body.BodyParser;
 import ej.hoka.http.body.StringBodyParser;
+import ej.hoka.http.requesthandler.DefaultRequestHandler;
 import ej.hoka.http.support.MIMEUtils;
 
 /*
  * Adding the default resource behaviour for the root of the HTTP server
  */
-public class SimpleHTTPSession extends DefaultHTTPSession {
+public class SimpleRequestHandler extends DefaultRequestHandler {
 
 	private static final String DEFAULT_ROOT_RESOURCE = "/html/index.html";
 
-	public SimpleHTTPSession(HTTPServer server) {
-		super(server);
-	}
-
 	@Override
-	public HTTPResponse answer(HTTPRequest request) {
+	public HTTPResponse process(HTTPRequest request) {
 		HTTPResponse response = null;
 		String uri = request.getURI();
 
@@ -42,7 +36,7 @@ public class SimpleHTTPSession extends DefaultHTTPSession {
 		if (uri.equals("/")) {
 			uri = DEFAULT_ROOT_RESOURCE;
 		}
-		try (InputStream resourceStream = SimpleHTTPSession.class.getResourceAsStream(uri)) {
+		try (InputStream resourceStream = SimpleRequestHandler.class.getResourceAsStream(uri)) {
 			if (resourceStream != null) {
 				response = new HTTPResponse(resourceStream);
 
@@ -65,16 +59,9 @@ public class SimpleHTTPSession extends DefaultHTTPSession {
 				}
 			}
 
-			response = super.answer(request);
+			response = super.process(request);
 		}
 		return response;
-	}
-
-	public static class Factory implements HTTPSession.Factory {
-		@Override
-		public HTTPSession newHTTPSession(HTTPServer server) {
-			return new SimpleHTTPSession(server);
-		}
 	}
 
 }

@@ -14,7 +14,7 @@ import ej.net.util.ssl.SslContextBuilder;
 
 /*
  * This simple server exposes resources from the src/resources folder
- * It uses the SimpleHTTPSession to serve a resource for the root of the server
+ * It uses the SimpleRequestHandler to serve a resource for the root of the server
  * It uses the private key and certificates from the src/resources folder to enable HTTPS.
  */
 public class SimpleHTTPSServer {
@@ -31,8 +31,9 @@ public class SimpleHTTPSServer {
 		sslContextBuilder.addClientKey(KEY_PATH, CERTIFICATE_PATH, CA_CERTIFICATE_PATH);
 		SSLContext sslContext = sslContextBuilder.build("123456"); // password
 
-		// create the http server with our custom http session
-		HTTPServer server = new HTTPServer(PORT, 10, 1, sslContext.getServerSocketFactory());
+		// create the http server with our custom request handler
+		HTTPServer server = new HTTPServer(PORT, 10, 1, new SimpleRequestHandler(),
+				sslContext.getServerSocketFactory());
 
 		// Once started the server is accessible on https://localhost:8443
 		server.start();

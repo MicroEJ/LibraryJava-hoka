@@ -7,12 +7,16 @@
  */
 package ej.hoka.http.requesthandler;
 
+import ej.hoka.http.HTTPConstants;
 import ej.hoka.http.HTTPErrorException;
 import ej.hoka.http.HTTPRequest;
 import ej.hoka.http.HTTPResponse;
 
-public interface RequestHandler {
+public class NotFoundRequestHandler implements RequestHandler {
 
-	HTTPResponse process(HTTPRequest request) throws HTTPErrorException;
+	@Override
+	public HTTPResponse process(HTTPRequest request) throws HTTPErrorException {
+		throw new HTTPErrorException(HTTPConstants.HTTP_STATUS_NOTFOUND, request.getURI());
+	}
 
 }

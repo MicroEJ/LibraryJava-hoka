@@ -10,6 +10,7 @@ package ej.hoka.http.requesthandler;
 import java.util.ArrayList;
 import java.util.List;
 
+import ej.hoka.http.HTTPErrorException;
 import ej.hoka.http.HTTPRequest;
 import ej.hoka.http.HTTPResponse;
 
@@ -22,7 +23,7 @@ public class RequestHandlerComposite implements RequestHandler {
 	}
 
 	@Override
-	public HTTPResponse process(HTTPRequest request) {
+	public HTTPResponse process(HTTPRequest request) throws HTTPErrorException {
 		for (RequestHandler handler : this.requestHandlers) {
 			HTTPResponse response = handler.process(request);
 			if (response != null) {

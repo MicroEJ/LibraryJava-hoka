@@ -13,15 +13,15 @@ import ej.hoka.http.HTTPServer;
 
 /*
  * This simple server exposes resources from the src/resources folder
- * It uses the SimpleHTTPSession to serve a resource for the root of the server
+ * It uses the SimpleRequestHandler to serve a resource for the root of the server
  */
 public class SimpleServer {
 
 	private static final int PORT = 8080;
 
 	public static void main(String[] args) throws IOException {
-		//create the http server with our custom http session
-		HTTPServer server = new HTTPServer(PORT, 10, 1);
+		// create the http server with our custom request handler
+		HTTPServer server = new HTTPServer(PORT, 10, 1, new SimpleRequestHandler());
 
 		//once started the server is accessible on
 		// http://localhost:8080

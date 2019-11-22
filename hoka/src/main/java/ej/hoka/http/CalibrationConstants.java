@@ -7,11 +7,12 @@
  */
 package ej.hoka.http;
 
+import ej.hoka.http.encoding.HTTPEncodingRegister;
 import ej.hoka.http.encoding.IHTTPEncodingHandler;
 
 /**
  * <p>
- * Configuration for {@link HTTPSession}.
+ * Configuration for {@link HTTPRequest#getEncodingHandler()}.
  * </p>
  */
 public final class CalibrationConstants {
@@ -22,7 +23,7 @@ public final class CalibrationConstants {
 	 * {@link IHTTPEncodingHandler} registered for to handle the encoding specified in the HTTP request.
 	 * </p>
 	 *
-	 * @see HTTPServer#registerEncodingHandler(ej.hoka.http.encoding.IHTTPEncodingHandler)
+	 * @see HTTPEncodingRegister#registerEncodingHandler(ej.hoka.http.encoding.IHTTPEncodingHandler)
 	 */
 	public static final boolean STRICT_ACCEPT_ENCODING_COMPLIANCE = false;
 

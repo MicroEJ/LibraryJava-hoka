@@ -14,6 +14,11 @@ import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
+import java.util.Map.Entry;
+
+import ej.hoka.http.encoding.HTTPEncodingRegister;
+import ej.hoka.http.encoding.IHTTPEncodingHandler;
+import ej.hoka.http.encoding.IHTTPTransferCodingHandler;
 
 /**
  * <p>
@@ -65,6 +70,11 @@ public class HTTPResponse {
 	public static final HTTPResponse RESPONSE_NOT_ACCEPTABLE = createResponseFromStatus(
 			HTTPConstants.HTTP_STATUS_NOTACCEPTABLE);
 	/**
+	 * An empty HTTP response with status code 408.
+	 */
+	public static final HTTPResponse RESPONSE_REQUESTTIMEOUT = createResponseFromStatus(
+			HTTPConstants.HTTP_STATUS_REQUESTTIMEOUT);
+	/**
 	 * An empty HTTP response with status code 415.
 	 */
 	public static final HTTPResponse RESPONSE_UNSUPPORTED_MEDIA_TYPE = createResponseFromStatus(
@@ -79,6 +89,21 @@ public class HTTPResponse {
 	 */
 	public static final HTTPResponse RESPONSE_NOT_IMPLEMENTED = createResponseFromStatus(
 			HTTPConstants.HTTP_STATUS_NOTIMPLEMENTED);
+
+	/**
+	 * The colon character.
+	 */
+	private static final String RESPONSE_COLON = ": "; //$NON-NLS-1$
+
+	/**
+	 * The HTTP/1.1 version String.
+	 */
+	private static final String RESPONSE_HTTP11 = "HTTP/1.1 "; //$NON-NLS-1$
+
+	/**
+	 * The Content-Type: String.
+	 */
+	private static final String RESPONSE_CONTENTTYPE = HTTPConstants.FIELD_CONTENT_TYPE + RESPONSE_COLON;
 
 	private String status;
 
@@ -249,6 +274,23 @@ public class HTTPResponse {
 	}
 
 	/**
+	 *
+	 * <p>
+	 * Returns the header field value associated to the given header field <code>key</code>.
+	 * </p>
+	 *
+	 * @param key
+	 *            a header field name (if <code>null</code>, <code>null</code> is returned).
+	 * @return the replied header field value, <code>null</code> if the header field is not found.
+	 */
+	public String getHeaderField(String key) {
+		if (key == null) {
+			return null;
+		}
+		return this.header.get(key.toLowerCase());
+	}
+
+	/**
 	 * Returns the length (in bytes) of the response data or <code>-1</code> if the length is unknown.
 	 *
 	 * @return the length (in bytes) of the response data.
@@ -389,4 +431,56 @@ public class HTTPResponse {
 	public void setStatus(String status) {
 		this.status = status;
 	}
+
+	/**
+	 * Send the {@link HTTPResponse} to the given {@link OutputStream} using the given {@link IHTTPEncodingHandler}.
+	 *
+	 * @param output
+	 *            {@link OutputStream} used to write the response to
+	 * @param encodingHandler
+	 *            the {@link IHTTPEncodingHandler} to encode the response. If <code>null</code>, the
+	 *            {@link IHTTPTransferCodingHandler} is used.
+	 * @throws IOException
+	 *             if the connection has been lost
+	 */
+	protected void writeResponse(OutputStream output, IHTTPEncodingHandler encodingHandler,
+			HTTPEncodingRegister encodingRegister, int bufferSize) throws IOException {
+	}
+
+	/**
+	 * Writes the HTTP Header using the {@link OutputStream} <code>output</code>.
+	 *
+	 * @param output
+	 *            {@link OutputStream}
+	 * @throws IOException
+	 *             when the connection is lost
+	 */
+	void writeHTTPHeader(OutputStream output) throws IOException {
+		final byte[] eofHeader = HTTPConstants.END_OF_LINE.getBytes();
+
+		output.write(RESPONSE_HTTP11.getBytes());
+		output.write(getStatus().getBytes());
+		output.write(' ');
+		output.write(eofHeader);
+
+		if (this.mimeType != null) {
+			output.write(RESPONSE_CONTENTTYPE.getBytes());
+			output.write(this.mimeType.getBytes());
+			output.write(eofHeader);
+		}
+
+		// add header parameters
+		Map<String, String> header = getHeader();
+		for (Entry<String, String> entry : header.entrySet()) {
+			String key = entry.getKey();
+			String value = entry.getValue();
+			output.write(key.getBytes());
+			output.write(RESPONSE_COLON.getBytes());
+			output.write(value.getBytes());
+			output.write(eofHeader);
+		}
+
+		output.write(eofHeader);
+	}
+
 }

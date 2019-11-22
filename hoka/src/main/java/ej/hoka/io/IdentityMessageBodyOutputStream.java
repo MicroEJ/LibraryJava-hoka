@@ -10,8 +10,6 @@ package ej.hoka.io;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import ej.hoka.http.HTTPSession;
-
 /**
  * <p>
  * Identity output stream. Wraps an {@link OutputStream} and all of the operations on
