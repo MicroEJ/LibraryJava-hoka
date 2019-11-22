@@ -290,7 +290,7 @@ public class HTTPServer {
 
 			Messages.LOGGER.log(Level.FINE, Messages.CATEGORY, Messages.HTTP_RESPONSE,
 					Integer.valueOf(connection.hashCode()), connection.getInetAddress().toString(),
-					response.getStatus(), request.getURI());
+					response.getStatus(), request == null ? "" : request.getURI());
 
 			sendResponse(response, outputStream, encodingHandler);
 			// }
