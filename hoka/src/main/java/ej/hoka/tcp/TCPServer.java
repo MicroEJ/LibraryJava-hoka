@@ -18,19 +18,20 @@ import ej.util.message.Level;
 
 /**
  * <p>
- * Abstract TCP/IP server.
+ * TCP/IP server that stores incoming connections.
+ * </p>
+ *
+ * <p>
+ * After starting this server with {@link #start()}, connections are available through
+ * {@link #getNextStreamConnection()}.
  * </p>
  */
 public class TCPServer {
-
-	// Default configuration
 
 	/**
 	 * By default, server is configured to keep connection open during one minute if possible.
 	 */
 	private static final int DEFAULT_TIMEOUT_DURATION = 60000; // 60s
-
-	// Configuration
 
 	/**
 	 * The port used by this server.
@@ -52,8 +53,6 @@ public class TCPServer {
 	 */
 	private final int timeout;
 
-	// State
-
 	/**
 	 * The server socket used by this server.
 	 */
@@ -72,12 +71,12 @@ public class TCPServer {
 	/**
 	 * Pointer to the last added item.
 	 */
-	private int lastAddedPtr; // initialized to 0
+	private int lastAddedPtr;
 
 	/**
 	 * Pointer for the last read item.
 	 */
-	private int lastReadPtr; // initialized to 0
+	private int lastReadPtr;
 
 	/**
 	 * <p>
@@ -147,13 +146,16 @@ public class TCPServer {
 	 *             if an error occurs during the creation of the socket.
 	 */
 	public void start() throws IOException {
-		if (this.thread != null) { // The serverSocket is closed before the thread is stopped.
+		if (!isStopped()) {
 			throw new IllegalStateException(
 					Messages.BUILDER.buildMessage(Level.SEVERE, Messages.CATEGORY, Messages.MULTIPLE_START_FORBIDDEN));
 		}
 
 		this.streamConnections = new Socket[this.maxOpenedConnections + 1]; // always an empty index in order to
 																			// distinguish between empty or full queue
+
+		this.lastAddedPtr = 0;
+		this.lastReadPtr = 0;
 
 		this.serverSocket = this.serverSocketFactory.createServerSocket(this.port);
 
@@ -197,7 +199,7 @@ public class TCPServer {
 	}
 
 	/**
-	 * Add a connection to the list of current connections.
+	 * Add a connection to the list of opened connections.
 	 *
 	 * @param connection
 	 *            {@link Socket} to add

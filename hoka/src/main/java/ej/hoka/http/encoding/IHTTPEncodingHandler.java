@@ -26,7 +26,7 @@ import ej.hoka.http.HTTPServer;
  * Encoding handlers should be registered in the {@link HTTPServer} in order to use them.
  * </p>
  *
- * @see HTTPServer#registerEncodingHandler(IHTTPEncodingHandler)
+ * @see HTTPEncodingRegister#registerEncodingHandler(IHTTPEncodingHandler)
  *
  */
 public interface IHTTPEncodingHandler {

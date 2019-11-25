@@ -7,12 +7,24 @@
  */
 package ej.hoka.http.requesthandler;
 
-import ej.hoka.http.HTTPErrorException;
 import ej.hoka.http.HTTPRequest;
 import ej.hoka.http.HTTPResponse;
 
+/**
+ * <p>
+ * A handler to process request and create appropriate response.
+ * </p>
+ */
 public interface RequestHandler {
 
-	HTTPResponse process(HTTPRequest request) throws HTTPErrorException;
+	/**
+	 * Processes the request and creates the appropriate response, or null if this request handler doesn't match the
+	 * request.
+	 *
+	 * @param request
+	 *            the {@link HTTPRequest} to process.
+	 * @return the {@link HTTPResponse} to send, or null if not handled by this {@link RequestHandler}.
+	 */
+	HTTPResponse process(HTTPRequest request);
 
 }

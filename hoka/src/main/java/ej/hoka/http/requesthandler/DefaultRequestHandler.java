@@ -35,13 +35,13 @@ public class DefaultRequestHandler implements RequestHandler {
 
 	/**
 	 * <p>
-	 * The generic behaviour of this request handler implementation is to find a resource matching the given URI in the
+	 * The generic behavior of this request handler implementation is to find a resource matching the given URI in the
 	 * classpath. The resource is included in the HTTP Response with the proper MIME-Type and HTTP Status (200 OK).
 	 * </p>
 	 *
 	 * @param request
 	 *            the {@link HTTPRequest}
-	 * @return the {@link HTTPResponse} containing the resource
+	 * @return the {@link HTTPResponse} containing the resource, or <code>null</code> if not found.
 	 */
 	@Override
 	public HTTPResponse process(HTTPRequest request) {

@@ -19,6 +19,9 @@ import java.util.Map.Entry;
 import ej.hoka.http.encoding.HTTPEncodingRegister;
 import ej.hoka.http.encoding.IHTTPEncodingHandler;
 import ej.hoka.http.encoding.IHTTPTransferCodingHandler;
+import ej.hoka.http.support.MIMEUtils;
+import ej.hoka.log.Messages;
+import ej.util.message.Level;
 
 /**
  * <p>
@@ -433,6 +436,85 @@ public class HTTPResponse {
 	}
 
 	/**
+	 * Sends the {@link HTTPResponse} to the {@link OutputStream}.
+	 * 
+	 * @throws IOException
+	 *
+	 */
+	void sendResponse(OutputStream outputStream, IHTTPEncodingHandler encodingHandler,
+			HTTPEncodingRegister encodingRegister, int bufferSize) throws IOException {
+		if (encodingHandler != null) {
+			addHeaderField(HTTPConstants.FIELD_CONTENT_ENCODING, encodingHandler.getId());
+		}
+		// only one of the next data can be defined.
+		// A better way may be to specialize HTTPResponse for Raw String and
+		// InputStream
+		// and makes theses classes "visitable" by a HTTPWriter which is able to
+		// visit both Raw String and InputStream HTTP Response
+		// we keep this implementation to avoid new hierarchy for performance
+		// but if the specialization evolves to a more and more
+		// specific way, do it!
+		byte[] rawData = getRawData();
+		try (InputStream dataStream = getData()) {
+			long length = getLength();
+
+			if (length < 0) {
+				// data will be transmitted using chunked transfer coding
+				// only when dataStream is used, the size is known otherwise
+				addHeaderField(HTTPConstants.FIELD_TRANSFER_ENCODING,
+						encodingRegister.getChunkedTransferCodingHandler().getId());
+			} // else the length is already defined in a header by the response
+
+			writeHTTPHeader(outputStream);
+
+			if (rawData != null) {
+				try (OutputStream dataOutput = encodingRegister.getIdentityTransferCodingHandler().open(this,
+						outputStream)) {
+					if (encodingHandler != null) {
+						try (OutputStream encodedDataOutput = encodingHandler.open(dataOutput)) {
+							writeAndFlush(rawData, encodedDataOutput);
+						}
+					} else {
+						writeAndFlush(rawData, dataOutput);
+					}
+					setDataStreamClosed();
+				}
+			} else if (dataStream != null) {
+				try (OutputStream dataOutput = (length == -1)
+						? encodingRegister.getChunkedTransferCodingHandler().open(this, outputStream)
+						: encodingRegister.getIdentityTransferCodingHandler().open(this, outputStream)) {
+					try (OutputStream ecodedOutput = (encodingHandler != null) ? encodingHandler.open(dataOutput)
+							: null) {
+						OutputStream output = (ecodedOutput != null) ? ecodedOutput : dataOutput;
+						final byte[] readBuffer = new byte[bufferSize];
+						while (true) {
+							int len = dataStream.read(readBuffer);
+
+							if (len < 0) { // read until EOF is reached
+								break;
+							}
+							// store read data
+							output.write(readBuffer, 0, len);
+							output.flush();
+						}
+					}
+				} catch (Throwable t) {
+					Messages.LOGGER.log(Level.SEVERE, Messages.CATEGORY, Messages.ERROR_UNKNOWN, t);
+				} finally {
+					// close data output stream. This does not close underlying
+					// TCP connection since transfer output stream does not
+					// close its underlying output stream
+					// if (dataOutput != null) {
+					// dataOutput.close();
+					// }
+					setDataStreamClosed();
+				}
+			}
+		}
+		outputStream.flush();
+	}
+
+	/**
 	 * Send the {@link HTTPResponse} to the given {@link OutputStream} using the given {@link IHTTPEncodingHandler}.
 	 *
 	 * @param output
@@ -481,6 +563,48 @@ public class HTTPResponse {
 		}
 
 		output.write(eofHeader);
+	}
+
+	private static void writeAndFlush(byte[] data, OutputStream stream) throws IOException {
+		stream.write(data);
+		stream.flush();
+		stream.close();
+	}
+
+	/**
+	 * Create a {@link HTTPResponse} to write the <code>msg</code> for the given <code>status</code>.
+	 *
+	 * @param status
+	 *            the error status. One of <code>HTTP_STATUS_*</code> constant of the {@link HTTPConstants} interface.
+	 * @param msg
+	 *            an optional error message to add in response.
+	 * @return a {@link HTTPResponse} that represent the error.
+	 * @see HTTPConstants#HTTP_STATUS_BADREQUEST
+	 * @see HTTPConstants#HTTP_STATUS_FORBIDDEN
+	 * @see HTTPConstants#HTTP_STATUS_INTERNALERROR
+	 * @see HTTPConstants#HTTP_STATUS_MEDIA_TYPE
+	 * @see HTTPConstants#HTTP_STATUS_METHOD
+	 * @see HTTPConstants#HTTP_STATUS_NOTACCEPTABLE
+	 * @see HTTPConstants#HTTP_STATUS_NOTFOUND
+	 * @see HTTPConstants#HTTP_STATUS_NOTIMPLEMENTED
+	 * @see HTTPConstants#HTTP_STATUS_NOTMODIFIED
+	 * @see HTTPConstants#HTTP_STATUS_OK
+	 * @see HTTPConstants#HTTP_STATUS_REDIRECT
+	 */
+	public static HTTPResponse createError(String status, String msg) {
+		StringBuilder buffer = new StringBuilder();
+		buffer.append("<html><head><title>"); //$NON-NLS-1$
+		buffer.append(status);
+		buffer.append("</title></head><body><h1>"); //$NON-NLS-1$
+		buffer.append(status);
+		buffer.append("</h1><p>"); //$NON-NLS-1$
+		buffer.append(msg);
+		buffer.append("</p></body></html>"); //$NON-NLS-1$
+
+		HTTPResponse response = new HTTPResponse(buffer.toString());
+		response.setMimeType(MIMEUtils.MIME_HTML);
+		response.setStatus(status);
+		return response;
 	}
 
 }

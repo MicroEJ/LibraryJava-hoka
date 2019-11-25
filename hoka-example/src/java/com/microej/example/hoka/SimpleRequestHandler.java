@@ -13,7 +13,6 @@ import java.io.InputStream;
 import ej.hoka.http.HTTPConstants;
 import ej.hoka.http.HTTPRequest;
 import ej.hoka.http.HTTPResponse;
-import ej.hoka.http.body.BodyParser;
 import ej.hoka.http.body.StringBodyParser;
 import ej.hoka.http.requesthandler.DefaultRequestHandler;
 import ej.hoka.http.support.MIMEUtils;
@@ -49,14 +48,17 @@ public class SimpleRequestHandler extends DefaultRequestHandler {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+
 		if (response == null) {
-			System.out.println("Not found " + uri);
-			BodyParser bodyParser = request.getBodyParser();
-			if (bodyParser instanceof StringBodyParser) {
-				String body = ((StringBodyParser) bodyParser).getBody();
+			try {
+				System.out.println("Not found " + uri);
+				String body = request.parseBody(new StringBodyParser());
 				if (body != null && !body.isEmpty()) {
 					System.out.println("\tBody: " + body);
 				}
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 
 			response = super.process(request);

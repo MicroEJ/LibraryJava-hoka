@@ -22,18 +22,23 @@ public class UnsupportedHTTPEncodingException extends UnsupportedEncodingExcepti
 	private static final long serialVersionUID = 5909681010475316898L;
 
 	/**
+	 * The colon character.
+	 */
+	private static final String RESPONSE_COLON = ": "; //$NON-NLS-1$
+
+	/**
 	 * <p>
 	 * The HTTP Header field causing the error.
 	 * </p>
 	 */
-	public final String field;
+	private final String field;
 
 	/**
 	 * <p>
 	 * The encoding which is not supported.
 	 * </p>
 	 */
-	public final String encoding;
+	private final String encoding;
 
 	/**
 	 * <p>
@@ -48,6 +53,11 @@ public class UnsupportedHTTPEncodingException extends UnsupportedEncodingExcepti
 	public UnsupportedHTTPEncodingException(String field, String encoding) {
 		this.field = field;
 		this.encoding = encoding;
+	}
+
+	@Override
+	public String getMessage() {
+		return this.field + RESPONSE_COLON + this.encoding;
 	}
 
 }

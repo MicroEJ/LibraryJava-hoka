@@ -10,11 +10,21 @@ package ej.hoka.http.encoding;
 import java.util.HashMap;
 import java.util.Map;
 
+import ej.hoka.http.support.AcceptEncoding;
+import ej.hoka.http.support.QualityArgument;
+
+/**
+ * Class that stores a register of available encoding and transfer coding handlers.
+ */
 public class HTTPEncodingRegister {
 
 	private final Map<String, IHTTPEncodingHandler> encodingHandlers;
 	private final Map<String, IHTTPTransferCodingHandler> transferCodingHandlers;
 
+	/**
+	 * Constructs the {@link HTTPEncodingRegister} with {@link IdentityEncodingHandler},
+	 * {@link IdentityTransferCodingHandler} and {@link ChunkedTransferCodingHandler} registered.
+	 */
 	public HTTPEncodingRegister() {
 		this.encodingHandlers = new HashMap<>(0);
 
@@ -106,4 +116,51 @@ public class HTTPEncodingRegister {
 	public void registerTransferCodingHandler(IHTTPTransferCodingHandler handler) {
 		this.transferCodingHandlers.put(handler.getId(), handler);
 	}
+
+	/**
+	 * Returns the most suitable {@link IHTTPEncodingHandler} to match the encodings described in
+	 * <code>Accept-Encoding</code> header.
+	 *
+	 * @param encodingParam
+	 *            is on the form <code>gzip, identity</code> or <code>gzip; q=0.8, identity; q=0.2</code>
+	 * @return the {@link IHTTPEncodingHandler}, or <code>null</code> if no suitable handler can be found
+	 */
+	public IHTTPEncodingHandler getAcceptEncodingHandler(String encoding) {
+		if (encoding == null) {
+			return null;
+		}
+
+		AcceptEncoding acceptEncoding = new AcceptEncoding();
+		acceptEncoding.parse(encoding);
+
+		// Try to return the most acceptable handler
+		QualityArgument[] encodings = acceptEncoding.getEncodings();
+		int nbEncodings = encodings.length;
+		boolean[] processed = new boolean[nbEncodings];
+		for (int pass = nbEncodings; --pass >= 0;) { // maximum number of passes
+			float localMax = 0;
+			int ptrMax = -1;
+			for (int i = nbEncodings; --i >= 0;) {
+				if (processed[i]) {
+					continue;
+				}
+				QualityArgument arg = encodings[i];
+				float qvalue = arg.getQuality();
+				if (qvalue > localMax) {
+					localMax = qvalue;
+					ptrMax = i;
+				}
+			}
+			processed[ptrMax] = true;
+
+			// Try to get the handler
+			IHTTPEncodingHandler handler = getEncodingHandler(encodings[ptrMax].getArgument());
+			if (handler != null) {
+				return handler;
+			}
+		}
+
+		return null;
+	}
+
 }

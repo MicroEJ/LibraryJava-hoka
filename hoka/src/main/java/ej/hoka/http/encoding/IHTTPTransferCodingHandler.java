@@ -19,8 +19,10 @@ import ej.hoka.http.HTTPServer;
  * <p>
  * Interface for defining HTTP transfer coding handlers.
  * </p>
- * <p>The HTTP transfer coding handler decodes data from the body of a {@link HTTPRequest} and encodes the body of a
- * {@link HTTPResponse}.</p>
+ * <p>
+ * The HTTP transfer coding handler decodes data from the body of a {@link HTTPRequest} and encodes the body of a
+ * {@link HTTPResponse}.
+ * </p>
  * <p>
  * Transfer coding is specified in <code>transfer-encoding</code> HTTP header.
  * </p>
@@ -28,13 +30,15 @@ import ej.hoka.http.HTTPServer;
  * Encoding handlers should be registered in the {@link HTTPServer} in order to use them.
  * </p>
  *
- * @see HTTPServer#registerTransferCodingHandler(IHTTPTransferCodingHandler)
+ * @see HTTPEncodingRegister#registerTransferCodingHandler(IHTTPTransferCodingHandler)
  *
  */
 public interface IHTTPTransferCodingHandler {
 
 	/**
-	 * <p>Returns the supported encoding id.</p>
+	 * <p>
+	 * Returns the supported encoding id.
+	 * </p>
 	 *
 	 * @return an internal {@link String} in lower case format.
 	 */
