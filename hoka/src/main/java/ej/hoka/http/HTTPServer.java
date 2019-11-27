@@ -13,10 +13,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.net.ServerSocketFactory;
 
-import ej.hoka.http.encoding.HTTPEncodingRegister;
+import ej.hoka.http.encoding.HTTPEncodingRegistry;
 import ej.hoka.http.encoding.IHTTPEncodingHandler;
 import ej.hoka.http.encoding.UnsupportedHTTPEncodingException;
 import ej.hoka.http.requesthandler.DefaultRequestHandler;
@@ -46,8 +48,7 @@ import ej.util.message.Level;
  *
  * </ul>
  * <p>
- * Override {@link HTTPSession#answer(HTTPRequest)} and redefine the server behavior for your own application
- *
+ * Define a {@link RequestHandler} to expose the different services of your application.
  * </p>
  *
  * <p>
@@ -55,12 +56,15 @@ import ej.util.message.Level;
  * </p>
  *
  * <pre>
- * // get a new server which handle a Default HTTP Session
+ * // get a new server which uses a DefaultRequestHandler
  * HTTPServer server = new HTTPServer(serverSocket, 10, 1);
  *
  * // start the server
  * server.start();
  * </pre>
+ *
+ * @see RequestHandlerComposite
+ * @see DefaultRequestHandler
  */
 public class HTTPServer {
 	/*
@@ -77,15 +81,11 @@ public class HTTPServer {
 	 *
 	 * <p><b>Ways to use: </b><ul>
 	 *
-	 * <li> Instantiate the {@link HTTPServer} with wanted end point address and port </li> <li> Override {@link
-	 * HTTPSession#answer(String, String, java.util.Hashtable, java.util.Hashtable) HTTPSession.answer()} and redefine
-	 * the server behavior for your own application </li>
+	 * <li> Define a {@link RequestHandler} to expose the different services of your application. </li> <li> Instantiate
+	 * the {@link HTTPServer} with wanted underlying socket parameters and the {@link RequestHandler}. </li>
 	 *
 	 * </ul>
 	 */
-
-	// FIXME for memory usage only
-	// public Runtime r;
 
 	/**
 	 * This size is used for the request and answer buffer size (two buffers will be created).
@@ -109,7 +109,7 @@ public class HTTPServer {
 
 	private final RequestHandlerComposite rootRequestHandler;
 
-	private final HTTPEncodingRegister encodingRegister;
+	private final HTTPEncodingRegistry encodingRegistry;
 
 	/**
 	 * Array of {@link Thread}s for the session jobs.
@@ -136,11 +136,24 @@ public class HTTPServer {
 	}
 
 	public HTTPServer(TCPServer tcpServer, int jobCount, RequestHandler requestHandler) {
-		this(tcpServer, jobCount, requestHandler, new HTTPEncodingRegister());
+		this(tcpServer, jobCount, requestHandler, new HTTPEncodingRegistry());
 	}
 
+	/**
+	 * Constructs a HTTP server that manage jobs to handle the connections from <code>tcpServer</code> with
+	 * <code>requestHandler</code>.
+	 *
+	 * @param tcpServer
+	 *            the underlying TCP server that stores upcoming connections.
+	 * @param jobCount
+	 *            the number of jobs to run.
+	 * @param requestHandler
+	 *            the application request handler.
+	 * @param encodingRegistry
+	 *            the registry of available encoding handlers.
+	 */
 	public HTTPServer(TCPServer tcpServer, int jobCount, final RequestHandler requestHandler,
-			HTTPEncodingRegister encodingRegister) {
+			HTTPEncodingRegistry encodingRegistry) {
 		this.server = tcpServer;
 
 		if (jobCount <= 0) {
@@ -149,22 +162,22 @@ public class HTTPServer {
 		this.sessionJobsCount = jobCount;
 
 		this.rootRequestHandler = new RequestHandlerComposite();
-		this.rootRequestHandler.addChild(IfNoneMatchRequestHandler.instance);
-		this.rootRequestHandler.addChild(new RequestHandler() {
+		this.rootRequestHandler.addRequestHandler(IfNoneMatchRequestHandler.instance);
+		this.rootRequestHandler.addRequestHandler(new RequestHandler() {
 			@Override
-			public HTTPResponse process(HTTPRequest request) {
+			public HTTPResponse process(HTTPRequest request, Map<String, String> attributes) {
 				try {
-					return requestHandler.process(request);
+					return requestHandler.process(request, attributes);
 				} catch (Throwable e) {
-					Messages.LOGGER.log(Level.SEVERE, Messages.CATEGORY, Messages.ERROR_UNKNOWN, e);
+					Messages.LOGGER.log(Level.SEVERE, Messages.CATEGORY_HOKA, Messages.ERROR_UNKNOWN, e);
 					return HTTPResponse.RESPONSE_INTERNAL_ERROR;
 				}
 			}
 
 		});
-		this.rootRequestHandler.addChild(NotFoundRequestHandler.instance);
+		this.rootRequestHandler.addRequestHandler(NotFoundRequestHandler.instance);
 
-		this.encodingRegister = encodingRegister;
+		this.encodingRegistry = encodingRegistry;
 	}
 
 	/**
@@ -223,15 +236,15 @@ public class HTTPServer {
 							return;
 						}
 
-						Messages.LOGGER.log(Level.FINE, Messages.CATEGORY, Messages.PROCESS_CONNECTION,
+						Messages.LOGGER.log(Level.FINE, Messages.CATEGORY_HOKA, Messages.PROCESS_CONNECTION,
 								Integer.valueOf(connection.hashCode()), connection.getInetAddress().toString());
 
 						handleConnection(connection);
 
-						Messages.LOGGER.log(Level.FINE, Messages.CATEGORY, Messages.CONNECTION_CLOSED,
+						Messages.LOGGER.log(Level.FINE, Messages.CATEGORY_HOKA, Messages.CONNECTION_CLOSED,
 								Integer.valueOf(connection.hashCode()), connection.getInetAddress().toString());
 					} catch (IOException e) {
-						Messages.LOGGER.log(Level.WARNING, Messages.CATEGORY, Messages.ERROR_UNKNOWN, e);
+						Messages.LOGGER.log(Level.WARNING, Messages.CATEGORY_HOKA, Messages.ERROR_UNKNOWN, e);
 					}
 				}
 			}
@@ -249,11 +262,11 @@ public class HTTPServer {
 				String responseMessage;
 
 				try {
-					request = new HTTPRequest(inputStream, this.encodingRegister);
+					request = new HTTPRequest(inputStream, this.encodingRegistry);
 
-					response = this.rootRequestHandler.process(request);
+					response = this.rootRequestHandler.process(request, new HashMap<String, String>());
 
-					encodingHandler = this.encodingRegister
+					encodingHandler = this.encodingRegistry
 							.getEncodingHandler(request.getHeaderField(HTTPConstants.FIELD_ACCEPT_ENCODING));
 
 					if (encodingHandler == null && CalibrationConstants.STRICT_ACCEPT_ENCODING_COMPLIANCE) {
@@ -295,14 +308,14 @@ public class HTTPServer {
 
 				String status = response.getStatus();
 				Messages.LOGGER.log(status.equals(HTTPConstants.HTTP_STATUS_OK) ? Level.FINE : Level.INFO,
-						Messages.CATEGORY, Messages.HTTP_RESPONSE, Integer.valueOf(connection.hashCode()),
+						Messages.CATEGORY_HOKA, Messages.HTTP_RESPONSE, Integer.valueOf(connection.hashCode()),
 						connection.getInetAddress().toString(), status, responseMessage);
 
-				response.sendResponse(outputStream, encodingHandler, this.encodingRegister, getBufferSize());
+				response.sendResponse(outputStream, encodingHandler, this.encodingRegistry, getBufferSize());
 			} while (keepAlive);
 		} catch (IOException e) {
 			// connection lost
-			Messages.LOGGER.log(Level.INFO, Messages.CATEGORY, Messages.CONNECTION_LOST,
+			Messages.LOGGER.log(Level.INFO, Messages.CATEGORY_HOKA, Messages.CONNECTION_LOST,
 					Integer.valueOf(connection.hashCode()), connection.getInetAddress().toString());
 		}
 	}

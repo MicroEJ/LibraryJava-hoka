@@ -7,6 +7,8 @@
  */
 package ej.hoka.http;
 
+import java.util.Map;
+
 import ej.hoka.http.requesthandler.RequestHandler;
 
 /**
@@ -21,10 +23,10 @@ class IfNoneMatchRequestHandler implements RequestHandler {
 	 * The instance of this stateless request handler.
 	 * </p>
 	 */
-	public static final IfNoneMatchRequestHandler instance = new IfNoneMatchRequestHandler();
+	static final IfNoneMatchRequestHandler instance = new IfNoneMatchRequestHandler();
 
 	@Override
-	public HTTPResponse process(HTTPRequest request) {
+	public HTTPResponse process(HTTPRequest request, Map<String, String> attributes) {
 		String etag = request.getHeaderField(HTTPConstants.FIELD_IF_NONE_MATCH);
 
 		if (etag == null) {

@@ -15,7 +15,7 @@ import java.util.Map;
 
 import ej.hoka.http.body.BodyParser;
 import ej.hoka.http.body.ParameterParser;
-import ej.hoka.http.encoding.HTTPEncodingRegister;
+import ej.hoka.http.encoding.HTTPEncodingRegistry;
 import ej.hoka.http.encoding.IHTTPEncodingHandler;
 import ej.hoka.http.encoding.IHTTPTransferCodingHandler;
 import ej.hoka.http.encoding.UnsupportedHTTPEncodingException;
@@ -97,13 +97,12 @@ public class HTTPRequest {
 	/**
 	 * Error Malformed HTTP Request.
 	 */
-	private static final IllegalArgumentException MALFORMED_HTTP_REQUEST = new IllegalArgumentException(
-			"Malformed HTTP Request"); //$NON-NLS-1$
+	private static final String MALFORMED_HTTP_REQUEST = "Malformed HTTP Request"; //$NON-NLS-1$
 
 	/**
 	 * Error connection lost.
 	 */
-	private static final IOException CONNECTION_LOST = new IOException("Connection lost"); //$NON-NLS-1$
+	private static final String CONNECTION_LOST = "Connection lost"; //$NON-NLS-1$
 
 	/**
 	 * Request method code.
@@ -140,25 +139,27 @@ public class HTTPRequest {
 	 */
 	private final InputStream body;
 
+	private Map<String, String> cookies;
+
 	/**
 	 * Constructs a new instance of HTTPRequest.
 	 *
 	 * @param inputStream
 	 *            the input stream of the request
-	 * @param encodingRegister
+	 * @param encodingRegistry
 	 *            the register of available encoding and transfer coding handlers.
 	 * @throws IOException
 	 *             if connection is lost during processing the request
 	 * @throws IllegalArgumentException
 	 *             if parsing the request failed
 	 */
-	protected HTTPRequest(InputStream inputStream, HTTPEncodingRegister encodingRegister) throws IOException {
+	protected HTTPRequest(InputStream inputStream, HTTPEncodingRegistry encodingRegistry) throws IOException {
 		this.method = parseMethod(inputStream);
 		this.uri = parseURI(inputStream, this.parameters = new HashMap<>(10));
 		this.version = parseVersion(inputStream);
 		this.header = parseHeaderFields(inputStream);
 
-		this.body = getContentEncodingStream(inputStream, encodingRegister);
+		this.body = getContentEncodingStream(inputStream, encodingRegistry);
 	}
 
 	/**
@@ -235,8 +236,41 @@ public class HTTPRequest {
 	}
 
 	/**
+	 * Return the cookies of the request.
+	 * <p>
+	 * Cookies are lazily parsed.
+	 *
+	 * @return the cookies.
+	 */
+	public Map<String, String> getCookies() {
+		if (this.cookies == null) {
+			this.cookies = parseCookies(this.header.get(HTTPConstants.FIELD_COOKIES));
+		}
+		return this.cookies;
+	}
+
+	/**
+	 * Return the cookie of the request with given name.
+	 * <p>
+	 * Cookies are lazily parsed.
+	 *
+	 * @param name
+	 *            the name of the cookie.
+	 * @return the cookie.
+	 */
+	public String getCookie(String name) {
+		if (name == null) {
+			return null;
+		}
+		return getCookies().get(name);
+	}
+
+	/**
 	 * Request the body to be parsed.
 	 *
+	 * @param bodyParser
+	 *            the parser.
+	 * @return the parsed body.
 	 * @throws IOException
 	 *             if an {@link IOException} occurs during parsing.
 	 */
@@ -276,14 +310,12 @@ public class HTTPRequest {
 	 *         been found to manage this encoding.
 	 * @throws IOException
 	 *             when I/O Error occurs.
-	 * @throws HTTPErrorException
-	 *             if no suitable {@link IHTTPEncodingHandler} is found
 	 */
-	private InputStream getContentEncodingStream(InputStream in, HTTPEncodingRegister encodingRegister)
+	private InputStream getContentEncodingStream(InputStream in, HTTPEncodingRegistry encodingRegistry)
 			throws IOException {
 		// 1) transfer encoding
 		String transferEncoding = getHeaderField(HTTPConstants.FIELD_TRANSFER_ENCODING);
-		IHTTPTransferCodingHandler transferCodingHandler = encodingRegister.getTransferCodingHandler(transferEncoding);
+		IHTTPTransferCodingHandler transferCodingHandler = encodingRegistry.getTransferCodingHandler(transferEncoding);
 		if (transferCodingHandler == null) {
 			// unable to manage transfer encoding
 			throw new UnsupportedHTTPEncodingException(HTTPConstants.HTTP_STATUS_NOTIMPLEMENTED,
@@ -294,7 +326,7 @@ public class HTTPRequest {
 		// 2) content encoding
 		String contentEncoding = getHeaderField(HTTPConstants.FIELD_CONTENT_ENCODING);
 		if (contentEncoding != null) {
-			IHTTPEncodingHandler handler = encodingRegister.getEncodingHandler(contentEncoding);
+			IHTTPEncodingHandler handler = encodingRegistry.getEncodingHandler(contentEncoding);
 			if (handler == null) {
 				throw new UnsupportedHTTPEncodingException(HTTPConstants.HTTP_STATUS_NOTIMPLEMENTED,
 						HTTPConstants.FIELD_TRANSFER_ENCODING + RESPONSE_COLON + contentEncoding);
@@ -320,7 +352,7 @@ public class HTTPRequest {
 		int read;
 		while ((read = input.read()) != ' ') {
 			if (read == -1) {
-				throw CONNECTION_LOST;
+				throw new IOException(CONNECTION_LOST);
 			}
 			builder.append((char) read);
 		}
@@ -336,7 +368,7 @@ public class HTTPRequest {
 		case HTTPConstants.HTTP_METHOD_DELETE:
 			return DELETE;
 		default:
-			throw MALFORMED_HTTP_REQUEST;
+			throw new IllegalArgumentException(MALFORMED_HTTP_REQUEST);
 		}
 	}
 
@@ -348,8 +380,6 @@ public class HTTPRequest {
 	 * @return <code>true</code> if succeed, <code>false</code> otherwise
 	 * @throws IOException
 	 *             if connection has been lost
-	 * @throws HTTPErrorException
-	 *             if the parsing was unsuccessful.
 	 */
 	private static String parseURI(InputStream input, Map<String, String> parameters) throws IOException {
 		StringBuilder sb = new StringBuilder(Math.min(64, input.available()));
@@ -359,7 +389,7 @@ public class HTTPRequest {
 			// "/resources/index.html?foo=bar " or "/resources/index "
 			int i = input.read();
 			if (i == -1) {
-				throw CONNECTION_LOST;
+				throw new IOException(CONNECTION_LOST);
 			}
 
 			switch (i) {
@@ -389,7 +419,7 @@ public class HTTPRequest {
 			int r = input.read(version, readBytes, 10 - readBytes);
 			if (r == -1) {
 				// EOF
-				throw CONNECTION_LOST;
+				throw new IOException(CONNECTION_LOST);
 			}
 			readBytes += r;
 		}
@@ -404,8 +434,6 @@ public class HTTPRequest {
 	 * @return
 	 * @throws IOException
 	 *             if connection has been lost
-	 * @throws HTTPErrorException
-	 *             if the parsing was unsuccessful
 	 */
 	private static Map<String, String> parseHeaderFields(InputStream input) throws IOException {
 		// headers is a hashmap
@@ -422,14 +450,14 @@ public class HTTPRequest {
 		int i = input.read();
 		loop: while (true) {
 			if (i == -1) {
-				throw CONNECTION_LOST;
+				throw new IOException(CONNECTION_LOST);
 			}
 
 			switch (i) {
 			case PERCENTAGE_CHAR:
 				if (curBuffer == sbKey) {
 					// no percent encoding allowed in HTTP header field name
-					throw MALFORMED_HTTP_REQUEST;
+					throw new IllegalArgumentException(MALFORMED_HTTP_REQUEST);
 				}
 				/*
 				 * RFC5987 is not implemented
@@ -458,7 +486,7 @@ public class HTTPRequest {
 			case CARRIAGE_RETURN_CHAR:
 				i = input.read();
 				if (i != NEWLINE_CHAR) {
-					throw MALFORMED_HTTP_REQUEST;
+					throw new IllegalArgumentException(MALFORMED_HTTP_REQUEST);
 				}
 
 				// end of header
@@ -470,7 +498,7 @@ public class HTTPRequest {
 				// if next char is a white space, the header is not finished
 				i = input.read();
 				if (i == -1) {
-					throw CONNECTION_LOST;
+					throw new IOException(CONNECTION_LOST);
 				}
 
 				if ((i == SPACE_CHAR) || (i == TABULATION_CHAR)) {
@@ -509,6 +537,26 @@ public class HTTPRequest {
 		}
 
 		return header;
+	}
+
+	private static Map<String, String> parseCookies(String cookiesHeader) {
+		Map<String, String> cookies = new HashMap<>();
+
+		if (cookiesHeader == null) {
+			return cookies;
+		}
+
+		int prev = 0;
+		int next;
+
+		while (prev != -1 && (next = cookiesHeader.indexOf('=', prev)) != -1) {
+			String name = cookiesHeader.substring(prev, next);
+			String value = cookiesHeader.substring(next + 1);
+			cookies.put(name, value);
+			prev = cookiesHeader.indexOf(';', next);
+		}
+
+		return cookies;
 	}
 
 }

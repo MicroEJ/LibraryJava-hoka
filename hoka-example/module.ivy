@@ -29,7 +29,7 @@
 		<dependency org="ej.api" name="bon" rev="1.3.0"/>
 		<dependency org="ej.api" name="net" rev="1.1.0"/>
 		
-		<dependency org="ej.library.iot" name="hoka" rev="6.1.0"/>
+		<dependency org="ej.library.iot" name="hoka" rev="7.0.0"/>
 		<dependency org="ej.library.iot" name="ssl-util" rev="2.2.0"/>
 	</dependencies>
 </ivy-module>

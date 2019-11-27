@@ -148,7 +148,7 @@ public class TCPServer {
 	public void start() throws IOException {
 		if (!isStopped()) {
 			throw new IllegalStateException(
-					Messages.BUILDER.buildMessage(Level.SEVERE, Messages.CATEGORY, Messages.MULTIPLE_START_FORBIDDEN));
+					Messages.BUILDER.buildMessage(Level.SEVERE, Messages.CATEGORY_HOKA, Messages.MULTIPLE_START_FORBIDDEN));
 		}
 
 		this.streamConnections = new Socket[this.maxOpenedConnections + 1]; // always an empty index in order to
@@ -162,7 +162,7 @@ public class TCPServer {
 		this.thread = new Thread(newProcess(), getName());
 		this.thread.start();
 
-		Messages.LOGGER.log(Level.INFO, Messages.CATEGORY, Messages.SERVER_STARTED);
+		Messages.LOGGER.log(Level.INFO, Messages.CATEGORY_HOKA, Messages.SERVER_STARTED);
 	}
 
 	/**
@@ -195,7 +195,7 @@ public class TCPServer {
 			this.streamConnections.notifyAll();
 		}
 
-		Messages.LOGGER.log(Level.INFO, Messages.CATEGORY, Messages.SERVER_STOPPED);
+		Messages.LOGGER.log(Level.INFO, Messages.CATEGORY_HOKA, Messages.SERVER_STOPPED);
 	}
 
 	/**
@@ -212,13 +212,13 @@ public class TCPServer {
 			}
 
 			if (nextPtr == this.lastReadPtr) {
-				Messages.LOGGER.log(Level.SEVERE, Messages.CATEGORY, Messages.TOO_MANY_CONNECTION,
+				Messages.LOGGER.log(Level.SEVERE, Messages.CATEGORY_HOKA, Messages.TOO_MANY_CONNECTION,
 						connection.getInetAddress().toString(), Integer.valueOf(this.maxOpenedConnections));
 				tooManyOpenConnections(connection);
 				return;
 			}
 
-			Messages.LOGGER.log(Level.INFO, Messages.CATEGORY, Messages.NEW_CONNECTION,
+			Messages.LOGGER.log(Level.INFO, Messages.CATEGORY_HOKA, Messages.NEW_CONNECTION,
 					Integer.valueOf(connection.hashCode()), connection.getInetAddress().toString());
 
 			this.streamConnections[this.lastAddedPtr = nextPtr] = connection;
@@ -285,7 +285,7 @@ public class TCPServer {
 		try {
 			connection.close();
 		} catch (IOException e) {
-			Messages.LOGGER.log(Level.SEVERE, Messages.CATEGORY, Messages.ERROR_UNKNOWN, e);
+			Messages.LOGGER.log(Level.SEVERE, Messages.CATEGORY_HOKA, Messages.ERROR_UNKNOWN, e);
 		}
 	}
 
@@ -311,7 +311,7 @@ public class TCPServer {
 						// Connection cannot be handled but server is still alive.
 						// It may happen if too many requests are made simultaneously.
 
-						Messages.LOGGER.log(Level.SEVERE, Messages.CATEGORY, Messages.ERROR_UNKNOWN, e);
+						Messages.LOGGER.log(Level.SEVERE, Messages.CATEGORY_HOKA, Messages.ERROR_UNKNOWN, e);
 					}
 				}
 			}

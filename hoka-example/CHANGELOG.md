@@ -7,13 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 1.4.0 - RC
 
-### Added
-
-  - Add timeout setting.
-
 ### Changed
 
-  - Update hoka version to 6.1.0.
+  - Update hoka version to 7.0.0.
   
 ## 1.3.0 - 2019-10-31
 

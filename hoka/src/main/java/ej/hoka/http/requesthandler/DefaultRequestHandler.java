@@ -8,6 +8,7 @@
 package ej.hoka.http.requesthandler;
 
 import java.io.InputStream;
+import java.util.Map;
 
 import ej.hoka.http.HTTPConstants;
 import ej.hoka.http.HTTPRequest;
@@ -44,7 +45,7 @@ public class DefaultRequestHandler implements RequestHandler {
 	 * @return the {@link HTTPResponse} containing the resource, or <code>null</code> if not found.
 	 */
 	@Override
-	public HTTPResponse process(HTTPRequest request) {
+	public HTTPResponse process(HTTPRequest request, Map<String, String> attributes) {
 		String uri = request.getURI();
 
 		InputStream resourceStream = getClass().getResourceAsStream(uri);

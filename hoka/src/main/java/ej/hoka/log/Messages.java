@@ -31,6 +31,11 @@ public final class Messages {
 	public static final int MULTIPLE_START_FORBIDDEN = -2;
 
 	/**
+	 * URI is empty.
+	 */
+	public static final int EMPTY_URI = -3;
+
+	/**
 	 * Unknown error.
 	 */
 	public static final int ERROR_UNKNOWN = -255;
@@ -75,9 +80,14 @@ public final class Messages {
 	public static final int CONNECTION_CLOSED = 7;
 
 	/**
-	 * Category message.
+	 * Hoka category message.
 	 */
-	public static final String CATEGORY = "Hoka"; //$NON-NLS-1$
+	public static final String CATEGORY_HOKA = "Hoka"; //$NON-NLS-1$
+
+	/**
+	 * REST category message.
+	 */
+	public static final String CATEGORY_REST = "REST"; //$NON-NLS-1$
 
 	/**
 	 * The message builder.

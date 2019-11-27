@@ -16,16 +16,16 @@ import ej.hoka.http.support.QualityArgument;
 /**
  * Class that stores a register of available encoding and transfer coding handlers.
  */
-public class HTTPEncodingRegister {
+public class HTTPEncodingRegistry {
 
 	private final Map<String, IHTTPEncodingHandler> encodingHandlers;
 	private final Map<String, IHTTPTransferCodingHandler> transferCodingHandlers;
 
 	/**
-	 * Constructs the {@link HTTPEncodingRegister} with {@link IdentityEncodingHandler},
+	 * Constructs the {@link HTTPEncodingRegistry} with {@link IdentityEncodingHandler},
 	 * {@link IdentityTransferCodingHandler} and {@link ChunkedTransferCodingHandler} registered.
 	 */
-	public HTTPEncodingRegister() {
+	public HTTPEncodingRegistry() {
 		this.encodingHandlers = new HashMap<>(0);
 
 		this.transferCodingHandlers = new HashMap<>(1);
@@ -121,7 +121,7 @@ public class HTTPEncodingRegister {
 	 * Returns the most suitable {@link IHTTPEncodingHandler} to match the encodings described in
 	 * <code>Accept-Encoding</code> header.
 	 *
-	 * @param encodingParam
+	 * @param encoding
 	 *            is on the form <code>gzip, identity</code> or <code>gzip; q=0.8, identity; q=0.2</code>
 	 * @return the {@link IHTTPEncodingHandler}, or <code>null</code> if no suitable handler can be found
 	 */

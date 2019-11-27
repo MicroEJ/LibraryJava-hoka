@@ -177,6 +177,13 @@ public final class HTTPConstants {
 
 	/**
 	 * <p>
+	 * HTTP header field (in lower case) <code>cookie</code>.
+	 * </p>
+	 */
+	public static final String FIELD_COOKIES = "cookie"; //$NON-NLS-1$
+
+	/**
+	 * <p>
 	 * Value for HTTP header field "Connection" (<code>keep-alive</code>).
 	 * </p>
 	 */

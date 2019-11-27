@@ -7,6 +7,8 @@
  */
 package ej.hoka.http.requesthandler;
 
+import java.util.Map;
+
 import ej.hoka.http.HTTPRequest;
 import ej.hoka.http.HTTPResponse;
 
@@ -23,8 +25,10 @@ public interface RequestHandler {
 	 *
 	 * @param request
 	 *            the {@link HTTPRequest} to process.
+	 * @param attributes
+	 *            the attributes of the request.
 	 * @return the {@link HTTPResponse} to send, or null if not handled by this {@link RequestHandler}.
 	 */
-	HTTPResponse process(HTTPRequest request);
+	HTTPResponse process(HTTPRequest request, Map<String, String> attributes);
 
 }

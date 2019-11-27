@@ -7,6 +7,8 @@
  */
 package ej.hoka.http;
 
+import java.util.Map;
+
 import ej.hoka.http.requesthandler.RequestHandler;
 
 /**
@@ -22,10 +24,10 @@ class NotFoundRequestHandler implements RequestHandler {
 	 * The instance of this stateless request handler.
 	 * </p>
 	 */
-	public static final NotFoundRequestHandler instance = new NotFoundRequestHandler();
+	static final NotFoundRequestHandler instance = new NotFoundRequestHandler();
 
 	@Override
-	public HTTPResponse process(HTTPRequest request) {
+	public HTTPResponse process(HTTPRequest request, Map<String, String> attributes) {
 		return HTTPResponse.RESPONSE_NOT_FOUND;
 	}
 

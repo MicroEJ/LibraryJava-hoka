@@ -16,7 +16,7 @@ import java.util.Hashtable;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import ej.hoka.http.encoding.HTTPEncodingRegister;
+import ej.hoka.http.encoding.HTTPEncodingRegistry;
 import ej.hoka.http.encoding.IHTTPEncodingHandler;
 import ej.hoka.http.encoding.IHTTPTransferCodingHandler;
 import ej.hoka.http.support.MIMEUtils;
@@ -209,6 +209,24 @@ public class HTTPResponse {
 	 */
 	public HTTPResponse(String data, String encoding) throws UnsupportedEncodingException {
 		this(data == null ? new byte[] {} : data.getBytes(encoding));
+	}
+
+	/**
+	 * <p>
+	 * Creates a new {@link HTTPResponse} using the {@link InputStream} <code>body</code> as response data.
+	 * </p>
+	 *
+	 * @param status
+	 *            the status of the response.
+	 * @param mimeType
+	 *            the mime type of the response.
+	 * @param body
+	 *            the {@link InputStream} to be used as response data.
+	 */
+	public HTTPResponse(String status, String mimeType, InputStream body) {
+		this(body);
+		setStatus(status);
+		setMimeType(mimeType);
 	}
 
 	private static HTTPResponse createResponseFromStatus(String status) {
@@ -437,12 +455,12 @@ public class HTTPResponse {
 
 	/**
 	 * Sends the {@link HTTPResponse} to the {@link OutputStream}.
-	 * 
+	 *
 	 * @throws IOException
 	 *
 	 */
 	void sendResponse(OutputStream outputStream, IHTTPEncodingHandler encodingHandler,
-			HTTPEncodingRegister encodingRegister, int bufferSize) throws IOException {
+			HTTPEncodingRegistry encodingRegistry, int bufferSize) throws IOException {
 		if (encodingHandler != null) {
 			addHeaderField(HTTPConstants.FIELD_CONTENT_ENCODING, encodingHandler.getId());
 		}
@@ -462,13 +480,13 @@ public class HTTPResponse {
 				// data will be transmitted using chunked transfer coding
 				// only when dataStream is used, the size is known otherwise
 				addHeaderField(HTTPConstants.FIELD_TRANSFER_ENCODING,
-						encodingRegister.getChunkedTransferCodingHandler().getId());
+						encodingRegistry.getChunkedTransferCodingHandler().getId());
 			} // else the length is already defined in a header by the response
 
 			writeHTTPHeader(outputStream);
 
 			if (rawData != null) {
-				try (OutputStream dataOutput = encodingRegister.getIdentityTransferCodingHandler().open(this,
+				try (OutputStream dataOutput = encodingRegistry.getIdentityTransferCodingHandler().open(this,
 						outputStream)) {
 					if (encodingHandler != null) {
 						try (OutputStream encodedDataOutput = encodingHandler.open(dataOutput)) {
@@ -481,8 +499,8 @@ public class HTTPResponse {
 				}
 			} else if (dataStream != null) {
 				try (OutputStream dataOutput = (length == -1)
-						? encodingRegister.getChunkedTransferCodingHandler().open(this, outputStream)
-						: encodingRegister.getIdentityTransferCodingHandler().open(this, outputStream)) {
+						? encodingRegistry.getChunkedTransferCodingHandler().open(this, outputStream)
+						: encodingRegistry.getIdentityTransferCodingHandler().open(this, outputStream)) {
 					try (OutputStream ecodedOutput = (encodingHandler != null) ? encodingHandler.open(dataOutput)
 							: null) {
 						OutputStream output = (ecodedOutput != null) ? ecodedOutput : dataOutput;
@@ -499,7 +517,7 @@ public class HTTPResponse {
 						}
 					}
 				} catch (Throwable t) {
-					Messages.LOGGER.log(Level.SEVERE, Messages.CATEGORY, Messages.ERROR_UNKNOWN, t);
+					Messages.LOGGER.log(Level.SEVERE, Messages.CATEGORY_HOKA, Messages.ERROR_UNKNOWN, t);
 				} finally {
 					// close data output stream. This does not close underlying
 					// TCP connection since transfer output stream does not
@@ -526,7 +544,7 @@ public class HTTPResponse {
 	 *             if the connection has been lost
 	 */
 	protected void writeResponse(OutputStream output, IHTTPEncodingHandler encodingHandler,
-			HTTPEncodingRegister encodingRegister, int bufferSize) throws IOException {
+			HTTPEncodingRegistry encodingRegistry, int bufferSize) throws IOException {
 	}
 
 	/**

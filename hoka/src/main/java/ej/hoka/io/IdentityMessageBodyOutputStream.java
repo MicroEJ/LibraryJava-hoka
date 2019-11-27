@@ -44,8 +44,8 @@ public class IdentityMessageBodyOutputStream extends OutputStream {
 	/**
 	 * <p>
 	 * Closes this output stream and flushes the underlying {@link OutputStream} . This method DOES NOT close the
-	 * underlying stream (i.e. the TCP connection stream). It is the responsibility of the {@link HTTPSession} to close
-	 * the underlying stream.
+	 * underlying stream (i.e. the TCP connection stream). It is the responsibility of the caller to close the
+	 * underlying stream.
 	 * </p>
 	 *
 	 * @throws IOException

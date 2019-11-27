@@ -9,6 +9,7 @@ package ej.hoka.http.requesthandler;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import ej.hoka.http.HTTPRequest;
 import ej.hoka.http.HTTPResponse;
@@ -34,9 +35,9 @@ public class RequestHandlerComposite implements RequestHandler {
 	}
 
 	@Override
-	public HTTPResponse process(HTTPRequest request) {
+	public HTTPResponse process(HTTPRequest request, Map<String, String> attributes) {
 		for (RequestHandler handler : this.requestHandlers) {
-			HTTPResponse response = handler.process(request);
+			HTTPResponse response = handler.process(request, attributes);
 			if (response != null) {
 				return response;
 			}
@@ -50,7 +51,7 @@ public class RequestHandlerComposite implements RequestHandler {
 	 * @param handler
 	 *            the {@link RequestHandler} to add.
 	 */
-	public void addChild(RequestHandler handler) {
+	public void addRequestHandler(RequestHandler handler) {
 		if (handler == null) {
 			throw new IllegalArgumentException();
 		}

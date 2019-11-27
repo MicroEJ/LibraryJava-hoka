@@ -9,6 +9,7 @@ package com.microej.example.hoka;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 
 import ej.hoka.http.HTTPConstants;
 import ej.hoka.http.HTTPRequest;
@@ -25,7 +26,7 @@ public class SimpleRequestHandler extends DefaultRequestHandler {
 	private static final String DEFAULT_ROOT_RESOURCE = "/html/index.html";
 
 	@Override
-	public HTTPResponse process(HTTPRequest request) {
+	public HTTPResponse process(HTTPRequest request, Map<String, String> attributes) {
 		HTTPResponse response = null;
 		String uri = request.getURI();
 
@@ -61,7 +62,7 @@ public class SimpleRequestHandler extends DefaultRequestHandler {
 				e.printStackTrace();
 			}
 
-			response = super.process(request);
+			response = super.process(request, attributes);
 		}
 		return response;
 	}

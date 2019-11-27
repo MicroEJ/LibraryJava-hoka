@@ -30,7 +30,7 @@ import ej.hoka.http.HTTPServer;
  * Encoding handlers should be registered in the {@link HTTPServer} in order to use them.
  * </p>
  *
- * @see HTTPEncodingRegister#registerTransferCodingHandler(IHTTPTransferCodingHandler)
+ * @see HTTPEncodingRegistry#registerTransferCodingHandler(IHTTPTransferCodingHandler)
  *
  */
 public interface IHTTPTransferCodingHandler {
