@@ -25,9 +25,9 @@ public class URLDecoder {
 	/**
 	 * Returns the character from the stream, which encode as "%ab" (single byte UTF-8) or "%ab%cd" (two byte ). The
 	 * initial % mark has been already reed. The character is represented as %ab where "a" and "b" is a hexa character
-	 * (0-9, A-F) if the value of (a * 16 + b) > 127 the next 3 bytes will be read as the second byte of a two-byte
-	 * UTF-8 char. When a character encoding problem is encountered, returns -1 (ffff). Since there is no unicode
-	 * character with this code, this does not cause problems.
+	 * (0-9, A-F) if the value of <code>(a * 16 + b) > 127</code> the next 3 bytes will be read as the second byte of a
+	 * two-byte UTF-8 char. When a character encoding problem is encountered, returns -1 (ffff). Since there is no
+	 * unicode character with this code, this does not cause problems.
 	 *
 	 * When a percentage encoded UTF-16 Surrogate Pair is encountered (integer value above 0xFFFF) this method
 	 * calculates the head and trail surrogate code point for the Unicode character. The head code point is inserted
@@ -50,10 +50,10 @@ public class URLDecoder {
 	/**
 	 * Returns the character from the stream, which encode as "%ab" (single byte UTF-8) or "%ab%cd" (two byte ). The
 	 * initial % mark has been already reed. The character is represented as %ab where "a" and "b" is a hexa character
-	 * (0-9, A-F) if the value of (a * 16 + b) > 127 the next 3 bytes will be read as the second byte of a two-byte
-	 * UTF-8 char. When a character encoding problem is encountered, returns -1 (ffff). Since there is no unicode
-	 * character with this code, this does not cause problems. Unicode characters above code point ffff are not handled
-	 * (Suplementary characters).
+	 * (0-9, A-F) if the value of <code>(a * 16 + b) > 127</code> the next 3 bytes will be read as the second byte of a
+	 * two-byte UTF-8 char. When a character encoding problem is encountered, returns -1 (ffff). Since there is no
+	 * unicode character with this code, this does not cause problems. Unicode characters above code point ffff are not
+	 * handled (Suplementary characters).
 	 *
 	 * @param is
 	 *            the Input Stream
