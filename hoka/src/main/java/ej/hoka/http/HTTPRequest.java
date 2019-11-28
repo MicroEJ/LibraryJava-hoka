@@ -268,6 +268,8 @@ public class HTTPRequest {
 	/**
 	 * Request the body to be parsed.
 	 *
+	 * @param <T>
+	 *            the type of body.
 	 * @param bodyParser
 	 *            the parser.
 	 * @return the parsed body.

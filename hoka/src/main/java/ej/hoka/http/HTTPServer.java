@@ -116,25 +116,92 @@ public class HTTPServer {
 	 */
 	private Thread[] jobs;
 
+	/**
+	 * Constructs the underlying {@link TCPServer} and the HTTP server that manage jobs to handle the connections from
+	 * the {@link TCPServer} and a {@link DefaultRequestHandler}.
+	 *
+	 * @param port
+	 *            the port to use.
+	 * @param maxSimultaneousConnection
+	 *            the maximum number of simultaneously opened connections.
+	 * @param jobCount
+	 *            the number of jobs to run.
+	 */
 	public HTTPServer(int port, int maxSimultaneousConnection, int jobCount) {
 		this(port, maxSimultaneousConnection, jobCount, new DefaultRequestHandler());
 	}
 
+	/**
+	 * Constructs the underlying {@link TCPServer} and the HTTP server that manage jobs to handle the connections from
+	 * the {@link TCPServer} with <code>requestHandler</code>.
+	 *
+	 * @param port
+	 *            the port to use.
+	 * @param maxSimultaneousConnection
+	 *            the maximum number of simultaneously opened connections.
+	 * @param jobCount
+	 *            the number of jobs to run.
+	 * @param requestHandler
+	 *            the application request handler.
+	 */
 	public HTTPServer(int port, int maxSimultaneousConnection, int jobCount, RequestHandler requestHandler) {
 		this(new TCPServer(port, maxSimultaneousConnection), jobCount, requestHandler);
 	}
 
+	/**
+	 * Constructs the underlying {@link TCPServer} and the HTTP server that manage jobs to handle the connections from
+	 * the {@link TCPServer} with <code>requestHandler</code>.
+	 *
+	 * @param port
+	 *            the port to use.
+	 * @param maxSimultaneousConnection
+	 *            the maximum number of simultaneously opened connections.
+	 * @param jobCount
+	 *            the number of jobs to run.
+	 * @param requestHandler
+	 *            the application request handler.
+	 * @param serverSocketFactory
+	 *            the {@link ServerSocketFactory}.
+	 */
 	public HTTPServer(int port, int maxSimultaneousConnection, int jobCount, RequestHandler requestHandler,
 			ServerSocketFactory serverSocketFactory) {
 		this(new TCPServer(port, maxSimultaneousConnection, serverSocketFactory), jobCount, requestHandler);
 	}
 
+	/**
+	 * Constructs the underlying {@link TCPServer} and the HTTP server that manage jobs to handle the connections from
+	 * the {@link TCPServer} with <code>requestHandler</code>.
+	 *
+	 * @param port
+	 *            the port to use.
+	 * @param maxSimultaneousConnection
+	 *            the maximum number of simultaneously opened connections.
+	 * @param jobCount
+	 *            the number of jobs to run.
+	 * @param requestHandler
+	 *            the application request handler.
+	 * @param serverSocketFactory
+	 *            the {@link ServerSocketFactory}.
+	 * @param keepAliveDuration
+	 *            the timeout duration for idling persistent connections.
+	 */
 	public HTTPServer(int port, int maxSimultaneousConnection, int jobCount, RequestHandler requestHandler,
 			ServerSocketFactory serverSocketFactory, int keepAliveDuration) {
 		this(new TCPServer(port, maxSimultaneousConnection, serverSocketFactory, keepAliveDuration), jobCount,
 				requestHandler);
 	}
 
+	/**
+	 * Constructs a HTTP server that manage jobs to handle the connections from <code>tcpServer</code> with
+	 * <code>requestHandler</code>.
+	 *
+	 * @param tcpServer
+	 *            the underlying TCP server that stores upcoming connections.
+	 * @param jobCount
+	 *            the number of jobs to run.
+	 * @param requestHandler
+	 *            the application request handler.
+	 */
 	public HTTPServer(TCPServer tcpServer, int jobCount, RequestHandler requestHandler) {
 		this(tcpServer, jobCount, requestHandler, new HTTPEncodingRegistry());
 	}
@@ -162,7 +229,9 @@ public class HTTPServer {
 		this.sessionJobsCount = jobCount;
 
 		this.rootRequestHandler = new RequestHandlerComposite();
+		// First, check if the resource matches the client cache
 		this.rootRequestHandler.addRequestHandler(IfNoneMatchRequestHandler.instance);
+		// Then, apply the application request handler and catch exceptions
 		this.rootRequestHandler.addRequestHandler(new RequestHandler() {
 			@Override
 			public HTTPResponse process(HTTPRequest request, Map<String, String> attributes) {
@@ -175,6 +244,7 @@ public class HTTPServer {
 			}
 
 		});
+		// In case the application request handler doesn't process the request, send a "404 Not Found" error
 		this.rootRequestHandler.addRequestHandler(NotFoundRequestHandler.instance);
 
 		this.encodingRegistry = encodingRegistry;

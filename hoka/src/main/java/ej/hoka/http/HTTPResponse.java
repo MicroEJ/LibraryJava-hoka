@@ -18,7 +18,6 @@ import java.util.Map.Entry;
 
 import ej.hoka.http.encoding.HTTPEncodingRegistry;
 import ej.hoka.http.encoding.IHTTPEncodingHandler;
-import ej.hoka.http.encoding.IHTTPTransferCodingHandler;
 import ej.hoka.http.support.MIMEUtils;
 import ej.hoka.log.Messages;
 import ej.util.message.Level;
@@ -530,21 +529,6 @@ public class HTTPResponse {
 			}
 		}
 		outputStream.flush();
-	}
-
-	/**
-	 * Send the {@link HTTPResponse} to the given {@link OutputStream} using the given {@link IHTTPEncodingHandler}.
-	 *
-	 * @param output
-	 *            {@link OutputStream} used to write the response to
-	 * @param encodingHandler
-	 *            the {@link IHTTPEncodingHandler} to encode the response. If <code>null</code>, the
-	 *            {@link IHTTPTransferCodingHandler} is used.
-	 * @throws IOException
-	 *             if the connection has been lost
-	 */
-	protected void writeResponse(OutputStream output, IHTTPEncodingHandler encodingHandler,
-			HTTPEncodingRegistry encodingRegistry, int bufferSize) throws IOException {
 	}
 
 	/**
