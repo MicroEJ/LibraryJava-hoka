@@ -12,7 +12,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -23,9 +22,7 @@ import ej.hoka.log.Messages;
 import ej.util.message.Level;
 
 /**
- * <p>
  * Represents a HTTP Response.
- * </p>
  */
 public class HTTPResponse {
 
@@ -107,6 +104,9 @@ public class HTTPResponse {
 	 */
 	private static final String RESPONSE_CONTENTTYPE = HTTPConstants.FIELD_CONTENT_TYPE + RESPONSE_COLON;
 
+	/**
+	 * The status.
+	 */
 	private String status;
 
 	/**
@@ -120,9 +120,7 @@ public class HTTPResponse {
 	private Object data;
 
 	/**
-	 * <p>
 	 * Do not update this value by hand, use {@link #setLength(long)} to maintain HTTP header.
-	 * </p>
 	 */
 	private long length = -1; // -1 means unknown
 
@@ -132,7 +130,7 @@ public class HTTPResponse {
 	private final HashMap<String, String> header = new HashMap<>(5);
 
 	/**
-	 * true if the {@link OutputStream} is closed.
+	 * <code>true</code> if the {@link OutputStream} is closed.
 	 *
 	 * @see #setDataStreamClosed()
 	 * @see #close()
@@ -140,43 +138,35 @@ public class HTTPResponse {
 	private boolean dataStreamClosed = false;
 
 	/**
-	 * <p>
 	 * Creates an empty {@link HTTPResponse}.
-	 * </p>
 	 */
 	public HTTPResponse() {
 		this(new byte[] {});
 	}
 
 	/**
-	 * <p>
 	 * Creates a new {@link HTTPResponse} using the given byte array as response data.
-	 * </p>
 	 *
 	 * @param data
-	 *            the data to send through response (as a raw byte array)
+	 *            the data to send through response (as a raw byte array).
 	 */
 	public HTTPResponse(byte[] data) {
 		setData(data);
 	}
 
 	/**
-	 * <p>
 	 * Creates a new {@link HTTPResponse} using the given {@link InputStream} as the response data.
-	 * </p>
 	 *
 	 * @param data
-	 *            the data to send through response (as a stream)
+	 *            the data to send through response (as a stream).
 	 */
 	public HTTPResponse(InputStream data) {
 		setData(data);
 	}
 
 	/**
-	 * <p>
 	 * Creates a new {@link HTTPResponse} using the given {@link String} as response data. The <code>data</code> is
 	 * transformed into bytes using the <code>ISO-8859-1</code> encoding.
-	 * </p>
 	 *
 	 * @param data
 	 *            the data to send through response (as a raw string)
@@ -186,10 +176,8 @@ public class HTTPResponse {
 	}
 
 	/**
-	 * <p>
 	 * Creates a new {@link HTTPResponse} using the {@link String} <code>data</code> as response data and the
 	 * <code>encoding</code>.
-	 * </p>
 	 *
 	 * @param data
 	 *            the {@link String} to be used as response body.
@@ -211,9 +199,7 @@ public class HTTPResponse {
 	}
 
 	/**
-	 * <p>
 	 * Creates a new {@link HTTPResponse} using the {@link InputStream} <code>body</code> as response data.
-	 * </p>
 	 *
 	 * @param status
 	 *            the status of the response.
@@ -228,17 +214,28 @@ public class HTTPResponse {
 		setMimeType(mimeType);
 	}
 
+	/**
+	 * Creates a new {@link HTTPResponse} using the {@link String} <code>body</code> as response data.
+	 *
+	 * @param status
+	 *            the status of the response.
+	 * @param mimeType
+	 *            the mime type of the response.
+	 * @param body
+	 *            the {@link String} to be used as response data.
+	 */
+	public HTTPResponse(String status, String mimeType, String body) {
+		this(body);
+		setStatus(status);
+		setMimeType(mimeType);
+	}
+
 	private static HTTPResponse createResponseFromStatus(String status) {
-		HTTPResponse response = new HTTPResponse();
-		response.setStatus(status);
-		response.addHeaderField(HTTPConstants.FIELD_CONNECTION, HTTPConstants.CONNECTION_FIELD_VALUE_CLOSE);
-		return response;
+		return new HTTPResponse(status, null, ""); //$NON-NLS-1$
 	}
 
 	/**
-	 * <p>
 	 * Adds a response header field.
-	 * </p>
 	 *
 	 * @param name
 	 *            name of the header field to set.
@@ -250,9 +247,7 @@ public class HTTPResponse {
 	}
 
 	/**
-	 * <p>
 	 * Close the data stream if the field {@link #data} is non null and the value of {@link #dataStreamClosed} is false.
-	 * </p>
 	 */
 	protected void close() {
 		InputStream data = getData();
@@ -283,21 +278,16 @@ public class HTTPResponse {
 	}
 
 	/**
-	 * <p>
 	 * Returns the response header.
-	 * </p>
 	 *
-	 * @return a {@link Hashtable} of (String,String) representing the HTTP Header Fields (may be empty).
+	 * @return a {@link Map} of (String,String) representing the HTTP header fields (may be empty).
 	 */
 	public Map<String, String> getHeader() {
 		return (Map<String, String>) this.header.clone();
 	}
 
 	/**
-	 *
-	 * <p>
 	 * Returns the header field value associated to the given header field <code>key</code>.
-	 * </p>
 	 *
 	 * @param key
 	 *            a header field name (if <code>null</code>, <code>null</code> is returned).
@@ -320,9 +310,7 @@ public class HTTPResponse {
 	}
 
 	/**
-	 * <p>
 	 * Returns the MIME-TYPE of the response.
-	 * </p>
 	 *
 	 * @return the response MIME-TYPE.
 	 */
@@ -347,9 +335,7 @@ public class HTTPResponse {
 	}
 
 	/**
-	 * <p>
 	 * Returns the response status.
-	 * </p>
 	 *
 	 * @return the response status.
 	 */
@@ -358,7 +344,7 @@ public class HTTPResponse {
 	}
 
 	/**
-	 * Set the data contained by this response.<br>
+	 * Set the data contained by this response.
 	 *
 	 * @param data
 	 *            the response data as a byte array (set to empty if <code>null</code> is given)
@@ -376,7 +362,7 @@ public class HTTPResponse {
 
 	/**
 	 * Sets the {@link InputStream} from which the response data can be read.
-	 *
+	 * <p>
 	 * This method should be used only if response data length is not known in advance. If the length is known by
 	 * advance the {@link #setData(InputStream, long)} should be used instead of this one. When response data is
 	 * specified with this method, the response must be sent using the chunked transfer-coding which increase the
@@ -391,7 +377,7 @@ public class HTTPResponse {
 
 	/**
 	 * Sets the {@link InputStream} from which the response data can be read.
-	 *
+	 * <p>
 	 * This method should be used when response data length is known in advance. It allows to transfer response body
 	 * without using the chunked transfer-coding. This reduces response message size.
 	 *
@@ -428,9 +414,7 @@ public class HTTPResponse {
 	}
 
 	/**
-	 * <p>
 	 * Set the response MIME-TYPE.
-	 * </p>
 	 *
 	 * @param mimeType
 	 *            the response MIME-TYPE to set.
@@ -440,9 +424,7 @@ public class HTTPResponse {
 	}
 
 	/**
-	 * <p>
 	 * Set the response status.
-	 * </p>
 	 *
 	 * @param status
 	 *            the response status to set. Should be one of the <code>HTTP_STATUS_*</code> constants defined in
@@ -458,7 +440,7 @@ public class HTTPResponse {
 	 * @throws IOException
 	 *
 	 */
-	void sendResponse(OutputStream outputStream, IHTTPEncodingHandler encodingHandler,
+	/* default */ void sendResponse(OutputStream outputStream, IHTTPEncodingHandler encodingHandler,
 			HTTPEncodingRegistry encodingRegistry, int bufferSize) throws IOException {
 		if (encodingHandler != null) {
 			addHeaderField(HTTPConstants.FIELD_CONTENT_ENCODING, encodingHandler.getId());
@@ -485,50 +467,58 @@ public class HTTPResponse {
 			writeHTTPHeader(outputStream);
 
 			if (rawData != null) {
-				try (OutputStream dataOutput = encodingRegistry.getIdentityTransferCodingHandler().open(this,
-						outputStream)) {
-					if (encodingHandler != null) {
-						try (OutputStream encodedDataOutput = encodingHandler.open(dataOutput)) {
-							writeAndFlush(rawData, encodedDataOutput);
-						}
-					} else {
-						writeAndFlush(rawData, dataOutput);
-					}
-					setDataStreamClosed();
-				}
+				sendRawDataResponse(rawData, outputStream, encodingHandler, encodingRegistry);
 			} else if (dataStream != null) {
-				try (OutputStream dataOutput = (length == -1)
-						? encodingRegistry.getChunkedTransferCodingHandler().open(this, outputStream)
-						: encodingRegistry.getIdentityTransferCodingHandler().open(this, outputStream)) {
-					try (OutputStream ecodedOutput = (encodingHandler != null) ? encodingHandler.open(dataOutput)
-							: null) {
-						OutputStream output = (ecodedOutput != null) ? ecodedOutput : dataOutput;
-						final byte[] readBuffer = new byte[bufferSize];
-						while (true) {
-							int len = dataStream.read(readBuffer);
-
-							if (len < 0) { // read until EOF is reached
-								break;
-							}
-							// store read data
-							output.write(readBuffer, 0, len);
-							output.flush();
-						}
-					}
-				} catch (Throwable t) {
-					Messages.LOGGER.log(Level.SEVERE, Messages.CATEGORY_HOKA, Messages.ERROR_UNKNOWN, t);
-				} finally {
-					// close data output stream. This does not close underlying
-					// TCP connection since transfer output stream does not
-					// close its underlying output stream
-					// if (dataOutput != null) {
-					// dataOutput.close();
-					// }
-					setDataStreamClosed();
-				}
+				sendInputStreamResponse(dataStream, outputStream, encodingHandler, encodingRegistry, bufferSize);
 			}
 		}
 		outputStream.flush();
+	}
+
+	private void sendRawDataResponse(byte[] rawData, OutputStream outputStream, IHTTPEncodingHandler encodingHandler,
+			HTTPEncodingRegistry encodingRegistry) throws IOException {
+		try (OutputStream dataOutput = encodingRegistry.getIdentityTransferCodingHandler().open(this, outputStream)) {
+			if (encodingHandler != null) {
+				try (OutputStream encodedDataOutput = encodingHandler.open(dataOutput)) {
+					writeAndFlush(rawData, encodedDataOutput);
+				}
+			} else {
+				writeAndFlush(rawData, dataOutput);
+			}
+			setDataStreamClosed();
+		}
+	}
+
+	private void sendInputStreamResponse(InputStream dataStream, OutputStream outputStream,
+			IHTTPEncodingHandler encodingHandler, HTTPEncodingRegistry encodingRegistry, int bufferSize) {
+		try (OutputStream dataOutput = (this.length == -1)
+				? encodingRegistry.getChunkedTransferCodingHandler().open(this, outputStream)
+				: encodingRegistry.getIdentityTransferCodingHandler().open(this, outputStream)) {
+			try (OutputStream ecodedOutput = (encodingHandler != null) ? encodingHandler.open(dataOutput) : null) {
+				OutputStream output = (ecodedOutput != null) ? ecodedOutput : dataOutput;
+				final byte[] readBuffer = new byte[bufferSize];
+				while (true) {
+					int len = dataStream.read(readBuffer);
+
+					if (len < 0) { // read until EOF is reached
+						break;
+					}
+					// store read data
+					output.write(readBuffer, 0, len);
+					output.flush();
+				}
+			}
+		} catch (Throwable t) {
+			Messages.LOGGER.log(Level.SEVERE, Messages.CATEGORY_HOKA, Messages.ERROR_UNKNOWN, t);
+		} finally {
+			// close data output stream. This does not close underlying
+			// TCP connection since transfer output stream does not
+			// close its underlying output stream
+			// if (dataOutput != null) {
+			// dataOutput.close();
+			// }
+			setDataStreamClosed();
+		}
 	}
 
 	/**
@@ -539,7 +529,7 @@ public class HTTPResponse {
 	 * @throws IOException
 	 *             when the connection is lost
 	 */
-	void writeHTTPHeader(OutputStream output) throws IOException {
+	private void writeHTTPHeader(OutputStream output) throws IOException {
 		final byte[] eofHeader = HTTPConstants.END_OF_LINE.getBytes();
 
 		output.write(RESPONSE_HTTP11.getBytes());

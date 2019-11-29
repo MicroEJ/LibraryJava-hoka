@@ -11,9 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * <p>
  * Utilities for decoding percent encoded characters.
- * </p>
  */
 public class URLDecoder {
 
@@ -162,26 +160,15 @@ public class URLDecoder {
 	 *             if I/O error occurred
 	 */
 	private static int readEncodedCharacter(InputStream is, boolean readPercentageCharacter) throws IOException {
-		int i;
 		if (readPercentageCharacter) {
-			char percent = (char) (i = is.read());
-			if (i == -1) {
-				throw new IOException();
-			}
+			char percent = readChar(is);
 			if (percent != '%') {
 				throw new IllegalArgumentException();
 			}
 		}
 
-		// first character
-		char c1 = (char) (i = is.read());
-		if (i == -1) {
-			throw new IOException();
-		}
-		char c2 = (char) (i = is.read());
-		if (i == -1) {
-			throw new IOException();
-		}
+		char c1 = readChar(is);
+		char c2 = readChar(is);
 
 		int x;
 		try {
@@ -190,6 +177,16 @@ public class URLDecoder {
 			throw new IllegalArgumentException();
 		}
 		return x;
+	}
+
+	private static char readChar(InputStream is) throws IOException {
+		int i = is.read();
+
+		if (i == -1) {
+			throw new IOException();
+		}
+
+		return (char) i;
 	}
 
 	/**

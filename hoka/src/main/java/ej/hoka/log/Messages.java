@@ -13,7 +13,7 @@ import ej.util.message.basic.BasicMessageBuilder;
 import ej.util.message.basic.BasicMessageLogger;
 
 /**
- * Gather the messages.
+ * Gathers the messages.
  */
 public final class Messages {
 	// ****************//

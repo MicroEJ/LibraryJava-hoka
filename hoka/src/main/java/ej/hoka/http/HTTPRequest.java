@@ -27,30 +27,19 @@ import ej.hoka.http.support.URLDecoder;
 public class HTTPRequest {
 
 	/**
-	 * <p>
 	 * Value returned by {@link #getMethod()} if the request method is <code>POST</code>.
-	 * </p>
 	 */
 	public static final int POST = 1;
-
 	/**
-	 * <p>
 	 * Value returned by {@link #getMethod()} if the request method is <code>GET</code>.
-	 * </p>
 	 */
 	public static final int GET = 2;
-
 	/**
-	 * <p>
 	 * Value returned by {@link #getMethod()} if the request method is <code>PUT</code>.
-	 * </p>
 	 */
 	public static final int PUT = 3;
-
 	/**
-	 * <p>
 	 * Value returned by {@link #getMethod()} if the request method is <code>DELETE</code>.
-	 * </p>
 	 */
 	public static final int DELETE = 4;
 
@@ -58,37 +47,30 @@ public class HTTPRequest {
 	 * Space character.
 	 */
 	private static final char SPACE_CHAR = ' ';
-
 	/**
 	 * Percentage character.
 	 */
 	private static final char PERCENTAGE_CHAR = '%';
-
 	/**
 	 * Colon character.
 	 */
 	private static final char COLON_CHAR = ':';
-
 	/**
 	 * The colon character.
 	 */
 	private static final String RESPONSE_COLON = ": "; //$NON-NLS-1$
-
 	/**
 	 * Newline character.
 	 */
 	private static final char NEWLINE_CHAR = '\n';
-
 	/**
 	 * Carriage return character.
 	 */
 	private static final char CARRIAGE_RETURN_CHAR = '\r';
-
 	/**
 	 * Tab character.
 	 */
 	private static final char TABULATION_CHAR = '\t';
-
 	/**
 	 * Question mark character.
 	 */
@@ -98,7 +80,6 @@ public class HTTPRequest {
 	 * Error Malformed HTTP Request.
 	 */
 	private static final String MALFORMED_HTTP_REQUEST = "Malformed HTTP Request"; //$NON-NLS-1$
-
 	/**
 	 * Error connection lost.
 	 */
@@ -139,19 +120,22 @@ public class HTTPRequest {
 	 */
 	private final InputStream body;
 
+	/**
+	 * Parsed request cookies. Lazily computed.
+	 */
 	private Map<String, String> cookies;
 
 	/**
 	 * Constructs a new instance of HTTPRequest.
 	 *
 	 * @param inputStream
-	 *            the input stream of the request
+	 *            the input stream of the request.
 	 * @param encodingRegistry
 	 *            the register of available encoding and transfer coding handlers.
 	 * @throws IOException
-	 *             if connection is lost during processing the request
+	 *             if connection is lost during processing the request.
 	 * @throws IllegalArgumentException
-	 *             if parsing the request failed
+	 *             if parsing the request failed.
 	 */
 	protected HTTPRequest(InputStream inputStream, HTTPEncodingRegistry encodingRegistry) throws IOException {
 		this.method = parseMethod(inputStream);
@@ -163,10 +147,8 @@ public class HTTPRequest {
 	}
 
 	/**
-	 * <p>
 	 * Returns the request method as an integer value which is one of {@link #POST}, {@link #GET}, {@link #PUT} or
 	 * {@link #DELETE}.
-	 * </p>
 	 *
 	 * @return the request method (one of {@link #POST}, {@link #GET}, {@link #PUT} or {@link #DELETE}).
 	 */
@@ -175,9 +157,7 @@ public class HTTPRequest {
 	}
 
 	/**
-	 * <p>
 	 * Returns the request URI.
-	 * </p>
 	 *
 	 * @return the request URI string.
 	 */
@@ -186,20 +166,16 @@ public class HTTPRequest {
 	}
 
 	/**
-	 * <p>
 	 * Returns the query parameters as {@link Map}.
-	 * </p>
 	 *
-	 * @return a {@link Map} of (String,String) representing the HTTP Query Parameters.
+	 * @return a {@link Map} of (String,String) representing the HTTP query parameters.
 	 */
 	public Map<String, String> getParameters() {
 		return Collections.unmodifiableMap(this.parameters);
 	}
 
 	/**
-	 * <p>
 	 * Returns the HTTP version request.
-	 * </p>
 	 *
 	 * @return the HTTP version request string.
 	 */
@@ -208,39 +184,35 @@ public class HTTPRequest {
 	}
 
 	/**
-	 * <p>
-	 * Returns all HTTP Header fields of the request.
-	 * </p>
+	 * Returns all HTTP header fields of the request.
 	 *
-	 * @return a {@link Map} of (String,String) representing the HTTP Header Fields (may be empty).
+	 * @return a {@link Map} of (String,String) representing the HTTP header fields (may be empty).
 	 */
 	public Map<String, String> getHeader() {
 		return Collections.unmodifiableMap(this.header);
 	}
 
 	/**
+	 * Returns the header field value associated to the given header field <code>name</code>.
 	 *
-	 * <p>
-	 * Returns the header field value associated to the given header field <code>key</code>.
-	 * </p>
-	 *
-	 * @param key
-	 *            a header field name (if <code>null</code>, <code>null</code> is returned).
-	 * @return the requested header field value, <code>null</code> if the header field is not found.
+	 * @param name
+	 *            the header field name.
+	 * @return the requested header field value, <code>null</code> if the header field is not found or <code>name</code>
+	 *         is null.
 	 */
-	public String getHeaderField(String key) {
-		if (key == null) {
+	public String getHeaderField(String name) {
+		if (name == null) {
 			return null;
 		}
-		return this.header.get(key.toLowerCase());
+		return this.header.get(name.toLowerCase());
 	}
 
 	/**
-	 * Return the cookies of the request.
+	 * Returns the cookies of the request.
 	 * <p>
 	 * Cookies are lazily parsed.
 	 *
-	 * @return the cookies.
+	 * @return a {@link Map} of (String,String) representing the HTTP cookies (may be empty)
 	 */
 	public Map<String, String> getCookies() {
 		if (this.cookies == null) {
@@ -256,7 +228,7 @@ public class HTTPRequest {
 	 *
 	 * @param name
 	 *            the name of the cookie.
-	 * @return the cookie.
+	 * @return the cookie, or <code>null</code> if <code>name</code> is <code>null</code>.
 	 */
 	public String getCookie(String name) {
 		if (name == null) {
@@ -308,8 +280,8 @@ public class HTTPRequest {
 	 *
 	 * @param in
 	 *            input stream which can be encoded with the given Content-Encoding
-	 * @return an InputStream which allows the decoding (may be the same as given in input), or null if no handler has
-	 *         been found to manage this encoding.
+	 * @return an {@link InputStream} which allows the decoding (may be the same as given in input), or
+	 *         <code>null</code> if no handler has been found to manage this encoding.
 	 * @throws IOException
 	 *             when I/O Error occurs.
 	 */
@@ -340,14 +312,14 @@ public class HTTPRequest {
 	}
 
 	/**
-	 * First step is to extract the method. The HTTP server supports only the GET and POST method. It can be written
+	 * First step is to extract the method. The HTTP server supports only the GET and POST methods. It can be written
 	 * upper case or lower case depending of the client.
 	 *
 	 * @param input
-	 *            the {@link InputStream}
-	 * @return true if a method get, post, put or delete is found false otherwise
+	 *            the {@link InputStream}.
+	 * @return <code>true</code> if a method get, post, put or delete is found, <code>false</code> otherwise.
 	 * @throws IOException
-	 *             if connection has been lost
+	 *             if connection has been lost.
 	 */
 	private static int parseMethod(InputStream input) throws IOException {
 		StringBuilder builder = new StringBuilder();
@@ -378,10 +350,10 @@ public class HTTPRequest {
 	 * Extract the URI and store it in the URI field.
 	 *
 	 * @param input
-	 *            the {@link InputStream}
+	 *            the {@link InputStream}.
 	 * @return <code>true</code> if succeed, <code>false</code> otherwise
 	 * @throws IOException
-	 *             if connection has been lost
+	 *             if connection has been lost.
 	 */
 	private static String parseURI(InputStream input, Map<String, String> parameters) throws IOException {
 		StringBuilder sb = new StringBuilder(Math.min(64, input.available()));

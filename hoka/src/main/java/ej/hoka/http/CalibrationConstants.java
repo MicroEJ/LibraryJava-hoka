@@ -11,17 +11,13 @@ import ej.hoka.http.encoding.HTTPEncodingRegistry;
 import ej.hoka.http.encoding.IHTTPEncodingHandler;
 
 /**
- * <p>
  * Configuration for {@link HTTPServer}.
- * </p>
  */
 public final class CalibrationConstants {
 
 	/**
-	 * <p>
-	 * if <code>true</code> the server should send a {@link HTTPConstants#HTTP_STATUS_NOTACCEPTABLE} if there is no
-	 * {@link IHTTPEncodingHandler} registered for to handle the encoding specified in the HTTP request.
-	 * </p>
+	 * If <code>true</code>, the server should send a {@link HTTPConstants#HTTP_STATUS_NOTACCEPTABLE} in case there is
+	 * no {@link IHTTPEncodingHandler} registered to handle the encoding specified in the HTTP request.
 	 *
 	 * @see HTTPEncodingRegistry#registerEncodingHandler(ej.hoka.http.encoding.IHTTPEncodingHandler)
 	 */
@@ -30,4 +26,5 @@ public final class CalibrationConstants {
 	private CalibrationConstants() {
 		// Forbid instanciation.
 	}
+
 }

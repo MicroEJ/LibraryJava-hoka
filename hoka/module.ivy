@@ -30,6 +30,7 @@
 		<dependency org="ej.api" name="net" rev="1.1.0"/>
 		<dependency org="ej.api" name="ssl" rev="2.1.0"/>
 		
+		<dependency org="ej.library.eclasspath" name="base64" rev="1.0.0"/>
 		<dependency org="ej.library.eclasspath" name="collections" rev="1.3.0"/>
 		<dependency org="ej.library.eclasspath" name="io" rev="1.1.0"/>
 		<dependency org="ej.library.runtime" name="basictool" rev="1.2.2"/>

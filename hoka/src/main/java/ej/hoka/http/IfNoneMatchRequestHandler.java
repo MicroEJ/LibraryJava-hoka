@@ -12,16 +12,12 @@ import java.util.Map;
 import ej.hoka.http.requesthandler.RequestHandler;
 
 /**
- * <p>
  * Request handler used by {@link HTTPServer} to manage client cache. See <code>If-None-Match</code> HTTP header.
- * </p>
  */
 class IfNoneMatchRequestHandler implements RequestHandler {
 
 	/**
-	 * <p>
 	 * The instance of this stateless request handler.
-	 * </p>
 	 */
 	static final IfNoneMatchRequestHandler instance = new IfNoneMatchRequestHandler();
 

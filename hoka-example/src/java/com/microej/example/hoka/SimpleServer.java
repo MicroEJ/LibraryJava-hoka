@@ -12,20 +12,23 @@ import java.io.IOException;
 import ej.hoka.http.HTTPServer;
 
 /*
- * This simple server exposes resources from the src/resources folder
- * It uses the SimpleRequestHandler to serve a resource for the root of the server
+ * This simple server exposes resources from the src/resources folder.
+ * It uses the SimpleRequestHandler to serve a resource for the root of the server.
  */
 public class SimpleServer {
 
 	private static final int PORT = 8080;
 
-	public static void main(String[] args) throws IOException {
-		// create the http server with our custom request handler
+	public static void main(String[] args) {
+		// Create the HTTP server with our custom request handler
 		HTTPServer server = new HTTPServer(PORT, 10, 1, new SimpleRequestHandler());
 
-		//once started the server is accessible on
-		// http://localhost:8080
-		server.start();
+		// Once started, the server is accessible on http://localhost:8080
+		try {
+			server.start();
+		} catch (IOException e) {
+			throw new RuntimeException("Port " + PORT + " already in use", e);
+		}
 	}
 
 }

@@ -8,12 +8,9 @@
 package ej.hoka.http.support;
 
 /**
- * <p>
  * Generic parser for parameterized arguments.
- * </p>
  * <p>
  * Example:
- * </p>
  *
  * <pre>
  * text/xml ; charset=toto
@@ -24,38 +21,28 @@ package ej.hoka.http.support;
 public abstract class ParameterizedArgument extends CharacterSeparatedList {
 
 	/**
-	 * <p>
 	 * Separator for the parameters: ';'.
-	 * </p>
 	 */
 	public static final char PARAMETER_SEP = ';';
 	/**
-	 * <p>
 	 * Separator for the tokens: '='.
-	 * </p>
 	 */
 	public static final char TOKEN_SEP = '=';
 
 	/**
-	 * <p>
 	 * Current argument.
-	 * </p>
 	 */
 	protected String argument;
 
 	/**
-	 * <p>
 	 * Creates a new instance of {@link ParameterizedArgument} with the default separator character of semicolon (";").
-	 * </p>
 	 */
 	public ParameterizedArgument() {
 		super(PARAMETER_SEP);
 	}
 
 	/**
-	 * <p>
 	 * Appends the current argument to the {@link StringBuffer} <code>sb</code>.
-	 * </p>
 	 *
 	 * @return the {@link StringBuffer} with the appended argument.
 	 * @param sb
@@ -67,9 +54,7 @@ public abstract class ParameterizedArgument extends CharacterSeparatedList {
 	}
 
 	/**
-	 * <p>
 	 * Returns current argument.
-	 * </p>
 	 *
 	 * @return current argument
 	 */
@@ -78,9 +63,7 @@ public abstract class ParameterizedArgument extends CharacterSeparatedList {
 	}
 
 	/**
-	 * <p>
 	 * Initialize the number of parameters to read for this argument. Subclasses should override this abstract method.
-	 * </p>
 	 *
 	 * @param nbParameters
 	 *            the number of parameters
@@ -88,9 +71,7 @@ public abstract class ParameterizedArgument extends CharacterSeparatedList {
 	protected abstract void initializeNbParameters(int nbParameters);
 
 	/**
-	 * <p>
 	 * Initialize the number of tokens.
-	 * </p>
 	 *
 	 * @param nbTokens
 	 *            the number of tokens this instance can handle.
@@ -101,11 +82,9 @@ public abstract class ParameterizedArgument extends CharacterSeparatedList {
 	}
 
 	/**
-	 * <p>
 	 * Reads a new parameter. A key-value pair is parsed from the current string argument. The key part will be a
 	 * substring from index startKey to index stopKey. The value part will be the substring from index startValue to
 	 * index stopValue.
-	 * </p>
 	 *
 	 * @param id
 	 *            id for this parameter
@@ -123,9 +102,7 @@ public abstract class ParameterizedArgument extends CharacterSeparatedList {
 	protected abstract void newParameter(int id, int startKey, int stopKey, int startValue, int stopValue);
 
 	/**
-	 * <p>
 	 * Adds a new token to the array of tokens. The search will begin from the index start to the index stop.
-	 * </p>
 	 *
 	 * @param id
 	 *            the ID of the token
@@ -155,4 +132,5 @@ public abstract class ParameterizedArgument extends CharacterSeparatedList {
 			newParameter(id - 1, start, equalPtr, startValue, stopValue);
 		}
 	}
+
 }

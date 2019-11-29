@@ -17,14 +17,10 @@ import ej.hoka.log.Messages;
 import ej.util.message.Level;
 
 /**
- * <p>
  * TCP/IP server that stores incoming connections.
- * </p>
- *
  * <p>
  * After starting this server with {@link #start()}, connections are available through
  * {@link #getNextStreamConnection()}.
- * </p>
  */
 public class TCPServer {
 
@@ -79,9 +75,7 @@ public class TCPServer {
 	private int lastReadPtr;
 
 	/**
-	 * <p>
 	 * Constructs a new instance of {@link TCPServer} using environment's default socket factory.
-	 * </p>
 	 *
 	 * @param port
 	 *            the port to use.
@@ -93,10 +87,8 @@ public class TCPServer {
 	}
 
 	/**
-	 * <p>
 	 * Constructs a new instance of {@link TCPServer} using the {@link ServerSocketFactory}
 	 * <code>serverSocketFactory</code>.
-	 * </p>
 	 *
 	 * @param port
 	 *            the port to use.
@@ -110,10 +102,8 @@ public class TCPServer {
 	}
 
 	/**
-	 * <p>
 	 * Constructs a new instance of {@link TCPServer} using the {@link ServerSocketFactory}
 	 * <code>serverSocketFactory</code>.
-	 * </p>
 	 *
 	 * @param port
 	 *            the port to use.
@@ -137,18 +127,16 @@ public class TCPServer {
 	}
 
 	/**
-	 * <p>
 	 * Starts the {@link TCPServer}. The {@link TCPServer} can be started only once. Calling this method while the
 	 * {@link TCPServer} is already running causes a {@link IllegalStateException}.
-	 * </p>
 	 *
 	 * @throws IOException
 	 *             if an error occurs during the creation of the socket.
 	 */
 	public void start() throws IOException {
 		if (!isStopped()) {
-			throw new IllegalStateException(
-					Messages.BUILDER.buildMessage(Level.SEVERE, Messages.CATEGORY_HOKA, Messages.MULTIPLE_START_FORBIDDEN));
+			throw new IllegalStateException(Messages.BUILDER.buildMessage(Level.SEVERE, Messages.CATEGORY_HOKA,
+					Messages.MULTIPLE_START_FORBIDDEN));
 		}
 
 		this.streamConnections = new Socket[this.maxOpenedConnections + 1]; // always an empty index in order to
@@ -166,9 +154,7 @@ public class TCPServer {
 	}
 
 	/**
-	 * <p>
 	 * Stops the {@link TCPServer} and closes the connection.
-	 * </p>
 	 */
 	public void stop() {
 		try {
@@ -256,9 +242,7 @@ public class TCPServer {
 	}
 
 	/**
-	 * <p>
 	 * Returns <code>true</code> if the {@link TCPServer} is stopped.
-	 * </p>
 	 *
 	 * @return <code>true</code> if the {@link TCPServer} is stopped, <code>false</code> otherwise
 	 */

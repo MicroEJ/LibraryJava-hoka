@@ -17,46 +17,39 @@ import ej.hoka.io.ChunkedMessageBodyInputStream;
 import ej.hoka.io.ChunkedMessageBodyOutputStream;
 
 /**
- * <p>
- * HTTP-1.1 chunked transfer encoding handler to read and write data in chunked encoding.<br>
- * </p>
+ * HTTP-1.1 chunked transfer encoding handler to read and write data in chunked encoding.
  */
 public class ChunkedTransferCodingHandler implements IHTTPTransferCodingHandler {
 
 	/**
 	 * Instance to use in factory method.
 	 */
-	private static ChunkedTransferCodingHandler Instance;
+	private static ChunkedTransferCodingHandler instance;
 
 	/**
 	 * Private default constructor to avoid direct instantiation.
 	 */
 	private ChunkedTransferCodingHandler() {
-		// private constructor, because of singleton behaviour
+		// private constructor, because of singleton behavior
 	}
 
 	/**
-	 * <p>
 	 * Factory method to create an instance of ChunkedTransferCodingHandler.
-	 * </p>
 	 *
 	 * @return an instance of {@link ChunkedTransferCodingHandler}
 	 */
 	public static ChunkedTransferCodingHandler getInstance() {
-		if (Instance == null) {
-			Instance = new ChunkedTransferCodingHandler();
+		if (instance == null) {
+			instance = new ChunkedTransferCodingHandler();
 		}
-		return Instance;
+		return instance;
 	}
 
 	// NOTES:
 	// This encoding has been first encountered with AXIS2 client
 	// Internal headers and extension are skipped (not used by AXIS2)
 	/**
-	 * <p>
 	 * Returns the internal ID of the {@link ChunkedTransferCodingHandler}.
-	 *
-	 * </p>
 	 *
 	 * @return the String "chunked".
 	 */
@@ -66,10 +59,8 @@ public class ChunkedTransferCodingHandler implements IHTTPTransferCodingHandler 
 	}
 
 	/**
-	 * <p>
 	 * Creates a {@link ChunkedMessageBodyInputStream} to read the body of the HTTP request in "chunked" encoding from
 	 * the {@link HTTPRequest} and the {@link InputStream}.
-	 * </p>
 	 *
 	 * @param request
 	 *            the {@link HTTPRequest}
@@ -86,18 +77,16 @@ public class ChunkedTransferCodingHandler implements IHTTPTransferCodingHandler 
 	}
 
 	/**
-	 * <p>
 	 * Creates an {@link OutputStream} to write the body of the HTTP response in "chunked" encoding using the
 	 * {@link HTTPResponse} and the {@link OutputStream}.
-	 * </p>
 	 *
 	 * @param response
-	 *            the {@link HTTPResponse}
+	 *            the {@link HTTPResponse}.
 	 * @param output
-	 *            the {@link OutputStream}
-	 * @return a new instance of {@link ChunkedMessageBodyOutputStream}
+	 *            the {@link OutputStream}.
+	 * @return a new instance of {@link ChunkedMessageBodyOutputStream}.
 	 * @throws IOException
-	 *             if an I/O error occurs
+	 *             if an I/O error occurs.
 	 */
 	@Override
 	public OutputStream open(HTTPResponse response, OutputStream output) throws IOException {

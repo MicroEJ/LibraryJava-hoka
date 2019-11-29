@@ -13,9 +13,7 @@ import ej.hoka.http.HTTPRequest;
 import ej.hoka.http.HTTPResponse;
 
 /**
- * <p>
  * A handler to process request and create appropriate response.
- * </p>
  */
 public interface RequestHandler {
 

@@ -29,14 +29,10 @@ import ej.hoka.tcp.TCPServer;
 import ej.util.message.Level;
 
 /**
- * <p>
  * HTTP Server.
- * </p>
- *
  * <p>
  * <b>Features + limitations: </b>
  * <ul>
- *
  * <li>CLDC 1.1</li>
  * <li>No fixed configuration files, logging, authorization, encryption.</li>
  * <li>Supports parameter parsing of GET and POST methods</li>
@@ -45,15 +41,11 @@ import ej.util.message.Level;
  * <li>Doesn't limit bandwidth, request time or simultaneous connections</li>
  * <li>Contains a built-in list of most common MIME types</li>
  * <li>All header names are converted to lower case</li>
- *
  * </ul>
  * <p>
  * Define a {@link RequestHandler} to expose the different services of your application.
- * </p>
- *
  * <p>
  * <b>Example:</b>
- * </p>
  *
  * <pre>
  * // get a new server which uses a DefaultRequestHandler
@@ -62,30 +54,14 @@ import ej.util.message.Level;
  * // start the server
  * server.start();
  * </pre>
+ * <p>
+ * To parse the request and write the response, a buffer size of 2048 by default is used. To change this value, set the
+ * property "hoka.buffer.size".
  *
  * @see RequestHandlerComposite
  * @see DefaultRequestHandler
  */
 public class HTTPServer {
-	/*
-	 * Implementation notes (some informations may be extracted in documentation or example) <p><b>Features +
-	 * limitations: </b><ul>
-	 *
-	 * <li> CLDC 1.1 </li> <li> No fixed configuration files, logging, authorization, encryption etc. (Implement
-	 * yourself if you need them.) </li> <li> Supports parameter parsing of GET and POST methods </li> <li> Supports
-	 * both dynamic content and file serving </li> <li> Never caches anything </li> <li> Doesn't limit bandwidth,
-	 * request time or simultaneous connections </li> <li> Contains a built-in list of most common MIME types </li> <li>
-	 * All header names are converted in lower case so they don't vary between browsers/clients </li>
-	 *
-	 * </ul>
-	 *
-	 * <p><b>Ways to use: </b><ul>
-	 *
-	 * <li> Define a {@link RequestHandler} to expose the different services of your application. </li> <li> Instantiate
-	 * the {@link HTTPServer} with wanted underlying socket parameters and the {@link RequestHandler}. </li>
-	 *
-	 * </ul>
-	 */
 
 	/**
 	 * This size is used for the request and answer buffer size (two buffers will be created).
@@ -112,7 +88,7 @@ public class HTTPServer {
 	private final HTTPEncodingRegistry encodingRegistry;
 
 	/**
-	 * Array of {@link Thread}s for the session jobs.
+	 * Array of {@link Thread} for the session jobs.
 	 */
 	private Thread[] jobs;
 
@@ -251,11 +227,10 @@ public class HTTPServer {
 	}
 
 	/**
-	 * <p>
 	 * Start the {@link HTTPServer} (in a dedicated thread): start listening for connections and start jobs to process
-	 * opened connections.<br>
+	 * opened connections.
+	 * <p>
 	 * Multiple start is not allowed.
-	 * </p>
 	 *
 	 * @throws IOException
 	 *             if an error occurs during the creation of the socket.
@@ -273,10 +248,8 @@ public class HTTPServer {
 	}
 
 	/**
-	 * <p>
 	 * Stops the {@link HTTPServer}. Stops listening for connections. This method blocks until all session jobs are
 	 * stopped.
-	 * </p>
 	 */
 	public void stop() {
 		this.server.stop();
@@ -293,7 +266,7 @@ public class HTTPServer {
 	/**
 	 * Returns a new job process as {@link Runnable}.
 	 *
-	 * @return a new job process as {@link Runnable}
+	 * @return a new job process as {@link Runnable}.
 	 */
 	private Runnable newJob() {
 		return new Runnable() {
@@ -352,28 +325,28 @@ public class HTTPServer {
 
 					String requestConnectionHeader = request.getHeaderField(HTTPConstants.FIELD_CONNECTION);
 					String responseConnectionHeader = response.getHeaderField(HTTPConstants.FIELD_CONNECTION);
-					keepAlive = HTTPConstants.CONNECTION_FIELD_VALUE_KEEP_ALIVE
+					keepAlive = HTTPConstants.FIELD_CONNECTION_VALUE_KEEP_ALIVE
 							.equalsIgnoreCase(requestConnectionHeader)
-							&& !HTTPConstants.CONNECTION_FIELD_VALUE_CLOSE.equalsIgnoreCase(responseConnectionHeader);
+							&& !HTTPConstants.FIELD_CONNECTION_VALUE_CLOSE.equalsIgnoreCase(responseConnectionHeader);
 					responseMessage = request.getURI();
 				} catch (IllegalArgumentException e) {
-					response = HTTPResponse.createError(HTTPConstants.HTTP_STATUS_BADREQUEST,
-							responseMessage = e.getMessage());
+					responseMessage = e.getMessage();
+					response = HTTPResponse.createError(HTTPConstants.HTTP_STATUS_BADREQUEST, responseMessage);
 					keepAlive = request != null && request.getHeaderField(HTTPConstants.FIELD_CONNECTION)
-							.equalsIgnoreCase(HTTPConstants.CONNECTION_FIELD_VALUE_KEEP_ALIVE);
+							.equalsIgnoreCase(HTTPConstants.FIELD_CONNECTION_VALUE_KEEP_ALIVE);
 				} catch (UnsupportedHTTPEncodingException e) {
-					response = HTTPResponse.createError(HTTPConstants.HTTP_STATUS_NOTIMPLEMENTED,
-							responseMessage = e.getMessage());
+					responseMessage = e.getMessage();
+					response = HTTPResponse.createError(HTTPConstants.HTTP_STATUS_NOTIMPLEMENTED, responseMessage);
 					keepAlive = request != null && request.getHeaderField(HTTPConstants.FIELD_CONNECTION)
-							.equalsIgnoreCase(HTTPConstants.CONNECTION_FIELD_VALUE_KEEP_ALIVE);
+							.equalsIgnoreCase(HTTPConstants.FIELD_CONNECTION_VALUE_KEEP_ALIVE);
 				} catch (SocketTimeoutException e) {
+					responseMessage = ""; //$NON-NLS-1$
 					response = HTTPResponse.RESPONSE_REQUESTTIMEOUT;
 					keepAlive = false;
-					responseMessage = ""; //$NON-NLS-1$
 				}
 
-				String connectionHeader = keepAlive ? HTTPConstants.CONNECTION_FIELD_VALUE_KEEP_ALIVE
-						: HTTPConstants.CONNECTION_FIELD_VALUE_CLOSE;
+				String connectionHeader = keepAlive ? HTTPConstants.FIELD_CONNECTION_VALUE_KEEP_ALIVE
+						: HTTPConstants.FIELD_CONNECTION_VALUE_CLOSE;
 				response.addHeaderField(HTTPConstants.FIELD_CONNECTION, connectionHeader);
 
 				String status = response.getStatus();

@@ -18,16 +18,14 @@ import ej.hoka.io.IdentityMessageBodyInputStream;
 import ej.hoka.io.IdentityMessageBodyOutputStream;
 
 /**
- * <p>
  * Identity transfer coding handler.
- * </p>
  */
 public class IdentityTransferCodingHandler implements IHTTPTransferCodingHandler {
 
 	/**
 	 * The static instance to use in factory method.
 	 */
-	private static IdentityTransferCodingHandler Instance;
+	private static IdentityTransferCodingHandler instance;
 
 	/**
 	 * The private constructor to prevent direct instantiation.
@@ -37,23 +35,19 @@ public class IdentityTransferCodingHandler implements IHTTPTransferCodingHandler
 	}
 
 	/**
-	 * <p>
 	 * Returns an instance of {@link IdentityTransferCodingHandler}.
-	 * </p>
 	 *
 	 * @return an instance of {@link IdentityTransferCodingHandler}
 	 */
 	public static IdentityTransferCodingHandler getInstance() {
-		if (Instance == null) {
-			Instance = new IdentityTransferCodingHandler();
+		if (instance == null) {
+			instance = new IdentityTransferCodingHandler();
 		}
-		return Instance;
+		return instance;
 	}
 
 	/**
-	 * <p>
 	 * Returns an internal ID of this encoding handler.
-	 * </p>
 	 *
 	 * @return null
 	 */
@@ -63,18 +57,16 @@ public class IdentityTransferCodingHandler implements IHTTPTransferCodingHandler
 	}
 
 	/**
-	 * <p>
 	 * Creates a new instance of {@link IdentityMessageBodyInputStream} to read the message body of the HTTP request.
-	 * </p>
 	 *
 	 * @see IdentityMessageBodyInputStream
 	 * @param request
-	 *            the HTTP request object
+	 *            the HTTP request object.
 	 * @param input
-	 *            the input stream to read the message body of the HTTP request
-	 * @return {@link IdentityMessageBodyOutputStream}
+	 *            the input stream to read the message body of the HTTP request.
+	 * @return {@link IdentityMessageBodyOutputStream}.
 	 * @throws IOException
-	 *             if an I/O error occurs
+	 *             if an I/O error occurs.
 	 */
 	@Override
 	public InputStream open(HTTPRequest request, InputStream input) throws IOException {
@@ -87,9 +79,7 @@ public class IdentityTransferCodingHandler implements IHTTPTransferCodingHandler
 	}
 
 	/**
-	 * <p>
 	 * Creates an {@link IdentityMessageBodyOutputStream} to write the message body of the HTTP response.
-	 * </p>
 	 *
 	 * @see IdentityMessageBodyOutputStream
 	 * @param response

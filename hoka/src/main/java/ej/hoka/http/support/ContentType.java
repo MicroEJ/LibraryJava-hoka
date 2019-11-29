@@ -8,38 +8,28 @@
 package ej.hoka.http.support;
 
 /**
- * <p>
  * This class handles the HTTP Content-Type header field.<br>
  * See: RFC HTTP/1.1 RFC2616 14.1 Content-Type
- * </p>
  */
 public class ContentType extends ParameterizedArgument {
 	/**
-	 * <p>
 	 * The string "charset".
-	 * </p>
 	 */
 	public static final String KEY_CHARSET = "charset"; //$NON-NLS-1$
 
 	/**
-	 * <p>
 	 * Optional charset. May be null.
-	 * </p>
 	 */
 	private String charset;
 
 	/**
-	 * <p>
 	 * Empty Constructor.
-	 * </p>
 	 */
 	public ContentType() {
 	}
 
 	/**
-	 * <p>
 	 * Constructor with MIME type parameter.
-	 * </p>
 	 *
 	 * @param mimeType
 	 *            the MIME type to use for content type
@@ -49,9 +39,7 @@ public class ContentType extends ParameterizedArgument {
 	}
 
 	/**
-	 * <p>
 	 * Constructor with MIME type and character set parameters.
-	 * </p>
 	 *
 	 * @param mimeType
 	 *            the MIME type to use as content type
@@ -67,7 +55,6 @@ public class ContentType extends ParameterizedArgument {
 	 * IS2T-API Canonises the MIME type.
 	 * <p>
 	 * At the end of the parsing, converts the MIME type to lower case and interns it.
-	 * </p>
 	 */
 	@Override
 	public void endParse() {
@@ -76,10 +63,8 @@ public class ContentType extends ParameterizedArgument {
 	}
 
 	/**
-	 * <p>
 	 * Appends the current character set to the {@link StringBuffer} <code>sb</code> in the following form:
 	 * <code>;charset=&lt;character-set-string&gt;</code>.
-	 * </p>
 	 *
 	 * @param sb
 	 *            the {@link StringBuffer}
@@ -95,9 +80,7 @@ public class ContentType extends ParameterizedArgument {
 	}
 
 	/**
-	 * <p>
 	 * Returns the optional charset. Could be null.
-	 * </p>
 	 *
 	 * @return the optional charset.
 	 */
@@ -106,9 +89,7 @@ public class ContentType extends ParameterizedArgument {
 	}
 
 	/**
-	 * <p>
 	 * Returns the canonized MIME type (converted to lower case).
-	 * </p>
 	 *
 	 * @return the canonized MIME type (converted to lower case)
 	 */

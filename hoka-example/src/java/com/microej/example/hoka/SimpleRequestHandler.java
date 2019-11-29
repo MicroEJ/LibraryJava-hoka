@@ -19,7 +19,7 @@ import ej.hoka.http.requesthandler.DefaultRequestHandler;
 import ej.hoka.http.support.MIMEUtils;
 
 /*
- * Adding the default resource behaviour for the root of the HTTP server
+ * Adding the default resource behavior for the root of the HTTP server
  */
 public class SimpleRequestHandler extends DefaultRequestHandler {
 
@@ -58,7 +58,6 @@ public class SimpleRequestHandler extends DefaultRequestHandler {
 					System.out.println("\tBody: " + body);
 				}
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 

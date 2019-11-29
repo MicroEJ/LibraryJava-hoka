@@ -12,17 +12,13 @@ import java.util.Map;
 import ej.hoka.http.requesthandler.RequestHandler;
 
 /**
- * <p>
  * Request handler used by {@link HTTPServer} to reply with a <code>"404 Not Found"</code> response as the last request
  * handler.
- * </p>
  */
 class NotFoundRequestHandler implements RequestHandler {
 
 	/**
-	 * <p>
 	 * The instance of this stateless request handler.
-	 * </p>
 	 */
 	static final NotFoundRequestHandler instance = new NotFoundRequestHandler();
 

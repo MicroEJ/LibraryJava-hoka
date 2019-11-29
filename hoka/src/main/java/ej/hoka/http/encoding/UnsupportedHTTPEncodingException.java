@@ -12,10 +12,8 @@ import java.io.UnsupportedEncodingException;
 import ej.hoka.http.HTTPConstants;
 
 /**
- * <p>
  * This exception is thrown when {@link HTTPConstants#FIELD_TRANSFER_ENCODING} or
  * {@link HTTPConstants#FIELD_CONTENT_ENCODING} cannot be handled by the server.
- * </p>
  */
 public class UnsupportedHTTPEncodingException extends UnsupportedEncodingException {
 
@@ -27,23 +25,17 @@ public class UnsupportedHTTPEncodingException extends UnsupportedEncodingExcepti
 	private static final String RESPONSE_COLON = ": "; //$NON-NLS-1$
 
 	/**
-	 * <p>
 	 * The HTTP Header field causing the error.
-	 * </p>
 	 */
 	private final String field;
 
 	/**
-	 * <p>
 	 * The encoding which is not supported.
-	 * </p>
 	 */
 	private final String encoding;
 
 	/**
-	 * <p>
 	 * Creates a new {@link UnsupportedHTTPEncodingException} with the given parameters.
-	 * </p>
 	 *
 	 * @param field
 	 *            the HTTP Header field causing the error.

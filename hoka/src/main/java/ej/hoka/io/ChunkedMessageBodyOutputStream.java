@@ -13,15 +13,13 @@ import java.io.OutputStream;
 import ej.hoka.http.HTTPConstants;
 
 /**
- * <p>
  * Output Stream for writing HTTP 1.1 Chunked transfer encoding data.
- * </p>
  * <p>
  * Each chunk starts with the number of octets of the data it embeds, expressed as a hexadecimal numbers in ASCII and a
  * terminating CRLF sequence, followed by the chunk data. The chunk is terminated by CRLF.
- * </p>
  */
 public class ChunkedMessageBodyOutputStream extends OutputStream {
+
 	/**
 	 * CR LF.
 	 */
@@ -53,10 +51,8 @@ public class ChunkedMessageBodyOutputStream extends OutputStream {
 	private byte[] pendingBytes = null; // lazily created
 
 	/**
-	 * <p>
 	 * Creates a new instance of {@link ChunkedMessageBodyOutputStream} using the specified {@link OutputStream} as the
 	 * underlying OutputStream.
-	 * </p>
 	 *
 	 * @param os
 	 *            the underlying {@link OutputStream} to use
@@ -66,10 +62,8 @@ public class ChunkedMessageBodyOutputStream extends OutputStream {
 	}
 
 	/**
-	 * <p>
 	 * Close this output stream. This method DOES NOT close the underlying stream (i.e. the TCP connection stream). It
 	 * is the responsibility of the HTTPSession to close the underlying stream.
-	 * </p>
 	 *
 	 * @throws IOException
 	 *             when an error occurs while closing the stream
@@ -88,9 +82,7 @@ public class ChunkedMessageBodyOutputStream extends OutputStream {
 	}
 
 	/**
-	 * <p>
 	 * Writes the pending data and flush underlying stream.
-	 * </p>
 	 *
 	 * @throws IOException
 	 *             when the connection is closed.
@@ -105,10 +97,8 @@ public class ChunkedMessageBodyOutputStream extends OutputStream {
 	}
 
 	/**
-	 * <p>
 	 * Writes the content of the byte array <code>b</code> from the offset <code>off</code> in length <code>len</code>
 	 * in chunked encoding using the underlying {@link OutputStream}.
-	 * </p>
 	 *
 	 * @param b
 	 *            the byte array
@@ -129,10 +119,8 @@ public class ChunkedMessageBodyOutputStream extends OutputStream {
 	}
 
 	/**
-	 * <p>
 	 * Write one byte of data. The byte is not sent immediately, it is stored in a buffer and will be sent in a chunk
 	 * when the buffer is full.
-	 * </p>
 	 *
 	 * @param b
 	 *            the byte to write to the underlying {@link OutputStream }
@@ -199,4 +187,5 @@ public class ChunkedMessageBodyOutputStream extends OutputStream {
 		writeChunk(this.pendingBytes, 0, this.nbPendingBytes);
 		this.nbPendingBytes = 0;
 	}
+
 }

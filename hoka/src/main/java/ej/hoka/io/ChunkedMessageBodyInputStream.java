@@ -11,15 +11,12 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * <p>
  * Input Stream for reading HTTP 1.1 Chunked transfer encoding data.
- * </p>
  * <p>
  * Each chunk starts with the number of octets of the data it embeds, expressed as a hexadecimal number in ASCII,
  * followed by optional parameters (chunk extension) and a terminating CRLF sequence, followed by the chunk data. The
  * chunk is terminated by CRLF. If chunk extensions are provided, the chunk size is terminated by a semicolon followed
  * with the extension name and an optional equal sign and value. (chunk extensions are skipped).
- * </p>
  */
 public class ChunkedMessageBodyInputStream extends InputStream {
 
@@ -65,10 +62,8 @@ public class ChunkedMessageBodyInputStream extends InputStream {
 	private int state;
 
 	/**
-	 * <p>
 	 * Creates a new <code>ChunkedMessageBodyInputStream</code> using the InputStream <code>is</code> as the underlying
 	 * data source.
-	 * </p>
 	 *
 	 * @param is
 	 *            InputStream to read from.
@@ -79,9 +74,7 @@ public class ChunkedMessageBodyInputStream extends InputStream {
 	}
 
 	/**
-	 * <p>
 	 * Returns the number of available bytes to read.
-	 * </p>
 	 *
 	 * @return the number of available bytes to read.
 	 * @throws IOException
@@ -112,11 +105,9 @@ public class ChunkedMessageBodyInputStream extends InputStream {
 	}
 
 	/**
-	 * <p>
 	 * Reads all remaining message body data and closes this input stream. This method DOES NOT close the underlying
 	 * stream (i.e. the TCP connection stream). It is the responsibility of the HTTPSession to close the underlying
 	 * stream.
-	 * </p>
 	 *
 	 * @throws IOException
 	 *             when an error occurs while closing the stream
@@ -239,9 +230,7 @@ public class ChunkedMessageBodyInputStream extends InputStream {
 	}
 
 	/**
-	 * <p>
 	 * Reads the next byte from the InputStream used in the constructor.
-	 * </p>
 	 *
 	 * @return the next byte value (0-255) or -1 if the end of the InputStream has been reached.
 	 * @throws IOException
@@ -264,11 +253,9 @@ public class ChunkedMessageBodyInputStream extends InputStream {
 	}
 
 	/**
-	 * <p>
 	 * Reads up to <code>length</code> bytes to the byte array <code>data</code> starting with <code>offset</code>. The
 	 * method tries to read <code>length</code> bytes (if there are at least <code>length</code> bytes in the
 	 * InputStream used in the constructor. Otherwise reads just the available number of bytes).
-	 * </p>
 	 *
 	 * @param data
 	 *            the byte array to store the bytes read from the underlying InputStream

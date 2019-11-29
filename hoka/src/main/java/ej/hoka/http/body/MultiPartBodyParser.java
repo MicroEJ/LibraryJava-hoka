@@ -67,11 +67,11 @@ public class MultiPartBodyParser implements BodyParser<MultiPartBody> {
 		 */
 		private byte[] buffer;
 		/**
-		 * the offset position within the buffer.
+		 * The offset position within the buffer.
 		 */
 		private int offset;
 		/**
-		 * the number of bytes available within the buffer.
+		 * The number of bytes available within the buffer.
 		 */
 		private int lengthAvailable;
 
@@ -137,7 +137,7 @@ public class MultiPartBodyParser implements BodyParser<MultiPartBody> {
 		}
 
 		/**
-		 * Consume the data up to after the next boundary.
+		 * Consumes the data up to after the next boundary.
 		 *
 		 * @throws IOException
 		 *             if an {@link IOException} occurs
@@ -192,7 +192,7 @@ public class MultiPartBodyParser implements BodyParser<MultiPartBody> {
 		}
 
 		/**
-		 * Buffer the data if needed.
+		 * Buffers the data if needed.
 		 *
 		 * @param length
 		 *            the size of the data that will be required.
@@ -215,6 +215,7 @@ public class MultiPartBodyParser implements BodyParser<MultiPartBody> {
 				this.offset = 0;
 			}
 		}
+
 	}
 
 	/**
@@ -235,7 +236,7 @@ public class MultiPartBodyParser implements BodyParser<MultiPartBody> {
 		}
 
 		/**
-		 * Consume the input stream from the request to get the next {@link HTTPPart} available.
+		 * Consumes the input stream from the request to get the next {@link HTTPPart} available.
 		 *
 		 * @return the next {@link HTTPPart} initialized, <code>null</code> if not found.
 		 * @throws IOException
@@ -254,4 +255,5 @@ public class MultiPartBodyParser implements BodyParser<MultiPartBody> {
 		}
 
 	}
+
 }

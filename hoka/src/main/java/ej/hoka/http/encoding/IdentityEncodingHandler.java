@@ -7,21 +7,18 @@
  */
 package ej.hoka.http.encoding;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
- * <p>
  * HTTP-1.1 Identity encoding handler.
- * </p>
  */
 public final class IdentityEncodingHandler implements IHTTPEncodingHandler {
 
 	/**
-	 * Instance to use in factory method.
+	 * instance to use in factory method.
 	 */
-	private static IdentityEncodingHandler Instance;
+	private static IdentityEncodingHandler instance;
 
 	/**
 	 * Private constructor to avoid direct instantiation.
@@ -31,23 +28,19 @@ public final class IdentityEncodingHandler implements IHTTPEncodingHandler {
 	}
 
 	/**
-	 * <p>
 	 * Returns an instance of {@link IdentityEncodingHandler}.
-	 * </p>
 	 *
-	 * @return an instance of {@link IdentityEncodingHandler}
+	 * @return an instance of {@link IdentityEncodingHandler}.
 	 */
 	public static IdentityEncodingHandler getInstance() {
-		if (Instance == null) {
-			Instance = new IdentityEncodingHandler();
+		if (instance == null) {
+			instance = new IdentityEncodingHandler();
 		}
-		return Instance;
+		return instance;
 	}
 
 	/**
-	 * <p>
 	 * Returns the internal ID of the {@link IdentityEncodingHandler}.
-	 * </p>
 	 *
 	 * @return the string "identity".
 	 */
@@ -57,34 +50,26 @@ public final class IdentityEncodingHandler implements IHTTPEncodingHandler {
 	}
 
 	/**
-	 * <p>
 	 * Returns the <code>original</code> {@link InputStream}.
-	 * </p>
 	 *
 	 * @param original
-	 *            the {@link InputStream} to return
-	 * @return the <code>original</code> {@link InputStream}
-	 * @throws IOException
-	 *             not thrown
+	 *            the {@link InputStream} to return.
+	 * @return the <code>original</code> {@link InputStream}.
 	 */
 	@Override
-	public InputStream open(final InputStream original) throws IOException {
+	public InputStream open(final InputStream original) {
 		return original;
 	}
 
 	/**
-	 * <p>
 	 * Returns the <code>original</code> {@link OutputStream}.
-	 * </p>
 	 *
 	 * @param original
-	 *            the {@link OutputStream} to return
-	 * @return the <code>original</code> {@link OutputStream}
-	 * @throws IOException
-	 *             not thrown
+	 *            the {@link OutputStream} to return.
+	 * @return the <code>original</code> {@link OutputStream}.
 	 */
 	@Override
-	public OutputStream open(final OutputStream original) throws IOException {
+	public OutputStream open(final OutputStream original) {
 		return original;
 	}
 

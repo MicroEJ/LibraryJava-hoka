@@ -9,14 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-  - Changed the static HTTPSession to the RequestHandler customizable mechanism
+  - Change the static HTTPSession to the RequestHandler customizable mechanism
   - Move encoding registering to a dedicated class.
-  - Changed the request's body parsing API.
+  - Change the request's body parsing API.
 
 ### Added
 
   - Add timeout mechanism to cleanup HTTP inactive connections.
   - Add Keep-Alive support.
+  - Merge REST library.
+  - Merge authentication library.
 
 ## 6.0.0 - 2019-10-31
 
