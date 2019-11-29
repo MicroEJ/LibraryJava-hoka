@@ -32,7 +32,7 @@ public class InMemorySessionDataAccess implements SessionDataAccess {
 
 	@Override
 	public Session getSessionByUser(String userID) {
-		if (!this.activeSessionIDs.containsKey(userID)) {
+		if (userID == null || !this.activeSessionIDs.containsKey(userID)) {
 			return null;
 		}
 		String sessionID = this.activeSessionIDs.get(userID);
@@ -42,7 +42,7 @@ public class InMemorySessionDataAccess implements SessionDataAccess {
 
 	@Override
 	public Session getSessionByID(String sessionID) {
-		if (!this.activeUserIDs.containsKey(sessionID)) {
+		if (sessionID == null || !this.activeUserIDs.containsKey(sessionID)) {
 			return null;
 		}
 		String userID = this.activeUserIDs.get(sessionID);

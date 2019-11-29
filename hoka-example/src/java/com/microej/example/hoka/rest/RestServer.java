@@ -30,7 +30,8 @@ public class RestServer {
 
 			RestRequestHandler endpointHandler = new RestRequestHandler();
 			endpointHandler.addEndpoint(new HelloEndPoint());
-			try (InputStream resourceFile = RestServer.class.getResourceAsStream("/html/html.resources.list")) {
+			try (InputStream resourceFile = RestServer.class
+					.getResourceAsStream("/rest/example.resources.list")) {
 				createStaticEndpoints(endpointHandler, resourceFile, "/index.html", "/html/");
 			}
 

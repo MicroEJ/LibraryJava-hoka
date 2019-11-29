@@ -2,6 +2,10 @@
 # For demonstration purpose only.
 # MicroEJ Corp. PROPRIETARY. Use is subject to license terms.
 
-/com/microej/example/hoka/hoka.crt
-/com/microej/example/hoka/hoka.key
-/com/microej/example/hoka/ca.crt
+/html/index.html
+/html/index.html.gz
+/https/ca.crt
+/https/hoka.crt
+/https/hoka.key
+/png/microej.png
+/rest/example.resources.list

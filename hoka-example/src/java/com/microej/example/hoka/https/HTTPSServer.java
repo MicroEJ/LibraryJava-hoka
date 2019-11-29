@@ -25,7 +25,7 @@ public class HTTPSServer {
 
 	private static final int PORT = 8443;
 
-	private static final String PACKAGE = "/com/microej/example/hoka/";
+	private static final String PACKAGE = "/https/";
 
 	private static final String KEY_PATH = PACKAGE + "hoka.key";
 	private static final String CERTIFICATE_PATH = PACKAGE + "hoka.crt";
