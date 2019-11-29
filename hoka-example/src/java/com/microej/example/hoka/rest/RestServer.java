@@ -20,7 +20,7 @@ import ej.hoka.rest.endpoint.AliasEndpoint;
 import ej.hoka.rest.endpoint.GzipResourceEndpoint;
 import ej.hoka.rest.endpoint.ResourceRestEndpoint;
 
-public class RestServerExample {
+public class RestServer {
 	private static final String SLASH = "/";
 
 	public static void main(String[] args) {
@@ -30,7 +30,7 @@ public class RestServerExample {
 
 			RestRequestHandler endpointHandler = new RestRequestHandler();
 			endpointHandler.addEndpoint(new HelloEndPoint());
-			try (InputStream resourceFile = RestServerExample.class.getResourceAsStream("/html/html.resources.list")) {
+			try (InputStream resourceFile = RestServer.class.getResourceAsStream("/html/html.resources.list")) {
 				createStaticEndpoints(endpointHandler, resourceFile, "/index.html", "/html/");
 			}
 

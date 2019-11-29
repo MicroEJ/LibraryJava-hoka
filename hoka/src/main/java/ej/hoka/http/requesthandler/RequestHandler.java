@@ -14,6 +14,8 @@ import ej.hoka.http.HTTPResponse;
 
 /**
  * A handler to process request and create appropriate response.
+ * <p>
+ * Implementations must be thread-safe to protect themselves against concurrent calls from different jobs.
  */
 public interface RequestHandler {
 

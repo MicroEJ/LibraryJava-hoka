@@ -23,7 +23,7 @@ import ej.hoka.http.support.MIMEUtils;
 import ej.hoka.rest.RestEndpoint;
 import ej.hoka.rest.RestRequestHandler;
 
-public class AuthenticationHTTPServerExample {
+public class AuthenticationExampleServer {
 
 	public static void main(String[] args) throws IOException {
 		SessionAuthenticator sessionAuthenticator = new SessionAuthenticator();
