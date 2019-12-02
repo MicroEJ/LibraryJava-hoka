@@ -343,6 +343,9 @@ public class HTTPServer {
 					responseMessage = ""; //$NON-NLS-1$
 					response = HTTPResponse.RESPONSE_REQUESTTIMEOUT;
 					keepAlive = false;
+				} finally {
+					// TODO : Remove to allow Keep-Alive
+					keepAlive = false;
 				}
 
 				String connectionHeader = keepAlive ? HTTPConstants.FIELD_CONNECTION_VALUE_KEEP_ALIVE
