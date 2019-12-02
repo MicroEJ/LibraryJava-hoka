@@ -38,7 +38,7 @@ public class RestServer {
 			rhc.addRequestHandler(endpointHandler);
 			rhc.addRequestHandler(new DumpRequestHandler()); // Used in case endpointHandler doesn't process the request
 
-			restServer = new HTTPServer(8080, 10, 10, rhc);
+			restServer = new HTTPServer(8080, 10, 3, rhc);
 			restServer.start();
 		} catch (IOException e) {
 			e.printStackTrace();

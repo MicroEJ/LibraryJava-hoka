@@ -21,7 +21,7 @@ public class SimpleServer {
 
 	public static void main(String[] args) {
 		// Create the HTTP server with our custom request handler
-		HTTPServer server = new HTTPServer(PORT, 10, 1, new SimpleRequestHandler());
+		HTTPServer server = new HTTPServer(PORT, 10, 3, new SimpleRequestHandler());
 
 		// Once started, the server is accessible on http://localhost:8080
 		try {

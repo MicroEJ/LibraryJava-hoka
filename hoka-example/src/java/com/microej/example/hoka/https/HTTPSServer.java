@@ -43,7 +43,7 @@ public class HTTPSServer {
 		}
 
 		// Create the HTTP server with the ServerSocketFactory of the SSL context
-		HTTPServer server = new HTTPServer(PORT, 10, 1, new SimpleRequestHandler(),
+		HTTPServer server = new HTTPServer(PORT, 10, 3, new SimpleRequestHandler(),
 				sslContext.getServerSocketFactory());
 
 		// Once started, the server is accessible on https://localhost:8443

@@ -46,7 +46,7 @@ public class AuthenticationExampleServer {
 		handler.addRequestHandler(publicHandler);
 		handler.addRequestHandler(privateHandler);
 
-		HTTPServer server = new HTTPServer(8080, 10, 1, handler);
+		HTTPServer server = new HTTPServer(8080, 10, 3, handler);
 		server.start();
 	}
 
