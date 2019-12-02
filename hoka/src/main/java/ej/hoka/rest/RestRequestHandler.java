@@ -7,10 +7,9 @@
  */
 package ej.hoka.rest;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
+import ej.basictool.map.PackedMap;
 import ej.hoka.http.HTTPRequest;
 import ej.hoka.http.HTTPResponse;
 import ej.hoka.http.requesthandler.RequestHandler;
@@ -22,7 +21,7 @@ import ej.hoka.http.requesthandler.RequestHandler;
  */
 public class RestRequestHandler implements RequestHandler {
 
-	private final List<RestEndpoint> endpoints;
+	private final PackedMap<String, RestEndpoint> endpoints;
 
 	/**
 	 * Constructs a REST request handler with no endpoint.
@@ -31,7 +30,7 @@ public class RestRequestHandler implements RequestHandler {
 	 *
 	 */
 	public RestRequestHandler() {
-		this.endpoints = new ArrayList<>();
+		this.endpoints = new PackedMap<>();
 	}
 
 	/**
@@ -41,28 +40,44 @@ public class RestRequestHandler implements RequestHandler {
 	 *            the endpoint to add.
 	 */
 	public void addEndpoint(RestEndpoint endpoint) {
-		this.endpoints.add(endpoint);
+		this.endpoints.put(endpoint.getURI(), endpoint);
 	}
 
 	@Override
 	public HTTPResponse process(HTTPRequest request, Map<String, String> attributes) {
-		String uri = request.getURI();
-		for (RestEndpoint endpoint : this.endpoints) {
-			if (endpoint.getURI().equals(uri)) {
-				switch (request.getMethod()) {
-				case HTTPRequest.GET:
-					return endpoint.get(request, attributes);
-				case HTTPRequest.POST:
-					return endpoint.post(request, attributes);
-				case HTTPRequest.PUT:
-					return endpoint.put(request, attributes);
-				case HTTPRequest.DELETE:
-					return endpoint.delete(request, attributes);
-				default:
-					return HTTPResponse.RESPONSE_NOT_FOUND;
-				}
-			}
+		RestEndpoint endpoint = getEndpointFromURI(request.getURI());
+
+		if (endpoint == null) {
+			return null;
 		}
+
+		switch (request.getMethod()) {
+		case HTTPRequest.GET:
+			return endpoint.get(request, attributes);
+		case HTTPRequest.POST:
+			return endpoint.post(request, attributes);
+		case HTTPRequest.PUT:
+			return endpoint.put(request, attributes);
+		case HTTPRequest.DELETE:
+			return endpoint.delete(request, attributes);
+		default:
+			return HTTPResponse.RESPONSE_NOT_FOUND;
+		}
+	}
+
+	protected RestEndpoint getEndpointFromURI(String uri) {
+		while (!uri.isEmpty()) {
+			if (this.endpoints.containsKey(uri)) {
+				return this.endpoints.get(uri);
+			}
+
+			int i = uri.lastIndexOf('/');
+			if (i == -1) {
+				break; // Should not happen if uri starts with '/'
+			}
+			uri = uri.substring(0, i);
+		}
+
 		return null;
 	}
 

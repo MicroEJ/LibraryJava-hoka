@@ -38,6 +38,10 @@ public class RestAuthenticatedRequestHandler extends RestRequestHandler {
 
 	@Override
 	public HTTPResponse process(HTTPRequest request, Map<String, String> attributes) {
+		if (super.getEndpointFromURI(request.getURI()) == null) {
+			return null;
+		}
+
 		String sessionID = getSessionID(request, attributes);
 
 		String username = this.authenticator.authenticate(sessionID);
