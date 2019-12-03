@@ -56,7 +56,7 @@ public class RestEndpoint {
 
 		if (uri.isEmpty()) {
 			throw new IllegalArgumentException(
-					Messages.BUILDER.buildMessage(Level.SEVERE, Messages.CATEGORY_REST, Messages.EMPTY_URI));
+					Messages.BUILDER.buildMessage(Level.SEVERE, Messages.CATEGORY_HOKA, Messages.EMPTY_URI));
 		}
 
 		if (!uri.startsWith(ENDPOINT_PREFIX)) {

@@ -37,8 +37,9 @@ public class AuthenticationExampleServer {
 		// Create a request handler responsible of handling request to "private"
 		// endpoints
 
-		RestRequestHandler privateHandler = new RestAuthenticatedRequestHandler(sessionAuthenticator);
-		privateHandler.addEndpoint(new HelloEndpoint("/api/hello"));
+		RestAuthenticatedRequestHandler privateHandler = new RestAuthenticatedRequestHandler(sessionAuthenticator,
+				"/api/private/");
+		privateHandler.addEndpoint(new HelloEndpoint("/api/private/hello"));
 
 		// Start the server with the two REST request handlers
 

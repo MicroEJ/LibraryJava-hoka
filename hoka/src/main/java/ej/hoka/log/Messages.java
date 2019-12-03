@@ -85,11 +85,6 @@ public final class Messages {
 	public static final String CATEGORY_HOKA = "Hoka"; //$NON-NLS-1$
 
 	/**
-	 * REST category message.
-	 */
-	public static final String CATEGORY_REST = "REST"; //$NON-NLS-1$
-
-	/**
 	 * The message builder.
 	 */
 	public static final MessageBuilder BUILDER = new BasicMessageBuilder();

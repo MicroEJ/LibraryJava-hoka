@@ -115,7 +115,7 @@ public class HTTPResponse {
 	private String mimeType;
 
 	/**
-	 * Unique field to store the data object to be used, it can be both byte[] or InputStream.
+	 * Unique field to store the data object to be used, it can be either a byte[] or an InputStream.
 	 */
 	private Object data;
 
@@ -128,14 +128,6 @@ public class HTTPResponse {
 	 * HTTP Response headers.
 	 */
 	private final HashMap<String, String> header = new HashMap<>(5);
-
-	/**
-	 * <code>true</code> if the {@link OutputStream} is closed.
-	 *
-	 * @see #setDataStreamClosed()
-	 * @see #close()
-	 */
-	private boolean dataStreamClosed = false;
 
 	/**
 	 * Creates an empty {@link HTTPResponse}.
@@ -158,10 +150,25 @@ public class HTTPResponse {
 	 * Creates a new {@link HTTPResponse} using the given {@link InputStream} as the response data.
 	 *
 	 * @param data
-	 *            the data to send through response (as a stream).
+	 *            the data to send through response (as a stream), the stream will be closed automatically when the
+	 *            response is sent.
 	 */
 	public HTTPResponse(InputStream data) {
 		setData(data);
+	}
+
+	/**
+	 * Creates a new {@link HTTPResponse} using the given {@link InputStream} as the response data.
+	 *
+	 * @param data
+	 *            the data to send through response (as a stream), the stream will be closed automatically when the
+	 *            response is sent.
+	 * @param length
+	 *            the length of the response.
+	 */
+	public HTTPResponse(InputStream data, int length) {
+		setData(data);
+		setLength(length);
 	}
 
 	/**
@@ -247,37 +254,6 @@ public class HTTPResponse {
 	}
 
 	/**
-	 * Close the data stream if the field {@link #data} is non null and the value of {@link #dataStreamClosed} is false.
-	 */
-	protected void close() {
-		InputStream data = getData();
-		if ((data != null) && !this.dataStreamClosed) {
-			try {
-				data.close();
-			} catch (IOException e) {
-				// ignore
-			}
-		}
-	}
-
-	/**
-	 * Returns the {@link InputStream} from which response data can be read.
-	 *
-	 * @return an {@link InputStream} from which response data can be read. May be <code>null</code>.
-	 */
-	protected InputStream getData() {
-		// data can be both byte[] or InputStream according to uses but not both
-		// so we used only one field
-		// The privileged way to set data is to use a Stream, prefer catching
-		// ClassClassException instead of instanceof
-		try {
-			return (InputStream) this.data;
-		} catch (ClassCastException e) {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns the response header.
 	 *
 	 * @return a {@link Map} of (String,String) representing the HTTP header fields (may be empty).
@@ -319,22 +295,6 @@ public class HTTPResponse {
 	}
 
 	/**
-	 * Returns the byte array from which response data can be read.
-	 *
-	 * @return a byte array from which response data can be read. May be <code>null</code>.
-	 */
-	protected byte[] getRawData() {
-		// data can be both byte[] or InputStream according to uses but not both
-		// so we used only one field
-		// The privileged way to set data is to use a Stream, prefer an
-		// instanceof check instead of catching ClassClassException
-		if (this.data instanceof byte[]) {
-			return (byte[]) this.data;
-		}
-		return null;
-	}
-
-	/**
 	 * Returns the response status.
 	 *
 	 * @return the response status.
@@ -369,7 +329,8 @@ public class HTTPResponse {
 	 * response message size.
 	 *
 	 * @param dataStream
-	 *            the {@link InputStream} from which the response data can be read.
+	 *            the {@link InputStream} from which the response data can be read, the stream will be closed
+	 *            automatically when the response is sent.
 	 */
 	private void setData(InputStream dataStream) {
 		setData(dataStream, -1);
@@ -382,7 +343,8 @@ public class HTTPResponse {
 	 * without using the chunked transfer-coding. This reduces response message size.
 	 *
 	 * @param dataStream
-	 *            the {@link InputStream} from which the response data can be read.
+	 *            the {@link InputStream} from which the response data can be read, the stream will be closed
+	 *            automatically when the response is sent.
 	 * @param length
 	 *            the number of byte to be read from the {@link InputStream}.
 	 */
@@ -392,17 +354,10 @@ public class HTTPResponse {
 	}
 
 	/**
-	 * Used in HTTPSession to indicate that response dataStream has been successfully read and closed.
-	 */
-	protected void setDataStreamClosed() {
-		this.dataStreamClosed = true;
-	}
-
-	/**
 	 * Sets the length of the response.
 	 *
 	 * @param length
-	 *            the length of the response
+	 *            the length of the response, if negative, the "content-length" field is removed.
 	 */
 	private void setLength(long length) {
 		if (length < 0) {
@@ -436,6 +391,8 @@ public class HTTPResponse {
 
 	/**
 	 * Sends the {@link HTTPResponse} to the {@link OutputStream}.
+	 * <p>
+	 * If the data of this response is an {@link InputStream}, closes it.
 	 *
 	 * @throws IOException
 	 *
@@ -445,6 +402,19 @@ public class HTTPResponse {
 		if (encodingHandler != null) {
 			addHeaderField(HTTPConstants.FIELD_CONTENT_ENCODING, encodingHandler.getId());
 		}
+
+		long length = getLength();
+
+		if (length < 0) {
+			// data will be transmitted using chunked transfer coding
+			// only when dataStream is used, the size is known otherwise
+			addHeaderField(HTTPConstants.FIELD_TRANSFER_ENCODING,
+					encodingRegistry.getChunkedTransferCodingHandler().getId());
+		} // else the length is already defined in a header by the response
+
+		writeHTTPHeader(outputStream);
+
+		Object data = this.data;
 		// only one of the next data can be defined.
 		// A better way may be to specialize HTTPResponse for Raw String and
 		// InputStream
@@ -453,25 +423,15 @@ public class HTTPResponse {
 		// we keep this implementation to avoid new hierarchy for performance
 		// but if the specialization evolves to a more and more
 		// specific way, do it!
-		byte[] rawData = getRawData();
-		try (InputStream dataStream = getData()) {
-			long length = getLength();
-
-			if (length < 0) {
-				// data will be transmitted using chunked transfer coding
-				// only when dataStream is used, the size is known otherwise
-				addHeaderField(HTTPConstants.FIELD_TRANSFER_ENCODING,
-						encodingRegistry.getChunkedTransferCodingHandler().getId());
-			} // else the length is already defined in a header by the response
-
-			writeHTTPHeader(outputStream);
-
-			if (rawData != null) {
-				sendRawDataResponse(rawData, outputStream, encodingHandler, encodingRegistry);
-			} else if (dataStream != null) {
+		if (data instanceof byte[]) {
+			byte[] dataArray = (byte[]) data;
+			sendRawDataResponse(dataArray, outputStream, encodingHandler, encodingRegistry);
+		} else if (data != null) {
+			try (InputStream dataStream = (InputStream) data) {
 				sendInputStreamResponse(dataStream, outputStream, encodingHandler, encodingRegistry, bufferSize);
 			}
 		}
+
 		outputStream.flush();
 	}
 
@@ -485,7 +445,6 @@ public class HTTPResponse {
 			} else {
 				writeAndFlush(rawData, dataOutput);
 			}
-			setDataStreamClosed();
 		}
 	}
 
@@ -517,7 +476,6 @@ public class HTTPResponse {
 			// if (dataOutput != null) {
 			// dataOutput.close();
 			// }
-			setDataStreamClosed();
 		}
 	}
 

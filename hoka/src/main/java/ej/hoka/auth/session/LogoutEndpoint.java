@@ -18,7 +18,7 @@ import ej.hoka.rest.RestEndpoint;
  * RestEndpoint that logs out users using cookie-based sessions.
  *
  * @see LoginEndpoint
- * @see RestAuthenticatedRequestHandler
+ * @see AuthenticatedRequestHandler
  */
 public abstract class LogoutEndpoint extends RestEndpoint {
 

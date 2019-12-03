@@ -12,9 +12,8 @@ import java.security.GeneralSecurityException;
 
 import javax.net.ssl.SSLContext;
 
-import com.microej.example.hoka.SimpleRequestHandler;
-
 import ej.hoka.http.HTTPServer;
+import ej.hoka.http.requesthandler.ResourceRequestHandler;
 import ej.net.util.ssl.SslContextBuilder;
 
 /*
@@ -43,10 +42,13 @@ public class HTTPSServer {
 		}
 
 		// Create the HTTP server with the ServerSocketFactory of the SSL context
-		HTTPServer server = new HTTPServer(PORT, 10, 3, new SimpleRequestHandler(),
+		HTTPServer server = new HTTPServer(PORT, 10, 3, new ResourceRequestHandler("/html/"),
 				sslContext.getServerSocketFactory());
 
-		// Once started, the server is accessible on https://localhost:8443
+		// Send the stack trace to the client when an exception is thrown
+		server.sendStackTraceOnException(true);
+
+		// Once started, the server is accessible on http://localhost:8080
 		try {
 			server.start();
 		} catch (IOException e) {

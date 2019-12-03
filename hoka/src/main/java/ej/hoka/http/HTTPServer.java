@@ -11,19 +11,22 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
+import java.io.PrintStream;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.HashMap;
-import java.util.Map;
 
 import javax.net.ServerSocketFactory;
 
 import ej.hoka.http.encoding.HTTPEncodingRegistry;
 import ej.hoka.http.encoding.IHTTPEncodingHandler;
 import ej.hoka.http.encoding.UnsupportedHTTPEncodingException;
-import ej.hoka.http.requesthandler.DefaultRequestHandler;
 import ej.hoka.http.requesthandler.RequestHandler;
 import ej.hoka.http.requesthandler.RequestHandlerComposite;
+import ej.hoka.http.requesthandler.ResourceRequestHandler;
+import ej.hoka.http.support.MIMEUtils;
 import ej.hoka.log.Messages;
 import ej.hoka.tcp.TCPServer;
 import ej.util.message.Level;
@@ -48,7 +51,7 @@ import ej.util.message.Level;
  * <b>Example:</b>
  *
  * <pre>
- * // get a new server which uses a DefaultRequestHandler
+ * // get a new server which uses a ResourceRequestHandler
  * HTTPServer server = new HTTPServer(serverSocket, 10, 1);
  *
  * // start the server
@@ -59,7 +62,7 @@ import ej.util.message.Level;
  * property "hoka.buffer.size".
  *
  * @see RequestHandlerComposite
- * @see DefaultRequestHandler
+ * @see ResourceRequestHandler
  */
 public class HTTPServer {
 
@@ -72,6 +75,11 @@ public class HTTPServer {
 	 * Property to set a custom buffer size.
 	 */
 	private static final String BUFFER_SIZE_PROPERTY = "hoka.buffer.size"; //$NON-NLS-1$
+
+	/**
+	 * The default root directory.
+	 */
+	private static final String HOKA_ROOT_DIRECTORY = "/hoka/"; //$NON-NLS-1$
 
 	/**
 	 * The underlying TCP server.
@@ -92,9 +100,13 @@ public class HTTPServer {
 	 */
 	private Thread[] jobs;
 
+	private boolean sendStackTraceOnException;
+
 	/**
 	 * Constructs the underlying {@link TCPServer} and the HTTP server that manage jobs to handle the connections from
-	 * the {@link TCPServer} and a {@link DefaultRequestHandler}.
+	 * the {@link TCPServer}.
+	 * <p>
+	 * Requests are handled by a {@link ResourceRequestHandler} targeting the <code>/hoka/</code> resource folder.
 	 *
 	 * @param port
 	 *            the port to use.
@@ -104,7 +116,7 @@ public class HTTPServer {
 	 *            the number of jobs to run.
 	 */
 	public HTTPServer(int port, int maxSimultaneousConnection, int jobCount) {
-		this(port, maxSimultaneousConnection, jobCount, new DefaultRequestHandler());
+		this(port, maxSimultaneousConnection, jobCount, new ResourceRequestHandler(HOKA_ROOT_DIRECTORY));
 	}
 
 	/**
@@ -207,23 +219,14 @@ public class HTTPServer {
 		this.rootRequestHandler = new RequestHandlerComposite();
 		// First, check if the resource matches the client cache
 		this.rootRequestHandler.addRequestHandler(IfNoneMatchRequestHandler.instance);
-		// Then, apply the application request handler and catch exceptions
-		this.rootRequestHandler.addRequestHandler(new RequestHandler() {
-			@Override
-			public HTTPResponse process(HTTPRequest request, Map<String, String> attributes) {
-				try {
-					return requestHandler.process(request, attributes);
-				} catch (Throwable e) {
-					Messages.LOGGER.log(Level.SEVERE, Messages.CATEGORY_HOKA, Messages.ERROR_UNKNOWN, e);
-					return HTTPResponse.RESPONSE_INTERNAL_ERROR;
-				}
-			}
-
-		});
+		// Then, apply the application request handler
+		this.rootRequestHandler.addRequestHandler(requestHandler);
 		// In case the application request handler doesn't process the request, send a "404 Not Found" error
 		this.rootRequestHandler.addRequestHandler(NotFoundRequestHandler.instance);
 
 		this.encodingRegistry = encodingRegistry;
+
+		this.sendStackTraceOnException = false;
 	}
 
 	/**
@@ -343,6 +346,30 @@ public class HTTPServer {
 					responseMessage = ""; //$NON-NLS-1$
 					response = HTTPResponse.RESPONSE_REQUESTTIMEOUT;
 					keepAlive = false;
+				} catch (IOException e) {
+					throw e;
+				} catch (final Throwable e) {
+					responseMessage = e.getMessage();
+					if (this.sendStackTraceOnException) {
+						final PipedInputStream pipedInputStream = new PipedInputStream(getBufferSize());
+						final PipedOutputStream pipedOutputStream = new PipedOutputStream(pipedInputStream);
+						new Thread(new Runnable() {
+							@Override
+							public void run() {
+								e.printStackTrace(new PrintStream(pipedOutputStream));
+								try {
+									pipedOutputStream.close();
+								} catch (IOException e) {
+									// Do nothing
+								}
+							}
+						}).start();
+						response = new HTTPResponse(HTTPConstants.HTTP_STATUS_INTERNALERROR, MIMEUtils.MIME_PLAINTEXT,
+								pipedInputStream);
+					} else {
+						response = HTTPResponse.RESPONSE_INTERNAL_ERROR;
+					}
+					keepAlive = false;
 				} finally {
 					// TODO : Remove to allow Keep-Alive
 					keepAlive = false;
@@ -353,7 +380,9 @@ public class HTTPServer {
 				response.addHeaderField(HTTPConstants.FIELD_CONNECTION, connectionHeader);
 
 				String status = response.getStatus();
-				Messages.LOGGER.log(status.equals(HTTPConstants.HTTP_STATUS_OK) ? Level.FINE : Level.INFO,
+				Messages.LOGGER.log(
+						status.equals(HTTPConstants.HTTP_STATUS_OK) ? Level.FINE
+								: status.equals(HTTPConstants.HTTP_STATUS_INTERNALERROR) ? Level.SEVERE : Level.INFO,
 						Messages.CATEGORY_HOKA, Messages.HTTP_RESPONSE, Integer.valueOf(connection.hashCode()),
 						connection.getInetAddress().toString(), status, responseMessage);
 
@@ -368,6 +397,26 @@ public class HTTPServer {
 
 	private int getBufferSize() {
 		return Integer.getInteger(BUFFER_SIZE_PROPERTY, BUFFER_SIZE).intValue();
+	}
+
+	/**
+	 * Returns whether of not the server sends the stack trace of thrown exceptions.
+	 *
+	 * @return <code>true</code> if the server sends the stack trace of thrown exceptions, <code>false</code> otherwise.
+	 */
+	public boolean getSendStackTraceOnException() {
+		return this.sendStackTraceOnException;
+	}
+
+	/**
+	 * Sets whether of not the server must send the stack trace of thrown exceptions.
+	 *
+	 * @param sendStackTraceOnException
+	 *            <code>true</code> if the server must send the stack trace of thrown exceptions, <code>false</code>
+	 *            otherwise.
+	 */
+	public void sendStackTraceOnException(boolean sendStackTraceOnException) {
+		this.sendStackTraceOnException = sendStackTraceOnException;
 	}
 
 }

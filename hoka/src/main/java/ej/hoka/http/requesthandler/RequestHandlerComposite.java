@@ -17,7 +17,7 @@ import ej.hoka.http.HTTPResponse;
  * A handler that delegates the process of the request to an array of {@link RequestHandler}.
  * <p>
  * The result of the process from a {@link RequestHandlerComposite} is the result of the first {@link RequestHandler}
- * matching the {@link HTTPRequest} in the array : the handlers are browsed in the order they have been added.
+ * matching the {@link HTTPRequest} in the array. The handlers are browsed in the order they have been added.
  */
 public class RequestHandlerComposite implements RequestHandler {
 
@@ -48,7 +48,7 @@ public class RequestHandlerComposite implements RequestHandler {
 	 * @param handler
 	 *            the {@link RequestHandler} to add.
 	 */
-	public void addRequestHandler(RequestHandler handler) {
+	public synchronized void addRequestHandler(RequestHandler handler) {
 		if (handler == null) {
 			throw new IllegalArgumentException();
 		}

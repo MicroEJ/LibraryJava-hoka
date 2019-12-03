@@ -14,7 +14,7 @@ import ej.hoka.auth.SessionAuthenticator;
  *
  * @see LoginEndpoint
  * @see LogoutEndpoint
- * @see RestAuthenticatedRequestHandler
+ * @see AuthenticatedRequestHandler
  */
 public class CookieBasedSessionConfiguration {
 
