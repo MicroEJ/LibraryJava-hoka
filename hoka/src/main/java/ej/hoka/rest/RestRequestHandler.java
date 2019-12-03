@@ -16,6 +16,10 @@ import ej.hoka.http.requesthandler.RequestHandler;
 
 /**
  * A request handler that exposes a REST API. Handles GET, POST, PUT and DELETE operations on endpoints.
+ * <p>
+ * The endpoint that handles the request is the endpoint with the most specific URI that matches the request. With two
+ * endpoints at <code>/api/</code> and <code>/api/my/endpoint</code>, the second is used when requesting
+ * <code>/api/my/endpoint/and/extension</code>.
  *
  * @see RestEndpoint
  */
@@ -34,12 +38,12 @@ public class RestRequestHandler implements RequestHandler {
 	}
 
 	/**
-	 * Adds an endpoint to this server.
+	 * Adds an endpoint to this handler.
 	 *
 	 * @param endpoint
 	 *            the endpoint to add.
 	 */
-	public void addEndpoint(RestEndpoint endpoint) {
+	public synchronized void addEndpoint(RestEndpoint endpoint) {
 		this.endpoints.put(endpoint.getURI(), endpoint);
 	}
 
@@ -65,10 +69,18 @@ public class RestRequestHandler implements RequestHandler {
 		}
 	}
 
-	protected RestEndpoint getEndpointFromURI(String uri) {
+	/**
+	 * Find the endpoint the most specific that matches the request URI.
+	 *
+	 * @param uri
+	 *            the URI to match.
+	 * @return the {@link RestEndpoint} the most specific that matches the request URI.
+	 */
+	public RestEndpoint getEndpointFromURI(String uri) {
+		PackedMap<String, RestEndpoint> endpoints = this.endpoints;
 		while (!uri.isEmpty()) {
-			if (this.endpoints.containsKey(uri)) {
-				return this.endpoints.get(uri);
+			if (endpoints.containsKey(uri)) {
+				return endpoints.get(uri);
 			}
 
 			int i = uri.lastIndexOf('/');
