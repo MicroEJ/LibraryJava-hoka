@@ -7,97 +7,60 @@
  */
 package ej.hoka.auth.session;
 
-import java.util.Map;
-
 import ej.hoka.auth.SessionAuthenticator;
-import ej.hoka.http.HTTPConstants;
 import ej.hoka.http.HTTPRequest;
-import ej.hoka.http.HTTPResponse;
+import ej.hoka.rest.RestEndpoint;
 import ej.hoka.rest.RestRequestHandler;
 
 /**
- * A REST request handler that requires the user to be authenticated using cookie-based sessions to access the
- * endpoints.
- *
- * @see LoginEndpoint
- * @see LogoutEndpoint
+ * An implementation of {@link AuthenticatedRequestHandler} for REST.
+ * <p>
+ * Uses a root URI like <code>/private/</code> so that only request with URIs that have this root as prefix are
+ * considered.
+ * <p>
+ * For example, an {@link AuthenticatedRequestHandler} with <code>/private/</code> root handles a request to
+ * <code>/private/my/endpoint</code> but not a request to <code>/public/another/endpoint</code>.
  */
-public class RestAuthenticatedRequestHandler extends RestRequestHandler {
+public class RestAuthenticatedRequestHandler extends AuthenticatedRequestHandler {
 
-	private final SessionAuthenticator authenticator;
+	private final RestRequestHandler endpointHandler;
+
+	private final String root;
 
 	/**
-	 * Constructs the request handler.
+	 * Constructs the REST request handler.
 	 *
 	 * @param authenticator
 	 *            the {@link SessionAuthenticator} used to authenticate users.
+	 * @param root
+	 *            the URI root used to match the request.
 	 */
-	public RestAuthenticatedRequestHandler(SessionAuthenticator authenticator) {
-		this.authenticator = authenticator;
+	public RestAuthenticatedRequestHandler(SessionAuthenticator authenticator, String root) {
+		super(authenticator);
+
+		this.endpointHandler = new RestRequestHandler();
+		this.root = root;
+	}
+
+	/**
+	 * Add an endpoint to this handler. The URI of the endpoint must be prefixed by <code>root</code>.
+	 *
+	 * @param endpoint
+	 *            the {@link RestEndpoint} to add.
+	 * @throws IllegalArgumentException
+	 *             if the endpoint URI isn't prefixed by <code>root</code>.
+	 * @see RestAuthenticatedRequestHandler#RestAuthenticatedRequestHandler(SessionAuthenticator, String)
+	 */
+	public void addEndpoint(RestEndpoint endpoint) {
+		if (!endpoint.getURI().startsWith(this.root)) {
+			throw new IllegalArgumentException();
+		}
+		this.endpointHandler.addEndpoint(endpoint);
 	}
 
 	@Override
-	public HTTPResponse process(HTTPRequest request, Map<String, String> attributes) {
-		String sessionID = getSessionID(request, attributes);
-
-		String username = this.authenticator.authenticate(sessionID);
-
-		if (username == null) {
-			return onFailedAuthentication(request, attributes);
-		}
-
-		return onSuccessfulAuthentication(request, attributes, username, sessionID);
-	}
-
-	/**
-	 * Retrieves the session ID from the cookies of the request.
-	 *
-	 * @param request
-	 *            the {@link HTTPRequest}.
-	 * @param attributes
-	 *            the attributes populated by the request processing.
-	 * @return the session ID.
-	 */
-	protected String getSessionID(HTTPRequest request, Map<String, String> attributes) {
-		return request.getCookie(CookieBasedSessionConfiguration.COOKIE_NAME);
-	}
-
-	/**
-	 * Constructs the response upon successful authentication.
-	 *
-	 * @param request
-	 *            the {@link HTTPRequest}.
-	 * @param attributes
-	 *            the attributes populated by the request processing.
-	 * @param username
-	 *            the username of the authenticated user.
-	 * @param sessionID
-	 *            the ID of the session.
-	 * @return the response to send.
-	 */
-	protected HTTPResponse onSuccessfulAuthentication(HTTPRequest request, Map<String, String> attributes,
-			String username, String sessionID) {
-		attributes.put("username", username); //$NON-NLS-1$
-
-		HTTPResponse response = super.process(request, attributes);
-
-		response.addHeaderField("Set-Cookie", //$NON-NLS-1$
-				CookieBasedSessionConfiguration.COOKIE_NAME + "=" + sessionID + "; HTTPOnly"); //$NON-NLS-1$ //$NON-NLS-2$
-
-		return response;
-	}
-
-	/**
-	 * Constructs the response upon failed authentication.
-	 *
-	 * @param request
-	 *            the {@link HTTPRequest}.
-	 * @param attributes
-	 *            the attributes populated by the request processing.
-	 * @return the response to send.
-	 */
-	protected HTTPResponse onFailedAuthentication(HTTPRequest request, Map<String, String> attributes) {
-		return HTTPResponse.createError(HTTPConstants.HTTP_STATUS_UNAUTHORIZED, ""); //$NON-NLS-1$
+	protected boolean match(HTTPRequest request) {
+		return request.getURI().startsWith(this.root);
 	}
 
 }

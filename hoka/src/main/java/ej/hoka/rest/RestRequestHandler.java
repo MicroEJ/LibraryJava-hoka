@@ -7,22 +7,25 @@
  */
 package ej.hoka.rest;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
+import ej.basictool.map.PackedMap;
 import ej.hoka.http.HTTPRequest;
 import ej.hoka.http.HTTPResponse;
 import ej.hoka.http.requesthandler.RequestHandler;
 
 /**
  * A request handler that exposes a REST API. Handles GET, POST, PUT and DELETE operations on endpoints.
+ * <p>
+ * The endpoint that handles the request is the endpoint with the most specific URI that matches the request. With two
+ * endpoints at <code>/api/</code> and <code>/api/my/endpoint</code>, the second is used when requesting
+ * <code>/api/my/endpoint/and/extension</code>.
  *
  * @see RestEndpoint
  */
 public class RestRequestHandler implements RequestHandler {
 
-	private final List<RestEndpoint> endpoints;
+	private final PackedMap<String, RestEndpoint> endpoints;
 
 	/**
 	 * Constructs a REST request handler with no endpoint.
@@ -31,38 +34,62 @@ public class RestRequestHandler implements RequestHandler {
 	 *
 	 */
 	public RestRequestHandler() {
-		this.endpoints = new ArrayList<>();
+		this.endpoints = new PackedMap<>();
 	}
 
 	/**
-	 * Adds an endpoint to this server.
+	 * Adds an endpoint to this handler.
 	 *
 	 * @param endpoint
 	 *            the endpoint to add.
 	 */
-	public void addEndpoint(RestEndpoint endpoint) {
-		this.endpoints.add(endpoint);
+	public synchronized void addEndpoint(RestEndpoint endpoint) {
+		this.endpoints.put(endpoint.getURI(), endpoint);
 	}
 
 	@Override
 	public HTTPResponse process(HTTPRequest request, Map<String, String> attributes) {
-		String uri = request.getURI();
-		for (RestEndpoint endpoint : this.endpoints) {
-			if (endpoint.getURI().equals(uri)) {
-				switch (request.getMethod()) {
-				case HTTPRequest.GET:
-					return endpoint.get(request, attributes);
-				case HTTPRequest.POST:
-					return endpoint.post(request, attributes);
-				case HTTPRequest.PUT:
-					return endpoint.put(request, attributes);
-				case HTTPRequest.DELETE:
-					return endpoint.delete(request, attributes);
-				default:
-					return HTTPResponse.RESPONSE_NOT_FOUND;
-				}
-			}
+		RestEndpoint endpoint = getEndpointFromURI(request.getURI());
+
+		if (endpoint == null) {
+			return null;
 		}
+
+		switch (request.getMethod()) {
+		case HTTPRequest.GET:
+			return endpoint.get(request, attributes);
+		case HTTPRequest.POST:
+			return endpoint.post(request, attributes);
+		case HTTPRequest.PUT:
+			return endpoint.put(request, attributes);
+		case HTTPRequest.DELETE:
+			return endpoint.delete(request, attributes);
+		default:
+			return HTTPResponse.RESPONSE_NOT_FOUND;
+		}
+	}
+
+	/**
+	 * Find the endpoint the most specific that matches the request URI.
+	 *
+	 * @param uri
+	 *            the URI to match.
+	 * @return the {@link RestEndpoint} the most specific that matches the request URI.
+	 */
+	public RestEndpoint getEndpointFromURI(String uri) {
+		PackedMap<String, RestEndpoint> endpoints = this.endpoints;
+		while (!uri.isEmpty()) {
+			if (endpoints.containsKey(uri)) {
+				return endpoints.get(uri);
+			}
+
+			int i = uri.lastIndexOf('/');
+			if (i == -1) {
+				break; // Should not happen if uri starts with '/'
+			}
+			uri = uri.substring(0, i);
+		}
+
 		return null;
 	}
 
