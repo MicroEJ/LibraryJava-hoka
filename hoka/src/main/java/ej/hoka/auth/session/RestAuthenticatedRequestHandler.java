@@ -8,7 +8,6 @@
 package ej.hoka.auth.session;
 
 import ej.hoka.auth.SessionAuthenticator;
-import ej.hoka.http.HTTPRequest;
 import ej.hoka.rest.RestEndpoint;
 import ej.hoka.rest.RestRequestHandler;
 
@@ -25,8 +24,6 @@ public class RestAuthenticatedRequestHandler extends AuthenticatedRequestHandler
 
 	private final RestRequestHandler endpointHandler;
 
-	private final String root;
-
 	/**
 	 * Constructs the REST request handler.
 	 *
@@ -36,10 +33,10 @@ public class RestAuthenticatedRequestHandler extends AuthenticatedRequestHandler
 	 *            the URI root used to match the request.
 	 */
 	public RestAuthenticatedRequestHandler(SessionAuthenticator authenticator, String root) {
-		super(authenticator);
+		super(authenticator, root);
 
 		this.endpointHandler = new RestRequestHandler();
-		this.root = root;
+		addRequestHandler(this.endpointHandler);
 	}
 
 	/**
@@ -52,15 +49,10 @@ public class RestAuthenticatedRequestHandler extends AuthenticatedRequestHandler
 	 * @see RestAuthenticatedRequestHandler#RestAuthenticatedRequestHandler(SessionAuthenticator, String)
 	 */
 	public void addEndpoint(RestEndpoint endpoint) {
-		if (!endpoint.getURI().startsWith(this.root)) {
+		if (!endpoint.getURI().startsWith(getRoot())) {
 			throw new IllegalArgumentException();
 		}
 		this.endpointHandler.addEndpoint(endpoint);
-	}
-
-	@Override
-	protected boolean match(HTTPRequest request) {
-		return request.getURI().startsWith(this.root);
 	}
 
 }

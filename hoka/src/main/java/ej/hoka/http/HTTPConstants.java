@@ -98,7 +98,7 @@ public final class HTTPConstants {
 	 */
 	public static final String FIELD_TRANSFER_ENCODING = "transfer-" + ENCODING; //$NON-NLS-1$
 	/**
-	 * HTTP header field (in lower case) <code>content-encoding</code>.
+	 * HTTP header field (in lower case) <code>accept-encoding</code>.
 	 */
 	public static final String FIELD_ACCEPT_ENCODING = "accept-" + ENCODING; //$NON-NLS-1$
 	/**

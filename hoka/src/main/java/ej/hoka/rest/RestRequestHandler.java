@@ -19,9 +19,11 @@ import ej.hoka.http.requesthandler.RequestHandler;
  * <p>
  * The endpoint that handles the request is the endpoint with the most specific URI that matches the request. With two
  * endpoints at <code>/api/</code> and <code>/api/my/endpoint</code>, the second is used when requesting
- * <code>/api/my/endpoint/and/extension</code>.
+ * <code>/api/my/endpoint</code> and also when requesting <code>/api/my/endpoint/and/extension</code> if it is a global
+ * endpoint.
  *
  * @see RestEndpoint
+ * @see RestEndpoint#isGlobal()
  */
 public class RestRequestHandler implements RequestHandler {
 
@@ -65,7 +67,7 @@ public class RestRequestHandler implements RequestHandler {
 		case HTTPRequest.DELETE:
 			return endpoint.delete(request, attributes);
 		default:
-			return HTTPResponse.RESPONSE_NOT_FOUND;
+			return null;
 		}
 	}
 
@@ -76,18 +78,26 @@ public class RestRequestHandler implements RequestHandler {
 	 *            the URI to match.
 	 * @return the {@link RestEndpoint} the most specific that matches the request URI.
 	 */
-	public RestEndpoint getEndpointFromURI(String uri) {
+	private RestEndpoint getEndpointFromURI(String uri) {
 		PackedMap<String, RestEndpoint> endpoints = this.endpoints;
-		while (!uri.isEmpty()) {
-			if (endpoints.containsKey(uri)) {
-				return endpoints.get(uri);
-			}
 
+		if (endpoints.containsKey(uri)) {
+			return endpoints.get(uri);
+		}
+
+		while (!uri.isEmpty()) {
 			int i = uri.lastIndexOf('/');
 			if (i == -1) {
 				break; // Should not happen if uri starts with '/'
 			}
 			uri = uri.substring(0, i);
+
+			if (endpoints.containsKey(uri)) {
+				RestEndpoint endpoint = endpoints.get(uri);
+				if (endpoint.isGlobal()) {
+					return endpoint;
+				}
+			}
 		}
 
 		return null;

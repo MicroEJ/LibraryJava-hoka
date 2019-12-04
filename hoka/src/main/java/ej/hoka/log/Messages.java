@@ -36,6 +36,11 @@ public final class Messages {
 	public static final int EMPTY_URI = -3;
 
 	/**
+	 * Requested URI contains "..".
+	 */
+	public static final int DIRECTORY_TRAVERSAL_URI = -4;
+
+	/**
 	 * Unknown error.
 	 */
 	public static final int ERROR_UNKNOWN = -255;

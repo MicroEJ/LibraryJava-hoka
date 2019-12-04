@@ -21,6 +21,7 @@ import ej.hoka.rest.endpoint.GzipResourceEndpoint;
 import ej.hoka.rest.endpoint.ResourceRestEndpoint;
 
 public class RestServer {
+
 	private static final String SLASH = "/";
 
 	public static void main(String[] args) {
@@ -30,9 +31,11 @@ public class RestServer {
 
 			RestRequestHandler endpointHandler = new RestRequestHandler();
 			endpointHandler.addEndpoint(new HelloEndPoint());
+			// Creates an endpoint for each resource in /rest/example.resources.list.
+			// Compressed resources are served as-is and decompressed by the browser.
 			try (InputStream resourceFile = RestServer.class
 					.getResourceAsStream("/rest/example.resources.list")) {
-				createStaticEndpoints(endpointHandler, resourceFile, "/index.html", "/html/");
+				createStaticEndpoints(endpointHandler, resourceFile, "/index.html", "/hoka/");
 			}
 
 			rhc.addRequestHandler(endpointHandler);
@@ -70,4 +73,5 @@ public class RestServer {
 			}
 		}
 	}
+
 }

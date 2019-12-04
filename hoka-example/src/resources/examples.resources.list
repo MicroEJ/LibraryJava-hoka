@@ -2,9 +2,9 @@
 # For demonstration purpose only.
 # MicroEJ Corp. PROPRIETARY. Use is subject to license terms.
 
-/html/index.html
-/html/index.html.gz
-/html/png/microej.png
+/hoka/index.html
+/hoka/index.html.gz
+/hoka/png/microej.png
 /https/ca.crt
 /https/hoka.crt
 /https/hoka.key

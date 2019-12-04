@@ -11,9 +11,6 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
-import java.io.PrintStream;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.HashMap;
@@ -26,7 +23,6 @@ import ej.hoka.http.encoding.UnsupportedHTTPEncodingException;
 import ej.hoka.http.requesthandler.RequestHandler;
 import ej.hoka.http.requesthandler.RequestHandlerComposite;
 import ej.hoka.http.requesthandler.ResourceRequestHandler;
-import ej.hoka.http.support.MIMEUtils;
 import ej.hoka.log.Messages;
 import ej.hoka.tcp.TCPServer;
 import ej.util.message.Level;
@@ -80,6 +76,20 @@ public class HTTPServer {
 	 * The default root directory.
 	 */
 	private static final String HOKA_ROOT_DIRECTORY = "/hoka/"; //$NON-NLS-1$
+
+	/**
+	 * The HTML line break tag.
+	 */
+	private static final String HTML_BR = "<br/>"; //$NON-NLS-1$
+
+	private static final HTTPResponse RESPONSE_INTERNAL_ERROR = HTTPResponse
+			.createResponseFromStatus(HTTPConstants.HTTP_STATUS_INTERNALERROR);
+
+	private static final HTTPResponse RESPONSE_REQUEST_TIMEOUT = HTTPResponse
+			.createResponseFromStatus(HTTPConstants.HTTP_STATUS_REQUESTTIMEOUT);
+
+	private static final HTTPResponse RESPONSE_NOT_ACCEPTABLE = HTTPResponse
+			.createResponseFromStatus(HTTPConstants.HTTP_STATUS_NOTACCEPTABLE);
 
 	/**
 	 * The underlying TCP server.
@@ -317,7 +327,7 @@ public class HTTPServer {
 
 					if (encodingHandler == null && CalibrationConstants.STRICT_ACCEPT_ENCODING_COMPLIANCE) {
 						// RFC2616 14.3
-						response = HTTPResponse.RESPONSE_NOT_ACCEPTABLE;
+						response = RESPONSE_NOT_ACCEPTABLE;
 					} /*
 						 * else { // continue with no encoding (null handler == // identity) // Example: Firefox 3.6
 						 * asks for // Accept-Encoding=gzip,deflate by default. // If none of these encodings if present
@@ -344,31 +354,24 @@ public class HTTPServer {
 							.equalsIgnoreCase(HTTPConstants.FIELD_CONNECTION_VALUE_KEEP_ALIVE);
 				} catch (SocketTimeoutException e) {
 					responseMessage = ""; //$NON-NLS-1$
-					response = HTTPResponse.RESPONSE_REQUESTTIMEOUT;
+					response = RESPONSE_REQUEST_TIMEOUT;
 					keepAlive = false;
 				} catch (IOException e) {
 					throw e;
 				} catch (final Throwable e) {
 					responseMessage = e.getMessage();
 					if (this.sendStackTraceOnException) {
-						final PipedInputStream pipedInputStream = new PipedInputStream(getBufferSize());
-						final PipedOutputStream pipedOutputStream = new PipedOutputStream(pipedInputStream);
-						new Thread(new Runnable() {
-							@Override
-							public void run() {
-								e.printStackTrace(new PrintStream(pipedOutputStream));
-								try {
-									pipedOutputStream.close();
-								} catch (IOException e) {
-									// Do nothing
-								}
-							}
-						}).start();
-						response = new HTTPResponse(HTTPConstants.HTTP_STATUS_INTERNALERROR, MIMEUtils.MIME_PLAINTEXT,
-								pipedInputStream);
+						StringBuilder fullMessageBuilder = new StringBuilder(responseMessage);
+						fullMessageBuilder.append(HTML_BR);
+						for (StackTraceElement stackTraceElement : e.getStackTrace()) {
+							fullMessageBuilder.append(stackTraceElement.toString()).append(HTML_BR);
+						}
+						response = HTTPResponse.createError(HTTPConstants.HTTP_STATUS_INTERNALERROR,
+								fullMessageBuilder.toString());
 					} else {
-						response = HTTPResponse.RESPONSE_INTERNAL_ERROR;
+						response = RESPONSE_INTERNAL_ERROR;
 					}
+
 					keepAlive = false;
 				} finally {
 					// TODO : Remove to allow Keep-Alive
@@ -400,16 +403,19 @@ public class HTTPServer {
 	}
 
 	/**
-	 * Returns whether of not the server sends the stack trace of thrown exceptions.
+	 * Returns whether or not the server sends the stack trace of thrown exceptions.
+	 * <p>
+	 * Returns false by default.
 	 *
 	 * @return <code>true</code> if the server sends the stack trace of thrown exceptions, <code>false</code> otherwise.
+	 * @see #sendStackTraceOnException(boolean)
 	 */
 	public boolean getSendStackTraceOnException() {
 		return this.sendStackTraceOnException;
 	}
 
 	/**
-	 * Sets whether of not the server must send the stack trace of thrown exceptions.
+	 * Sets whether or not the server must send the stack trace of thrown exceptions.
 	 *
 	 * @param sendStackTraceOnException
 	 *            <code>true</code> if the server must send the stack trace of thrown exceptions, <code>false</code>

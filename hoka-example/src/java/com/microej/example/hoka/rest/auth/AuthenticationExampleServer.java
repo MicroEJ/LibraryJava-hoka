@@ -39,7 +39,7 @@ public class AuthenticationExampleServer {
 
 		RestAuthenticatedRequestHandler privateHandler = new RestAuthenticatedRequestHandler(sessionAuthenticator,
 				"/api/private/");
-		privateHandler.addEndpoint(new HelloEndpoint("/api/private/hello"));
+		privateHandler.addEndpoint(new HelloEndpoint("/api/private/*"));
 
 		// Start the server with the two REST request handlers
 

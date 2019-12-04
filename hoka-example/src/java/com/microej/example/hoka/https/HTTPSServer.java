@@ -42,7 +42,7 @@ public class HTTPSServer {
 		}
 
 		// Create the HTTP server with the ServerSocketFactory of the SSL context
-		HTTPServer server = new HTTPServer(PORT, 10, 3, new ResourceRequestHandler("/html/"),
+		HTTPServer server = new HTTPServer(PORT, 10, 3, new ResourceRequestHandler("/hoka/"),
 				sslContext.getServerSocketFactory());
 
 		// Send the stack trace to the client when an exception is thrown

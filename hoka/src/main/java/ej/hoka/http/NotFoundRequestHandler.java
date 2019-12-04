@@ -22,9 +22,12 @@ class NotFoundRequestHandler implements RequestHandler {
 	 */
 	static final NotFoundRequestHandler instance = new NotFoundRequestHandler();
 
+	private static final HTTPResponse RESPONSE_NOT_FOUND = HTTPResponse
+			.createResponseFromStatus(HTTPConstants.HTTP_STATUS_NOTFOUND);
+
 	@Override
 	public HTTPResponse process(HTTPRequest request, Map<String, String> attributes) {
-		return HTTPResponse.RESPONSE_NOT_FOUND;
+		return RESPONSE_NOT_FOUND;
 	}
 
 	private NotFoundRequestHandler() {

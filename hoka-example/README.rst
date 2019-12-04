@@ -12,21 +12,15 @@ SimpleServer
 
 The example
 `SimpleServer <src/java/com/microej/example/hoka/SimpleServer.java>`__
-shows a basic instantiation of ``HTTPServer`` with a custom
-``RequestHandler``.
+shows a basic instantiation of ``HTTPServer``.
 
-Like with the ``DefaultRequestHandler``, each time a URL is requested by
+It uses the ``ResourceRequestHandler``. Each time a URL is requested by
 a client, a match is done between this URL and resource in the
-src/resources source folder.
+src/resources/hoka folder.
 
 For example:
 
-http://localhost:8080/html/index.html serves the Java resource
-“/html/index.html”.
-
-Moreover, a custom behavior is added when requesting the root of the
-server : the root URL is mapped to a default resource configured in
-``SimpleRequestHandler.DEFAULT_ROOT_RESOURCE``.
+http://localhost:8080/index.html serves the Java resource “/hoka/index.html”.
 
 HTTPSServer
 -----------

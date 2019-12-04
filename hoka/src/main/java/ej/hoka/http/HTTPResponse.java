@@ -27,69 +27,6 @@ import ej.util.message.Level;
 public class HTTPResponse {
 
 	/**
-	 * An empty HTTP response with status code 200.
-	 */
-	public static final HTTPResponse RESPONSE_OK = createResponseFromStatus(HTTPConstants.HTTP_STATUS_OK);
-	/**
-	 * An empty HTTP response with status code 301.
-	 */
-	public static final HTTPResponse RESPONSE_MOVED_PERMANENTLY = createResponseFromStatus(
-			HTTPConstants.HTTP_STATUS_REDIRECT);
-	/**
-	 * An empty HTTP response with status code 304.
-	 */
-	public static final HTTPResponse RESPONSE_NOT_MODIFIED = createResponseFromStatus(
-			HTTPConstants.HTTP_STATUS_NOTMODIFIED);
-	/**
-	 * An empty HTTP response with status code 400.
-	 */
-	public static final HTTPResponse RESPONSE_BAD_REQUEST = createResponseFromStatus(
-			HTTPConstants.HTTP_STATUS_BADREQUEST);
-	/**
-	 * An empty HTTP response with status code 401.
-	 */
-	public static final HTTPResponse RESPONSE_UNAUTHORIZED = createResponseFromStatus(
-			HTTPConstants.HTTP_STATUS_UNAUTHORIZED);
-	/**
-	 * An empty HTTP response with status code 403.
-	 */
-	public static final HTTPResponse RESPONSE_FORBIDDEN = createResponseFromStatus(HTTPConstants.HTTP_STATUS_FORBIDDEN);
-	/**
-	 * An empty HTTP response with status code 404.
-	 */
-	public static final HTTPResponse RESPONSE_NOT_FOUND = createResponseFromStatus(HTTPConstants.HTTP_STATUS_NOTFOUND);
-	/**
-	 * An empty HTTP response with status code 405.
-	 */
-	public static final HTTPResponse RESPONSE_METHOD_NOT_ALLOWED = createResponseFromStatus(
-			HTTPConstants.HTTP_STATUS_METHOD);
-	/**
-	 * An empty HTTP response with status code 406.
-	 */
-	public static final HTTPResponse RESPONSE_NOT_ACCEPTABLE = createResponseFromStatus(
-			HTTPConstants.HTTP_STATUS_NOTACCEPTABLE);
-	/**
-	 * An empty HTTP response with status code 408.
-	 */
-	public static final HTTPResponse RESPONSE_REQUESTTIMEOUT = createResponseFromStatus(
-			HTTPConstants.HTTP_STATUS_REQUESTTIMEOUT);
-	/**
-	 * An empty HTTP response with status code 415.
-	 */
-	public static final HTTPResponse RESPONSE_UNSUPPORTED_MEDIA_TYPE = createResponseFromStatus(
-			HTTPConstants.HTTP_STATUS_MEDIA_TYPE);
-	/**
-	 * An empty HTTP response with status code 500.
-	 */
-	public static final HTTPResponse RESPONSE_INTERNAL_ERROR = createResponseFromStatus(
-			HTTPConstants.HTTP_STATUS_INTERNALERROR);
-	/**
-	 * An empty HTTP response with status code 501.
-	 */
-	public static final HTTPResponse RESPONSE_NOT_IMPLEMENTED = createResponseFromStatus(
-			HTTPConstants.HTTP_STATUS_NOTIMPLEMENTED);
-
-	/**
 	 * The colon character.
 	 */
 	private static final String RESPONSE_COLON = ": "; //$NON-NLS-1$
@@ -213,7 +150,8 @@ public class HTTPResponse {
 	 * @param mimeType
 	 *            the mime type of the response.
 	 * @param body
-	 *            the {@link InputStream} to be used as response data.
+	 *            the {@link InputStream} to be used as response data, the stream will be closed automatically when the
+	 *            response is sent..
 	 */
 	public HTTPResponse(String status, String mimeType, InputStream body) {
 		this(body);
@@ -237,7 +175,14 @@ public class HTTPResponse {
 		setMimeType(mimeType);
 	}
 
-	private static HTTPResponse createResponseFromStatus(String status) {
+	/**
+	 * Creates a {@link HTTPResponse} with given status and empty body.
+	 *
+	 * @param status
+	 *            the status of the response.
+	 * @return the empty response with given status.
+	 */
+	public static HTTPResponse createResponseFromStatus(String status) {
 		return new HTTPResponse(status, null, ""); //$NON-NLS-1$
 	}
 
@@ -469,13 +414,6 @@ public class HTTPResponse {
 			}
 		} catch (Throwable t) {
 			Messages.LOGGER.log(Level.SEVERE, Messages.CATEGORY_HOKA, Messages.ERROR_UNKNOWN, t);
-		} finally {
-			// close data output stream. This does not close underlying
-			// TCP connection since transfer output stream does not
-			// close its underlying output stream
-			// if (dataOutput != null) {
-			// dataOutput.close();
-			// }
 		}
 	}
 

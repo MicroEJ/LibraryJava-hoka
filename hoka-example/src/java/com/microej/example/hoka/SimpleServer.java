@@ -10,7 +10,6 @@ package com.microej.example.hoka;
 import java.io.IOException;
 
 import ej.hoka.http.HTTPServer;
-import ej.hoka.http.requesthandler.ResourceRequestHandler;
 
 /*
  * This simple server exposes resources from the src/resources/hoka folder.
@@ -21,7 +20,9 @@ public class SimpleServer {
 
 	public static void main(String[] args) {
 		// Create the HTTP server with the default resource request handler
-		HTTPServer server = new HTTPServer(PORT, 10, 3, new ResourceRequestHandler("/html/"));
+		HTTPServer server = new HTTPServer(PORT, 10, 3);
+		// Above instantiation of HTTPServer is equivalent to :
+		// new HTTPServer(PORT, 10, 3, new ResourceRequestHandler("/hoka/"))
 
 		// Send the stack trace to the client when an exception is thrown
 		server.sendStackTraceOnException(true);

@@ -21,18 +21,39 @@ import ej.hoka.http.requesthandler.RequestHandlerComposite;
  * @see LoginEndpoint
  * @see LogoutEndpoint
  */
-public abstract class AuthenticatedRequestHandler extends RequestHandlerComposite {
+public class AuthenticatedRequestHandler extends RequestHandlerComposite {
+
+	private static final String SLASH = "/"; //$NON-NLS-1$
 
 	private final SessionAuthenticator authenticator;
+
+	private final String root;
 
 	/**
 	 * Constructs the request handler.
 	 *
 	 * @param authenticator
 	 *            the {@link SessionAuthenticator} used to authenticate users.
+	 * @param root
+	 *            the URI root used to match the request.
 	 */
-	public AuthenticatedRequestHandler(SessionAuthenticator authenticator) {
+	public AuthenticatedRequestHandler(SessionAuthenticator authenticator, String root) {
 		this.authenticator = authenticator;
+
+		if (root.endsWith(SLASH)) {
+			root = root.substring(0, root.length() - 1);
+		}
+
+		this.root = root;
+	}
+
+	/**
+	 * Gets the root of this handler.
+	 *
+	 * @return the root.
+	 */
+	public String getRoot() {
+		return this.root;
 	}
 
 	@Override
@@ -54,12 +75,16 @@ public abstract class AuthenticatedRequestHandler extends RequestHandlerComposit
 
 	/**
 	 * Determines whether or not the request matches this handler.
+	 * <p>
+	 * The handler matches requests to URIs prefixed by the root path. Override this method to change the behavior.
 	 *
 	 * @param request
 	 *            the request to match.
 	 * @return <code>true</code> if the request matches this handler, <code>false</code> otherwise.
 	 */
-	protected abstract boolean match(HTTPRequest request);
+	protected boolean match(HTTPRequest request) {
+		return request.getURI().startsWith(this.root);
+	}
 
 	/**
 	 * Retrieves the session ID from the cookies of the request.
@@ -96,9 +121,6 @@ public abstract class AuthenticatedRequestHandler extends RequestHandlerComposit
 		if (response == null) {
 			return null;
 		}
-
-		response.addHeaderField("Set-Cookie", //$NON-NLS-1$
-				CookieBasedSessionConfiguration.COOKIE_NAME + "=" + sessionID + "; HTTPOnly"); //$NON-NLS-1$ //$NON-NLS-2$
 
 		return response;
 	}

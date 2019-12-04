@@ -15,6 +15,8 @@ import ej.hoka.http.HTTPConstants;
 import ej.hoka.http.HTTPRequest;
 import ej.hoka.http.HTTPResponse;
 import ej.hoka.http.support.MIMEUtils;
+import ej.hoka.log.Messages;
+import ej.util.message.Level;
 
 /**
  * Resource Request Handler implementation.
@@ -32,6 +34,8 @@ public class ResourceRequestHandler implements RequestHandler {
 	private static final String SLASH = "/"; //$NON-NLS-1$
 
 	private static final String DEFAULT_INDEX = "index.html"; //$NON-NLS-1$
+
+	private static final String DIRECTORY_TRAVERSAL_SEQUENCE = ".."; //$NON-NLS-1$
 
 	private final String root;
 	private final String index;
@@ -80,6 +84,12 @@ public class ResourceRequestHandler implements RequestHandler {
 	@Override
 	public HTTPResponse process(HTTPRequest request, Map<String, String> attributes) {
 		String uri = this.root + request.getURI();
+
+		if (uri.contains(DIRECTORY_TRAVERSAL_SEQUENCE)) {
+			// For security reasons, do not handle request to URI with a directory traversal sequence.
+			Messages.LOGGER.log(Level.INFO, Messages.CATEGORY_HOKA, Messages.DIRECTORY_TRAVERSAL_URI);
+			return null;
+		}
 
 		if (uri.endsWith(SLASH)) {
 			uri += this.index;

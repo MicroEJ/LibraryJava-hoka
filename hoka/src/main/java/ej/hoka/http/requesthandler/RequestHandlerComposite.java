@@ -44,6 +44,8 @@ public class RequestHandlerComposite implements RequestHandler {
 
 	/**
 	 * Adds a {@link RequestHandler} in the list.
+	 * <p>
+	 * The handlers are browsed in the order they have been added.
 	 *
 	 * @param handler
 	 *            the {@link RequestHandler} to add.

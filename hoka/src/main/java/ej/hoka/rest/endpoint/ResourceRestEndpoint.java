@@ -79,7 +79,7 @@ public class ResourceRestEndpoint extends RestEndpoint {
 	protected HTTPResponse getResourceResponse() {
 		InputStream resourceAsStream = this.getResourceAsStream();
 		if (resourceAsStream == null) {
-			return HTTPResponse.RESPONSE_NOT_FOUND;
+			return null;
 		}
 
 		String mimeType = this.mimetype;
