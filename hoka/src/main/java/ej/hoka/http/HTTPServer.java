@@ -82,6 +82,8 @@ public class HTTPServer {
 	 */
 	private static final String HTML_BR = "<br/>"; //$NON-NLS-1$
 
+	private static final String EXCEPTION_PREFIX = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;at "; //$NON-NLS-1$
+
 	private static final HTTPResponse RESPONSE_INTERNAL_ERROR = HTTPResponse
 			.createResponseFromStatus(HTTPConstants.HTTP_STATUS_INTERNALERROR);
 
@@ -90,6 +92,8 @@ public class HTTPServer {
 
 	private static final HTTPResponse RESPONSE_NOT_ACCEPTABLE = HTTPResponse
 			.createResponseFromStatus(HTTPConstants.HTTP_STATUS_NOTACCEPTABLE);
+
+	private static final String JAVA_LANG = "java.lang"; //$NON-NLS-1$
 
 	/**
 	 * The underlying TCP server.
@@ -361,10 +365,21 @@ public class HTTPServer {
 				} catch (final Throwable e) {
 					responseMessage = e.getMessage();
 					if (this.sendStackTraceOnException) {
-						StringBuilder fullMessageBuilder = new StringBuilder(responseMessage);
-						fullMessageBuilder.append(HTML_BR);
-						for (StackTraceElement stackTraceElement : e.getStackTrace()) {
-							fullMessageBuilder.append(stackTraceElement.toString()).append(HTML_BR);
+						StringBuilder fullMessageBuilder = new StringBuilder();
+						if (responseMessage != null) {
+							fullMessageBuilder.append(responseMessage);
+							fullMessageBuilder.append(HTML_BR);
+						}
+						StackTraceElement[] stackTrace = e.getStackTrace();
+						int i = 0;
+						while (i < stackTrace.length && stackTrace[i].getClassName().startsWith(JAVA_LANG)) {
+							i++;
+						}
+						fullMessageBuilder.append(stackTrace[i - 1].toString()).append(HTML_BR);
+						for (; i < stackTrace.length
+								&& !stackTrace[i].getClassName().equals(getClass().getName()); i++) {
+							fullMessageBuilder.append(EXCEPTION_PREFIX).append(stackTrace[i].toString())
+									.append(HTML_BR);
 						}
 						response = HTTPResponse.createError(HTTPConstants.HTTP_STATUS_INTERNALERROR,
 								fullMessageBuilder.toString());

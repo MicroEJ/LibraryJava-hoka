@@ -38,6 +38,14 @@ use a REST handler with a “Hello” endpoint. The example also has a dump
 handler that dumps the request in the output stream of the application
 in case the request is out of the REST scope.
 
+Usage
+^^^^^
+
+#.  Run the example.
+#.  Go to `/ <http://localhost:8080/>`__, you should see the decompressed html content of `index.html.gz <src/resources/hoka/index.html.gz>`__.
+#.  Go to `/hello/world <http://localhost:8080/hello/world>`__, you should receive a text starting with "REPLY /hello/world".
+#.  Go to `/not/a/valid/endpoint <http://localhost:8080/not/a/valid/endpoint>`__, you should receive a textual dump of the request you sent.
+
 AuthenticationExampleServer
 ---------------------------
 
@@ -49,6 +57,16 @@ authenticated user. This example uses the default session-based
 authentication implementations in package
 `ej.hoka.auth.session <../hoka/src/main/java/ej/hoka/auth/session/>`__
 in the Hoka library.
+
+Usage
+^^^^^
+
+#. Run the example.
+#. Go to `/api/private <http://localhost:8080/api/private>`__, you should receive a 401 Not authorized response.
+#. Go to `/api/login <http://localhost:8080/api/login>`__ and completes the form.
+#. Go back to `/api/private <http://localhost:8080/api/private>`__, this time you should be able to pass the authentication (check cookies).
+#. Go to `/api/logout <http://localhost:8080/api/logout>`__.
+#. Go back to `/api/private <http://localhost:8080/api/private>`__, you are not authenticated again.
 
 Requirements
 ============
