@@ -21,7 +21,7 @@ public class MultiPartBodyParser implements BodyParser<MultiPartBody> {
 
 	private static final int SIZE = 512;
 	/**
-	 * The boundary delimiter;
+	 * The boundary delimiter.
 	 */
 	public static final String BOUNDARY = "boundary="; //$NON-NLS-1$
 
@@ -78,7 +78,7 @@ public class MultiPartBodyParser implements BodyParser<MultiPartBody> {
 		/**
 		 * Checks whether more data is available in the input stream.
 		 *
-		 * @return <code>true</code> if more data is available in the input stream.
+		 * @return {@code true} if more data is available in the input stream.
 		 * @throws IOException
 		 *             if an {@link IOException} happens.
 		 */
@@ -95,7 +95,7 @@ public class MultiPartBodyParser implements BodyParser<MultiPartBody> {
 		 * @param off
 		 *            the offset.
 		 * @param len
-		 *            the lenght.
+		 *            the length.
 		 * @return the number of bytes read.
 		 * @throws IOException
 		 *             if an {@link IOException} happens.
@@ -221,7 +221,7 @@ public class MultiPartBodyParser implements BodyParser<MultiPartBody> {
 	/**
 	 * Class representing the collection of {@link HTTPPart} in the request.
 	 */
-	public class MultiPartBody {
+	public static class MultiPartBody {
 
 		private final MultiPartBuffer buffer;
 
@@ -244,7 +244,7 @@ public class MultiPartBodyParser implements BodyParser<MultiPartBody> {
 		 */
 		public HTTPPart nextPart() throws IOException {
 			if (this.buffer != null && this.buffer.hasData()) {
-				HTTPPart httpPart = new HTTPPart(this.buffer);
+				HTTPPart httpPart = createPart();
 				if (httpPart.parseHeaders().size() == 0 && !this.buffer.hasData()) {
 					httpPart.close();
 					httpPart = null;
@@ -252,6 +252,10 @@ public class MultiPartBodyParser implements BodyParser<MultiPartBody> {
 				return httpPart;
 			}
 			return null;
+		}
+
+		private HTTPPart createPart() {
+			return new HTTPPart(this.buffer);
 		}
 
 	}

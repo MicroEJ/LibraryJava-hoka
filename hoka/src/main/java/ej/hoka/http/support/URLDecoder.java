@@ -20,6 +20,10 @@ public class URLDecoder {
 	 */
 	private static final int HEXA = 16;
 
+	private URLDecoder() {
+		// Forbid instantiation.
+	}
+
 	/**
 	 * Returns the character from the stream, which encode as "%ab" (single byte UTF-8) or "%ab%cd" (two byte ). The
 	 * initial % mark has been already reed. The character is represented as %ab where "a" and "b" is a hexa character
@@ -223,10 +227,6 @@ public class URLDecoder {
 			// no surrogate pair, return original UTF-16 code
 			return code;
 		}
-	}
-
-	private URLDecoder() {
-		// Forbid instantiation.
 	}
 
 }

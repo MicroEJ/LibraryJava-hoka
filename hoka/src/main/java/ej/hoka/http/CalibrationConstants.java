@@ -16,7 +16,7 @@ import ej.hoka.http.encoding.IHTTPEncodingHandler;
 public final class CalibrationConstants {
 
 	/**
-	 * If <code>true</code>, the server should send a {@link HTTPConstants#HTTP_STATUS_NOTACCEPTABLE} in case there is
+	 * If {@code true}, the server should send a {@link HTTPConstants#HTTP_STATUS_NOTACCEPTABLE} in case there is
 	 * no {@link IHTTPEncodingHandler} registered to handle the encoding specified in the HTTP request.
 	 *
 	 * @see HTTPEncodingRegistry#registerEncodingHandler(ej.hoka.http.encoding.IHTTPEncodingHandler)

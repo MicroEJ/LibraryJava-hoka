@@ -50,8 +50,11 @@ public class RestEndpoint {
 	 * <p>
 	 * If URI does not start with a {@code /} character, it is automatically added.
 	 * <p>
-	 * If URI ends with <code>*</code>, the {@link RestEndpoint} created is a global endpoint and is able to process
+	 * If URI ends with <code>/*</code>, the {@link RestEndpoint} created is a global endpoint and is able to process
 	 * requests to sub-endpoints.
+	 * <p>
+	 * For example, an endpoint created with the "/my/custom/*" URI is able to process, among others, the requests to
+	 * "/my/custom" and "/my/custom/endpoint".
 	 *
 	 * @param uri
 	 *            the URI of this endpoint.
@@ -59,10 +62,6 @@ public class RestEndpoint {
 	 *             if URI is empty
 	 */
 	public RestEndpoint(String uri) {
-		if (uri == null) {
-			throw new NullPointerException();
-		}
-
 		uri = uri.trim();
 
 		if (uri.isEmpty()) {
@@ -87,6 +86,9 @@ public class RestEndpoint {
 
 	/**
 	 * Gets this endpoint URI.
+	 * <p>
+	 * If this endpoint is global, the returned URI doesn't contain the trailing <code>/*</code> of the URI given to the
+	 * constructor.
 	 *
 	 * @return this endpoint URI.
 	 */
@@ -97,7 +99,7 @@ public class RestEndpoint {
 	/**
 	 * Returns whether or not this endpoint is global, which means it can process sub-endpoints.
 	 * <p>
-	 * For example, a global <code>/</code> endpoint can process request to <code>/my/endpoint</code>.
+	 * For example, a global <code>/my/custom/*</code> endpoint can process request to <code>/my/custom/endpoint</code>.
 	 *
 	 * @return this endpoint URI.
 	 * @see #RestEndpoint(String)

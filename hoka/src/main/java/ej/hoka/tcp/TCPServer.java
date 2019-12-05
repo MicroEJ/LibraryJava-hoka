@@ -207,7 +207,8 @@ public class TCPServer {
 			Messages.LOGGER.log(Level.INFO, Messages.CATEGORY_HOKA, Messages.NEW_CONNECTION,
 					Integer.valueOf(connection.hashCode()), connection.getInetAddress().toString());
 
-			this.streamConnections[this.lastAddedPtr = nextPtr] = connection;
+			this.streamConnections[nextPtr] = connection;
+			this.lastAddedPtr = nextPtr;
 			this.streamConnections.notify();
 		}
 	}
@@ -234,7 +235,8 @@ public class TCPServer {
 			if (nextPtr == this.streamConnections.length) {
 				nextPtr = 0;
 			}
-			Socket connection = this.streamConnections[this.lastReadPtr = nextPtr];
+			Socket connection = this.streamConnections[nextPtr];
+			this.lastReadPtr = nextPtr;
 			// allow GC
 			this.streamConnections[nextPtr] = null;
 			return connection;
@@ -242,9 +244,9 @@ public class TCPServer {
 	}
 
 	/**
-	 * Returns <code>true</code> if the {@link TCPServer} is stopped.
+	 * Returns {@code true} if the {@link TCPServer} is stopped.
 	 *
-	 * @return <code>true</code> if the {@link TCPServer} is stopped, <code>false</code> otherwise
+	 * @return {@code true} if the {@link TCPServer} is stopped, {@code false} otherwise
 	 */
 	public boolean isStopped() {
 		return this.serverSocket == null || this.thread == null;

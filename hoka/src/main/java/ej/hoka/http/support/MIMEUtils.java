@@ -123,7 +123,7 @@ public class MIMEUtils {
 	 *            the file extension to be mapped to the <code>mimeType</code>
 	 * @param mimeType
 	 *            the MIME-Type to be associated with the given file extension.
-	 * @return <code>true</code> if the mapping is successful, <code>false</code> otherwise (file extension already
+	 * @return {@code true} if the mapping is successful, {@code false} otherwise (file extension already
 	 *         mapped to a MIME-Type)
 	 */
 	public static boolean mapFileExtensionToMIMEType(String fileExtension, String mimeType) {

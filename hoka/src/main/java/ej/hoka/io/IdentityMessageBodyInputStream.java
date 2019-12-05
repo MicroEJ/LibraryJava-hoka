@@ -16,6 +16,8 @@ import java.io.InputStream;
  */
 public class IdentityMessageBodyInputStream extends InputStream {
 
+	private static final int BUFFER_SIZE = 512;
+
 	/**
 	 * If true the input stream is considered to be closed and all further operation will result in IOException.
 	 */
@@ -85,7 +87,7 @@ public class IdentityMessageBodyInputStream extends InputStream {
 	@Override
 	public void close() throws IOException {
 		if (this.remainingBytes > 0) {
-			byte[] buf = new byte[Math.min(512, this.remainingBytes)];
+			byte[] buf = new byte[Math.min(BUFFER_SIZE, this.remainingBytes)];
 			while (this.remainingBytes > 0) {
 				read(buf);
 			}

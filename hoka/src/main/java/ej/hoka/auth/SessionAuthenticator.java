@@ -16,7 +16,8 @@ import java.util.Base64;
  */
 public class SessionAuthenticator implements Authenticator {
 
-	private static final long DEFAULT_SESSION_LIFETIME = 3600; // 1 hour
+	private static final long ONE_SECOND = 1000L;
+	private static final long DEFAULT_SESSION_LIFETIME = 3600L; // 1 hour
 
 	private static final SecureRandom secureRandomNumberGenerator = new SecureRandom();
 	private static final int TOKEN_SIZE = 128;
@@ -124,7 +125,7 @@ public class SessionAuthenticator implements Authenticator {
 	 *
 	 * @param sessionID
 	 *            the identifier of the session.
-	 * @return <code>false</code> if no sessions are referenced by <code>sessionID</code>, <code>true</code> otherwise
+	 * @return {@code false} if no sessions are referenced by <code>sessionID</code>, {@code true} otherwise
 	 */
 	public boolean logout(String sessionID) {
 		synchronized (this.database) {
@@ -159,7 +160,7 @@ public class SessionAuthenticator implements Authenticator {
 	 * @see System#currentTimeMillis()
 	 */
 	protected long generateExpiration() {
-		return System.currentTimeMillis() / 1000L + this.sessionLifetime;
+		return System.currentTimeMillis() / ONE_SECOND + this.sessionLifetime;
 	}
 
 }

@@ -20,6 +20,8 @@ import java.io.InputStream;
  */
 public class ChunkedMessageBodyInputStream extends InputStream {
 
+	private static final int BUFFER_SIZE = 512;
+
 	/**
 	 * Carriage return character.
 	 */
@@ -116,9 +118,9 @@ public class ChunkedMessageBodyInputStream extends InputStream {
 	public void close() throws IOException {
 		if (this.state != STATE_END) {
 			// read remaining data
-			byte[] buf = new byte[512];
+			byte[] buf = new byte[BUFFER_SIZE];
 			while (initChunk()) {
-				int result = this.is.read(buf, 0, Math.min(512, this.remainingBytes));
+				int result = this.is.read(buf, 0, Math.min(BUFFER_SIZE, this.remainingBytes));
 				checkPrematureEOF(result);
 				this.remainingBytes -= result;
 			}

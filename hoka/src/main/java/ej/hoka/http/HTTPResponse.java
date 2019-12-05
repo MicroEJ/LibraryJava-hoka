@@ -151,7 +151,7 @@ public class HTTPResponse {
 	 *            the mime type of the response.
 	 * @param body
 	 *            the {@link InputStream} to be used as response data, the stream will be closed automatically when the
-	 *            response is sent..
+	 *            response is sent.
 	 */
 	public HTTPResponse(String status, String mimeType, InputStream body) {
 		this(body);
@@ -319,7 +319,7 @@ public class HTTPResponse {
 	 * @param mimeType
 	 *            the response MIME-TYPE to set.
 	 */
-	public void setMimeType(String mimeType) {
+	public final void setMimeType(String mimeType) {
 		this.mimeType = mimeType;
 	}
 
@@ -330,7 +330,7 @@ public class HTTPResponse {
 	 *            the response status to set. Should be one of the <code>HTTP_STATUS_*</code> constants defined in
 	 *            {@link HTTPConstants}
 	 */
-	public void setStatus(String status) {
+	public final void setStatus(String status) {
 		this.status = status;
 	}
 

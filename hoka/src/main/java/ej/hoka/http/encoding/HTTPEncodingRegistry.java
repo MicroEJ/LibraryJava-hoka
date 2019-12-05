@@ -139,10 +139,10 @@ public class HTTPEncodingRegistry {
 		QualityArgument[] encodings = acceptEncoding.getEncodings();
 		int nbEncodings = encodings.length;
 		boolean[] processed = new boolean[nbEncodings];
-		for (int pass = nbEncodings; --pass >= 0;) { // maximum number of passes
+		for (int pass = nbEncodings - 1; pass >= 0; pass--) { // maximum number of passes
 			float localMax = 0;
 			int ptrMax = -1;
-			for (int i = nbEncodings; --i >= 0;) {
+			for (int i = nbEncodings - 1; i >= 0; i--) {
 				if (processed[i]) {
 					continue;
 				}

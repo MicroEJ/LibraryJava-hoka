@@ -80,7 +80,7 @@ public class AuthenticatedRequestHandler extends RequestHandlerComposite {
 	 *
 	 * @param request
 	 *            the request to match.
-	 * @return <code>true</code> if the request matches this handler, <code>false</code> otherwise.
+	 * @return {@code true}{@code true} if the request matches this handler, {@code false} otherwise.
 	 */
 	protected boolean match(HTTPRequest request) {
 		return request.getURI().startsWith(this.root);

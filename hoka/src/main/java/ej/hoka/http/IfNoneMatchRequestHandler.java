@@ -21,6 +21,10 @@ class IfNoneMatchRequestHandler implements RequestHandler {
 	 */
 	static final IfNoneMatchRequestHandler instance = new IfNoneMatchRequestHandler();
 
+	private IfNoneMatchRequestHandler() {
+		// Forbid instantiation
+	}
+
 	@Override
 	public HTTPResponse process(HTTPRequest request, Map<String, String> attributes) {
 		String etag = request.getHeaderField(HTTPConstants.FIELD_IF_NONE_MATCH);
@@ -34,10 +38,6 @@ class IfNoneMatchRequestHandler implements RequestHandler {
 		HTTPResponse response = new HTTPResponse();
 		response.setStatus(HTTPConstants.HTTP_STATUS_NOTMODIFIED);
 		return response;
-	}
-
-	private IfNoneMatchRequestHandler() {
-		// Forbid instantiation
 	}
 
 }

@@ -138,7 +138,7 @@ public abstract class CharacterSeparatedList {
 
 		// 2) extract tokens
 		ptr = start;
-		for (int i = -1; ++i < nbTokens;) {
+		for (int i = 0; i < nbTokens; i++) {
 			// find the first occurence of the separator
 			int endEncoding = str.indexOf(this.separator, ptr);
 			// if the separator is not found, the end index is the initial end

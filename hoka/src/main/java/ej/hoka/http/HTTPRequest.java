@@ -26,6 +26,7 @@ import ej.hoka.http.support.URLDecoder;
  */
 public class HTTPRequest {
 
+	private static final int INITIAL_STRING_BUILDER_CAPACITY = 16;
 	/**
 	 * Value returned by {@link #getMethod()} if the request method is <code>POST</code>.
 	 */
@@ -85,6 +86,10 @@ public class HTTPRequest {
 	 */
 	private static final String CONNECTION_LOST = "Connection lost"; //$NON-NLS-1$
 
+	private static final int INITIAL_MAP_CAPACITY = 10;
+	private static final int INITIAL_URI_CAPACITY = 64;
+	private static final int VERSION_SIZE = 10;
+
 	/**
 	 * Request method code.
 	 *
@@ -139,7 +144,8 @@ public class HTTPRequest {
 	 */
 	protected HTTPRequest(InputStream inputStream, HTTPEncodingRegistry encodingRegistry) throws IOException {
 		this.method = parseMethod(inputStream);
-		this.uri = parseURI(inputStream, this.parameters = new HashMap<>(10));
+		this.parameters = new HashMap<>(INITIAL_MAP_CAPACITY);
+		this.uri = parseURI(inputStream, this.parameters);
 		this.version = parseVersion(inputStream);
 		this.header = parseHeaderFields(inputStream);
 
@@ -253,29 +259,6 @@ public class HTTPRequest {
 	}
 
 	/**
-	 * Not implemented(empty method).
-	 */
-	protected void finish() {
-		// === IMPORTANT NOTE
-		// On linux (SunJvm & J9), closing a connection through server side when
-		// there are remaining bytes to read
-		// throws a reset exception to the client (TCP RST/ACK is sent)
-		// This issue does not appear on Windows.
-		// => Choice is to empty the InputStream
-
-		// stream is an input stream that reads remaining
-		// data in request body when closed.
-
-		// try {
-		// // close the input stream. Does NOT close underlying
-		// // stream. cf IHTTPTransferCodingHandler.open
-		// stream.close();
-		// } catch (IOException e) {
-		// // can't do anything more
-		// }
-	}
-
-	/**
 	 * Returns the content encoding input stream.
 	 *
 	 * @param in
@@ -317,7 +300,7 @@ public class HTTPRequest {
 	 *
 	 * @param input
 	 *            the {@link InputStream}.
-	 * @return <code>true</code> if a method get, post, put or delete is found, <code>false</code> otherwise.
+	 * @return {@code true} if a method get, post, put or delete is found, {@code false} otherwise.
 	 * @throws IOException
 	 *             if connection has been lost.
 	 */
@@ -351,12 +334,12 @@ public class HTTPRequest {
 	 *
 	 * @param input
 	 *            the {@link InputStream}.
-	 * @return <code>true</code> if succeed, <code>false</code> otherwise
+	 * @return {@code true} if succeed, {@code false} otherwise
 	 * @throws IOException
 	 *             if connection has been lost.
 	 */
 	private static String parseURI(InputStream input, Map<String, String> parameters) throws IOException {
-		StringBuilder sb = new StringBuilder(Math.min(64, input.available()));
+		StringBuilder sb = new StringBuilder(Math.min(INITIAL_URI_CAPACITY, input.available()));
 		// main loop
 		loop: while (true) {
 			// the stream should now be something like
@@ -387,17 +370,17 @@ public class HTTPRequest {
 	}
 
 	private static String parseVersion(InputStream input) throws IOException {
-		byte[] version = new byte[10]; // HTTPx.y\r\n
+		byte[] version = new byte[VERSION_SIZE]; // HTTPx.y\r\n
 		int readBytes = 0;
-		while (readBytes < 10) {
-			int r = input.read(version, readBytes, 10 - readBytes);
+		while (readBytes < VERSION_SIZE) {
+			int r = input.read(version, readBytes, VERSION_SIZE - readBytes);
 			if (r == -1) {
 				// EOF
 				throw new IOException(CONNECTION_LOST);
 			}
 			readBytes += r;
 		}
-		return new String(version, 0, version.length - 2);
+		return new String(version, 0, VERSION_SIZE - 2);
 	}
 
 	/**
@@ -412,11 +395,11 @@ public class HTTPRequest {
 	private static Map<String, String> parseHeaderFields(InputStream input) throws IOException {
 		// headers is a hashmap
 		// the stream look like "foo:bar zor:zorvalue "
-		HashMap<String, String> header = new HashMap<>(10); // most HTTP requests have less
+		HashMap<String, String> header = new HashMap<>(INITIAL_MAP_CAPACITY); // most HTTP requests have less
 		// than 10 header fields
 
-		StringBuilder sbKey = new StringBuilder(16);
-		StringBuilder sbValue = new StringBuilder(16);
+		StringBuilder sbKey = new StringBuilder(INITIAL_STRING_BUILDER_CAPACITY);
+		StringBuilder sbValue = new StringBuilder(INITIAL_STRING_BUILDER_CAPACITY);
 		StringBuilder curBuffer = sbKey;
 		boolean pendingSpace = false;
 		// read char before entering the loop. This allows to loop without

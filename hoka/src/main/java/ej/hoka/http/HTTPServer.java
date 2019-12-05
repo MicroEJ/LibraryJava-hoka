@@ -253,7 +253,7 @@ public class HTTPServer {
 
 		this.jobs = new Thread[this.sessionJobsCount];
 
-		for (int i = this.sessionJobsCount; --i >= 0;) {
+		for (int i = this.sessionJobsCount - 1; i >= 0; i--) {
 			Thread job = new Thread(newJob(), "HTTP-JOB-" + i); //$NON-NLS-1$
 			this.jobs[i] = job;
 			job.start();
@@ -267,7 +267,7 @@ public class HTTPServer {
 	public void stop() {
 		this.server.stop();
 
-		for (int i = this.jobs.length; --i >= 0;) {
+		for (int i = this.jobs.length - 1; i >= 0; i--) {
 			try {
 				this.jobs[i].join();
 			} catch (InterruptedException e) {
@@ -407,7 +407,7 @@ public class HTTPServer {
 	 * <p>
 	 * Returns false by default.
 	 *
-	 * @return <code>true</code> if the server sends the stack trace of thrown exceptions, <code>false</code> otherwise.
+	 * @return {@code true} if the server sends the stack trace of thrown exceptions, {@code false} otherwise.
 	 * @see #sendStackTraceOnException(boolean)
 	 */
 	public boolean getSendStackTraceOnException() {
@@ -418,8 +418,7 @@ public class HTTPServer {
 	 * Sets whether or not the server must send the stack trace of thrown exceptions.
 	 *
 	 * @param sendStackTraceOnException
-	 *            <code>true</code> if the server must send the stack trace of thrown exceptions, <code>false</code>
-	 *            otherwise.
+	 *            {@code true} if the server must send the stack trace of thrown exceptions, {@code false} otherwise.
 	 */
 	public void sendStackTraceOnException(boolean sendStackTraceOnException) {
 		this.sendStackTraceOnException = sendStackTraceOnException;

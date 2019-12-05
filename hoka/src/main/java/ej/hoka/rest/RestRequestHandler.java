@@ -18,11 +18,11 @@ import ej.hoka.http.requesthandler.RequestHandler;
  * A request handler that exposes a REST API. Handles GET, POST, PUT and DELETE operations on endpoints.
  * <p>
  * The endpoint that handles the request is the endpoint with the most specific URI that matches the request. With two
- * endpoints at <code>/api/</code> and <code>/api/my/endpoint</code>, the second is used when requesting
- * <code>/api/my/endpoint</code> and also when requesting <code>/api/my/endpoint/and/extension</code> if it is a global
- * endpoint.
+ * endpoints at <code>/api/*</code> and <code>/api/my/endpoint</code>, the second is used when requesting
+ * <code>/api/my/endpoint</code> and the first is used when requesting <code>/api/my/endpoint/and/extension</code>
+ * because the second is not a global endpoint.
  *
- * @see RestEndpoint
+ * @see RestEndpoint#RestEndpoint(String)
  * @see RestEndpoint#isGlobal()
  */
 public class RestRequestHandler implements RequestHandler {
@@ -81,8 +81,9 @@ public class RestRequestHandler implements RequestHandler {
 	private RestEndpoint getEndpointFromURI(String uri) {
 		PackedMap<String, RestEndpoint> endpoints = this.endpoints;
 
-		if (endpoints.containsKey(uri)) {
-			return endpoints.get(uri);
+		RestEndpoint endpoint = endpoints.get(uri);
+		if (endpoint != null) {
+			return endpoint;
 		}
 
 		while (!uri.isEmpty()) {
@@ -92,11 +93,9 @@ public class RestRequestHandler implements RequestHandler {
 			}
 			uri = uri.substring(0, i);
 
-			if (endpoints.containsKey(uri)) {
-				RestEndpoint endpoint = endpoints.get(uri);
-				if (endpoint.isGlobal()) {
-					return endpoint;
-				}
+			endpoint = endpoints.get(uri);
+			if (endpoint != null && endpoint.isGlobal()) {
+				return endpoint;
 			}
 		}
 

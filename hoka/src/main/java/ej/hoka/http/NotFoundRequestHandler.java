@@ -25,13 +25,13 @@ class NotFoundRequestHandler implements RequestHandler {
 	private static final HTTPResponse RESPONSE_NOT_FOUND = HTTPResponse
 			.createResponseFromStatus(HTTPConstants.HTTP_STATUS_NOTFOUND);
 
+	private NotFoundRequestHandler() {
+		// Forbid instantiation
+	}
+
 	@Override
 	public HTTPResponse process(HTTPRequest request, Map<String, String> attributes) {
 		return RESPONSE_NOT_FOUND;
-	}
-
-	private NotFoundRequestHandler() {
-		// Forbid instantiation
 	}
 
 }

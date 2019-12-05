@@ -14,6 +14,8 @@ package ej.hoka.auth;
  */
 public class Session {
 
+	private static final long ONE_SECOND = 1000L;
+
 	/* package */ final String userID;
 	/* package */ final String sessionID;
 	/* package */ final long sessionExpiration;
@@ -37,10 +39,10 @@ public class Session {
 	/**
 	 * Checks whether the session has expired or not.
 	 *
-	 * @return <code>true</code> if the session has expired, <code>false</code> otherwise.
+	 * @return {@code true} if the session has expired, {@code false} otherwise.
 	 */
 	public boolean isExpired() {
-		return 1000L * this.sessionExpiration < System.currentTimeMillis();
+		return ONE_SECOND * this.sessionExpiration < System.currentTimeMillis();
 	}
 
 }

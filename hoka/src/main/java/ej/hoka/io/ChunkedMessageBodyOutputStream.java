@@ -30,6 +30,8 @@ public class ChunkedMessageBodyOutputStream extends OutputStream {
 	 */
 	private static final int PENDING_BYTE_LENGTH = 32;
 
+	private static final int HEXA = 16;
+
 	/**
 	 * Closed flag.
 	 */
@@ -139,8 +141,9 @@ public class ChunkedMessageBodyOutputStream extends OutputStream {
 			this.pendingBytes = new byte[PENDING_BYTE_LENGTH];
 		}
 
-		this.pendingBytes[this.nbPendingBytes++] = (byte) b;
+		this.pendingBytes[this.nbPendingBytes] = (byte) b;
 
+		this.nbPendingBytes++;
 		if (this.nbPendingBytes == PENDING_BYTE_LENGTH) {
 			// pendingBytes full, write it.
 			writePendingBytes();
@@ -165,7 +168,7 @@ public class ChunkedMessageBodyOutputStream extends OutputStream {
 	 */
 	private void writeChunk(final byte[] b, final int off, final int len) throws IOException {
 		// write chunk size
-		this.os.write(Integer.toString(len, 16).getBytes());
+		this.os.write(Integer.toString(len, HEXA).getBytes());
 		this.os.write(CRLF);
 		// write chunk data
 		this.os.write(b, off, len);

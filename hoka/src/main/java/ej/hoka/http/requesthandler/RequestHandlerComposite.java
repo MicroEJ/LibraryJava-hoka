@@ -50,7 +50,7 @@ public class RequestHandlerComposite implements RequestHandler {
 	 * @param handler
 	 *            the {@link RequestHandler} to add.
 	 */
-	public synchronized void addRequestHandler(RequestHandler handler) {
+	public final synchronized void addRequestHandler(RequestHandler handler) {
 		if (handler == null) {
 			throw new IllegalArgumentException();
 		}
