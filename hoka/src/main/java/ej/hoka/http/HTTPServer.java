@@ -93,8 +93,6 @@ public class HTTPServer {
 	private static final HTTPResponse RESPONSE_NOT_ACCEPTABLE = HTTPResponse
 			.createResponseFromStatus(HTTPConstants.HTTP_STATUS_NOTACCEPTABLE);
 
-	private static final String JAVA_LANG = "java.lang"; //$NON-NLS-1$
-
 	/**
 	 * The underlying TCP server.
 	 */
@@ -365,28 +363,11 @@ public class HTTPServer {
 				} catch (final Throwable e) {
 					responseMessage = e.getMessage();
 					if (this.sendStackTraceOnException) {
-						StringBuilder fullMessageBuilder = new StringBuilder();
-						if (responseMessage != null) {
-							fullMessageBuilder.append(responseMessage);
-							fullMessageBuilder.append(HTML_BR);
-						}
-						StackTraceElement[] stackTrace = e.getStackTrace();
-						int i = 0;
-						while (i < stackTrace.length && stackTrace[i].getClassName().startsWith(JAVA_LANG)) {
-							i++;
-						}
-						fullMessageBuilder.append(stackTrace[i - 1].toString()).append(HTML_BR);
-						for (; i < stackTrace.length
-								&& !stackTrace[i].getClassName().equals(getClass().getName()); i++) {
-							fullMessageBuilder.append(EXCEPTION_PREFIX).append(stackTrace[i].toString())
-									.append(HTML_BR);
-						}
 						response = HTTPResponse.createError(HTTPConstants.HTTP_STATUS_INTERNALERROR,
-								fullMessageBuilder.toString());
+								getHtmlExceptionStackTrace(e));
 					} else {
 						response = RESPONSE_INTERNAL_ERROR;
 					}
-
 					keepAlive = false;
 				} finally {
 					// TODO : Remove to allow Keep-Alive
@@ -437,6 +418,46 @@ public class HTTPServer {
 	 */
 	public void sendStackTraceOnException(boolean sendStackTraceOnException) {
 		this.sendStackTraceOnException = sendStackTraceOnException;
+	}
+
+	/**
+	 * Creates a HTML representation of the stack trace of <code>t</code>.
+	 * <p>
+	 * Only the relevant part of the stack trace is dumped. The exception superclasses constructors and the job internal
+	 * calls are skipped.
+	 *
+	 * @param t
+	 *            the throwable to dump.
+	 * @return the HTML representation of the stack trace as a {@link String}.
+	 */
+	private static String getHtmlExceptionStackTrace(Throwable t) {
+		StringBuilder fullMessageBuilder = new StringBuilder();
+
+		String message = t.getMessage();
+		if (message != null) {
+			fullMessageBuilder.append(message);
+			fullMessageBuilder.append(HTML_BR);
+		}
+
+		StackTraceElement[] stackTrace = t.getStackTrace();
+
+		int i = 0;
+		String className;
+
+		// Skip all the exception superclasses constructors
+		className = "java.lang"; //$NON-NLS-1$
+		while (i < stackTrace.length && stackTrace[i].getClassName().startsWith(className)) {
+			i++;
+		}
+
+		// Append only the stack trace up to this class call to RequestHandler#process.
+		className = HTTPServer.class.getName();
+		fullMessageBuilder.append(stackTrace[i - 1].toString()).append(HTML_BR);
+		for (; i < stackTrace.length && !stackTrace[i].getClassName().equals(className); i++) {
+			fullMessageBuilder.append(EXCEPTION_PREFIX).append(stackTrace[i].toString()).append(HTML_BR);
+		}
+
+		return fullMessageBuilder.toString();
 	}
 
 }
