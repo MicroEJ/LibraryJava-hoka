@@ -8,30 +8,25 @@
 package ej.hoka.http.support;
 
 /**
- * <p>
  * Utility class for parsing Accept Encoding header in HTTP requests.<br>
  * <i>See: (RFC HTTP/1.1 RFC2616 14.3 Accept Encoding)</i>
- * </p>
  */
 public class AcceptEncoding extends CharacterSeparatedList {
+
 	/**
-	 * array of {@link QualityArgument}s.
+	 * Array of {@link QualityArgument}s.
 	 */
 	protected QualityArgument[] encodings;
 
 	/**
-	 * <p>
 	 * Creates a new instance of {@link AcceptEncoding} with a default separator (comma character ",").
-	 * </p>
 	 */
 	public AcceptEncoding() {
 		super(',');
 	}
 
 	/**
-	 * <p>
 	 * Not implemented.
-	 * </p>
 	 *
 	 * @param sb
 	 *            the {@link StringBuffer}
@@ -39,13 +34,11 @@ public class AcceptEncoding extends CharacterSeparatedList {
 	 */
 	@Override
 	public StringBuilder generate(StringBuilder sb) {
-		throw new RuntimeException(); // TODO if necessary
+		throw new RuntimeException();
 	}
 
 	/**
-	 * <p>
 	 * Returns the previously parsed array of {@link QualityArgument}s.
-	 * </p>
 	 *
 	 * @return the encodings previously parsed.
 	 */
@@ -54,9 +47,7 @@ public class AcceptEncoding extends CharacterSeparatedList {
 	}
 
 	/**
-	 * <p>
 	 * Sets the size of the array for storing parsed {@link QualityArgument}s.
-	 * </p>
 	 *
 	 * @param nbTokens
 	 *            the size of the array for storing the parsed {@link QualityArgument}s.
@@ -67,10 +58,8 @@ public class AcceptEncoding extends CharacterSeparatedList {
 	}
 
 	/**
-	 * <p>
 	 * Parses the <code>index</code>th {@link QualityArgument} from the index <code>start</code> to the index
 	 * <code>stop</code>.
-	 * </p>
 	 *
 	 * @param index
 	 *            the index of the {@link QualityArgument} to be parsed
@@ -84,4 +73,5 @@ public class AcceptEncoding extends CharacterSeparatedList {
 		QualityArgument qualityArgument = this.encodings[index] = new QualityArgument();
 		qualityArgument.parse(this.currentString, start, stop);
 	}
+
 }

@@ -35,8 +35,7 @@ public class HTTPPart extends InputStream {
 	 * @param multiPart
 	 *            the shared multipart buffer.
 	 */
-	/* package */
-	HTTPPart(MultiPartBodyParser.MultiPartBuffer multiPart) {
+	/* default */ HTTPPart(MultiPartBodyParser.MultiPartBuffer multiPart) {
 		this.multiPart = multiPart;
 		this.isInit = false;
 		this.isFinished = false;
@@ -60,7 +59,7 @@ public class HTTPPart extends InputStream {
 	 * @throws IOException
 	 *             if an IOException occurs during read.
 	 */
-	/* package */ synchronized Map<String, String> parseHeaders() throws IOException {
+	/* default */ synchronized Map<String, String> parseHeaders() throws IOException {
 		if (!this.headerParsed) {
 			init();
 			this.headerParsed = true;
@@ -138,4 +137,5 @@ public class HTTPPart extends InputStream {
 			this.isInit = true;
 		}
 	}
+
 }

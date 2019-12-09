@@ -1,0 +1,11 @@
+# Copyright 2019 MicroEJ Corp. All rights reserved.
+# For demonstration purpose only.
+# MicroEJ Corp. PROPRIETARY. Use is subject to license terms.
+
+/hoka/index.html
+/hoka/index.html.gz
+/hoka/png/microej.png
+/https/ca.crt
+/https/hoka.crt
+/https/hoka.key
+/rest/example.resources.list

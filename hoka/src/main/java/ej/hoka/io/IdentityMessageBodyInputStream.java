@@ -11,12 +11,12 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * <p>
  * Identity input stream. Wraps an {@link InputStream} and all of the operations on
  * {@link IdentityMessageBodyInputStream} are delegated to this underlying {@link InputStream}.
- * </p>
  */
 public class IdentityMessageBodyInputStream extends InputStream {
+
+	private static final int BUFFER_SIZE = 512;
 
 	/**
 	 * If true the input stream is considered to be closed and all further operation will result in IOException.
@@ -34,11 +34,9 @@ public class IdentityMessageBodyInputStream extends InputStream {
 	private int remainingBytes;
 
 	/**
-	 * <p>
 	 * Creates a new instance of {@link IdentityMessageBodyInputStream} with the {@link InputStream} <code>is</code>
 	 * with the predefined length <code>bodyLength</code>. The <code>bodyLength</code> should be the maximum number of
 	 * bytes can be read from the InputStream.
-	 * </p>
 	 *
 	 * @param is
 	 *            the underlying {@link InputStream} to read the body content of the HTTP message body
@@ -51,9 +49,7 @@ public class IdentityMessageBodyInputStream extends InputStream {
 	}
 
 	/**
-	 * <p>
 	 * Returns the number of bytes that can be read (or skipped over) from this input stream without blocking.
-	 * </p>
 	 *
 	 * @return the number of available bytes could be read from the stream
 	 * @throws IOException
@@ -81,11 +77,9 @@ public class IdentityMessageBodyInputStream extends InputStream {
 	}
 
 	/**
-	 * <p>
 	 * Reads all remaining message body data and then close this input stream. This method DOES NOT close the underlying
 	 * stream (i.e. the TCP connection stream). It is the responsibility of the HTTPSession to close the underlying
 	 * stream.
-	 * </p>
 	 *
 	 * @throws IOException
 	 *             when an error occurs while closing the stream
@@ -93,7 +87,7 @@ public class IdentityMessageBodyInputStream extends InputStream {
 	@Override
 	public void close() throws IOException {
 		if (this.remainingBytes > 0) {
-			byte[] buf = new byte[Math.min(512, this.remainingBytes)];
+			byte[] buf = new byte[Math.min(BUFFER_SIZE, this.remainingBytes)];
 			while (this.remainingBytes > 0) {
 				read(buf);
 			}
@@ -102,11 +96,9 @@ public class IdentityMessageBodyInputStream extends InputStream {
 	}
 
 	/**
-	 * <p>
 	 * Reads the next byte of data from the input stream. The byte value is returned as an int in the range of 0 to 255.
 	 * If no byte is available because the end of the stream has been reached, the value -1 is returned. This method
 	 * blocks until input data is available, the end of the stream is detected, or an exception is thrown.
-	 * </p>
 	 *
 	 * @return the next byte of data from the input stream, or -1 if the end of the input stream has been reached.
 	 * @throws IOException
@@ -127,12 +119,10 @@ public class IdentityMessageBodyInputStream extends InputStream {
 	}
 
 	/**
-	 * <p>
 	 * Reads up to <code>length</code> bytes of data from the underlying {@link InputStream} into an array of bytes. An
 	 * attempt is made to read as many as <code>length</code> bytes, but the amount of bytes can be read from the
 	 * {@link InputStream} could be less than <code>length</code>, even <code>0</code>. The number of bytes actually
 	 * read are returned as an integer.
-	 * </p>
 	 *
 	 * @see InputStream#read(byte[], int, int)
 	 * @param data
@@ -167,4 +157,5 @@ public class IdentityMessageBodyInputStream extends InputStream {
 		this.remainingBytes -= result;
 		return result;
 	}
+
 }

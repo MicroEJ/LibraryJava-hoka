@@ -11,62 +11,42 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import ej.hoka.http.HTTPConstants;
-import ej.hoka.http.HTTPRequest;
+import ej.hoka.http.body.MultiPartBodyParser.MultiPartBody;
 import ej.hoka.http.support.MIMEUtils;
 
 /**
- * A body parser for MIME_MULTIPART_FORM_ENCODED_DATA.
+ * A body parser for {@link MIMEUtils#MIME_MULTIPART_FORM_ENCODED_DATA}.
  */
-public class MultiPartBodyParser implements BodyParser {
+public class MultiPartBodyParser implements BodyParser<MultiPartBody> {
 
 	private static final int SIZE = 512;
 	/**
-	 * The boundary delimiter;
+	 * The boundary delimiter.
 	 */
 	public static final String BOUNDARY = "boundary="; //$NON-NLS-1$
 
-	private MultiPartBuffer buffer;
-
 	/**
-	 * Initialize the parsing, must be called before {@link #nextPart()}. This function does not consume the request.
+	 * Initialize the parsing, must be called before {@link MultiPartBody#nextPart()}. This function does not consume
+	 * the <code>inputStream</code>.
 	 */
 	@Override
-	public void parseBody(HTTPRequest httpRequest) throws IOException {
-		String contentType = httpRequest.getHeaderField(HTTPConstants.FIELD_CONTENT_TYPE);
-		// 3. the body contains a multipart form encoded
+	public MultiPartBody parseBody(InputStream inputStream, String contentType) throws IOException {
+		MultiPartBuffer buffer = null;
 		if ((contentType != null) && contentType.startsWith(MIMEUtils.MIME_MULTIPART_FORM_ENCODED_DATA)) {
 			String boundary = contentType.substring(contentType.indexOf(';') + 1);
-			this.buffer = new MultiPartBuffer();
-			this.buffer.boundary = (HTTPConstants.END_OF_LINE + "--" //$NON-NLS-1$
+			buffer = new MultiPartBuffer();
+			buffer.boundary = (HTTPConstants.END_OF_LINE + "--" //$NON-NLS-1$
 					+ boundary.substring(boundary.indexOf(BOUNDARY) + BOUNDARY.length())).getBytes();
-			this.buffer.stream = httpRequest.getStream();
-			this.buffer.buffer = new byte[SIZE];
+			buffer.stream = inputStream;
+			buffer.buffer = new byte[SIZE];
 			/**
 			 * The first boundary does not have the line jump, artificially add it to have a generic behaviour.
 			 */
-			this.buffer.buffer[0] = '\r';
-			this.buffer.buffer[1] = '\n';
-			this.buffer.lengthAvailable = 2;
+			buffer.buffer[0] = '\r';
+			buffer.buffer[1] = '\n';
+			buffer.lengthAvailable = 2;
 		}
-	}
-
-	/**
-	 * Consume the input stream from the request to get the next {@link HTTPPart} available.
-	 *
-	 * @return the next {@link HTTPPart} initialized, <code>null</code> if not found.
-	 * @throws IOException
-	 *             if an {@link IOException} occurs during the parsing of the headers.
-	 */
-	public HTTPPart nextPart() throws IOException {
-		if (this.buffer != null && this.buffer.hasData()) {
-			HTTPPart httpPart = new HTTPPart(this.buffer);
-			if (httpPart.parseHeaders().size() == 0 && !this.buffer.hasData()) {
-				httpPart.close();
-				httpPart = null;
-			}
-			return httpPart;
-		}
-		return null;
+		return new MultiPartBody(buffer);
 	}
 
 	/**
@@ -87,18 +67,18 @@ public class MultiPartBodyParser implements BodyParser {
 		 */
 		private byte[] buffer;
 		/**
-		 * the offset position within the buffer.
+		 * The offset position within the buffer.
 		 */
 		private int offset;
 		/**
-		 * the number of bytes available within the buffer.
+		 * The number of bytes available within the buffer.
 		 */
 		private int lengthAvailable;
 
 		/**
 		 * Checks whether more data is available in the input stream.
 		 *
-		 * @return <code>true</code> if more data is available in the input stream.
+		 * @return {@code true} if more data is available in the input stream.
 		 * @throws IOException
 		 *             if an {@link IOException} happens.
 		 */
@@ -115,7 +95,7 @@ public class MultiPartBodyParser implements BodyParser {
 		 * @param off
 		 *            the offset.
 		 * @param len
-		 *            the lenght.
+		 *            the length.
 		 * @return the number of bytes read.
 		 * @throws IOException
 		 *             if an {@link IOException} happens.
@@ -157,7 +137,7 @@ public class MultiPartBodyParser implements BodyParser {
 		}
 
 		/**
-		 * Consume the data up to after the next boundary.
+		 * Consumes the data up to after the next boundary.
 		 *
 		 * @throws IOException
 		 *             if an {@link IOException} occurs
@@ -212,7 +192,7 @@ public class MultiPartBodyParser implements BodyParser {
 		}
 
 		/**
-		 * Buffer the data if needed.
+		 * Buffers the data if needed.
 		 *
 		 * @param length
 		 *            the size of the data that will be required.
@@ -235,5 +215,45 @@ public class MultiPartBodyParser implements BodyParser {
 				this.offset = 0;
 			}
 		}
+
 	}
+
+	/**
+	 * Class representing the collection of {@link HTTPPart} in the request.
+	 */
+	public static class MultiPartBody {
+
+		private final MultiPartBuffer buffer;
+
+		/**
+		 * Constructs the {@link MultiPartBody} with the specified <code>buffer</code>.
+		 *
+		 * @param buffer
+		 *            the {@link MultiPartBuffer} to user.
+		 */
+		private MultiPartBody(MultiPartBuffer buffer) {
+			this.buffer = buffer;
+		}
+
+		/**
+		 * Consumes the input stream from the request to get the next {@link HTTPPart} available.
+		 *
+		 * @return the next {@link HTTPPart} initialized, <code>null</code> if not found.
+		 * @throws IOException
+		 *             if an {@link IOException} occurs during the parsing of the headers.
+		 */
+		public HTTPPart nextPart() throws IOException {
+			if (this.buffer != null && this.buffer.hasData()) {
+				HTTPPart httpPart = new HTTPPart(this.buffer); // NOSONAR
+				if (httpPart.parseHeaders().size() == 0 && !this.buffer.hasData()) {
+					httpPart.close();
+					httpPart = null;
+				}
+				return httpPart;
+			}
+			return null;
+		}
+
+	}
+
 }
