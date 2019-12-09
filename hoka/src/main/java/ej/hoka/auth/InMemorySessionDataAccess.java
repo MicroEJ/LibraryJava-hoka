@@ -7,13 +7,11 @@
  */
 package ej.hoka.auth;
 
-import java.util.HashMap;
-
 import ej.basictool.map.PackedMap;
 
 /**
- * A {@link SessionDataAccess} implementation that uses {@link HashMap} to map user ID to session ID, session ID to user
- * ID and session ID to session expiration.
+ * A {@link SessionDataAccess} implementation that uses {@link PackedMap} to map user ID to session ID, session ID to
+ * user ID and session ID to session expiration.
  * <p>
  * Sessions aren't automatically removed when expired.
  */

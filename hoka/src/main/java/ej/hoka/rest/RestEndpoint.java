@@ -90,7 +90,7 @@ public class RestEndpoint {
 	 * If this endpoint is global, the returned URI doesn't contain the trailing <code>/*</code> of the URI given to the
 	 * constructor.
 	 *
-	 * @return this endpoint URI.
+	 * @return this endpoint URI, cannot be null.
 	 */
 	public String getURI() {
 		return this.uri;
@@ -101,7 +101,7 @@ public class RestEndpoint {
 	 * <p>
 	 * For example, a global <code>/my/custom/*</code> endpoint can process request to <code>/my/custom/endpoint</code>.
 	 *
-	 * @return this endpoint URI.
+	 * @return {@code true} if this endpoint is global, {@code false} otherwise.
 	 * @see #RestEndpoint(String)
 	 */
 	public boolean isGlobal() {

@@ -244,7 +244,7 @@ public class MultiPartBodyParser implements BodyParser<MultiPartBody> {
 		 */
 		public HTTPPart nextPart() throws IOException {
 			if (this.buffer != null && this.buffer.hasData()) {
-				HTTPPart httpPart = createPart();
+				HTTPPart httpPart = new HTTPPart(this.buffer); // NOSONAR
 				if (httpPart.parseHeaders().size() == 0 && !this.buffer.hasData()) {
 					httpPart.close();
 					httpPart = null;
@@ -252,10 +252,6 @@ public class MultiPartBodyParser implements BodyParser<MultiPartBody> {
 				return httpPart;
 			}
 			return null;
-		}
-
-		private HTTPPart createPart() {
-			return new HTTPPart(this.buffer);
 		}
 
 	}
