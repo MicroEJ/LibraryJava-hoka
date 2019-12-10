@@ -1,17 +1,14 @@
-Overview
-========
+# Overview
 
 The Hoka HTTP Server can be used to create web interfaces or M2M
 capabilities for embedded applications. One Hoka instance can serve
 multiple architectures (filesystem, REST, SOAP, ...).
 
-Usage
-=====
+# Usage
 
 Examples are available in the [hoka-example](..\hoka-example) project.
 
-Instantiating the HTTPServer
-----------------------------
+## Instantiating the HTTPServer
 
 `HTTPServer` is the entry point of this library. His constructor is :
 
@@ -42,8 +39,7 @@ The parameters of the constructor are the following :
 -   `keepAliveDuration` : the timeout duration in milliseconds for
     idling persistent connections.
 
-Customizing the HTTP Server
----------------------------
+## Customizing the HTTP Server
 
 ### `ej.hoka.tcp`
 
@@ -132,25 +128,21 @@ To parse a body, use `HTTPRequest#parseBody(BodyParser)`. For example :
 > String body = request.parseBody(parser);
 > ```
 
-Requirements
-============
+# Requirements
 
 This library requires the following Foundation Libraries:
 
     @FOUNDATION_LIBRARIES_LIST@
 
-Dependencies
-============
+# Dependencies
 
 *All dependencies are retrieved transitively by Ivy resolver*.
 
-Source
-======
+# Source
 
 N.A.
 
-Restrictions
-============
+# Restrictions
 
 None.
 
