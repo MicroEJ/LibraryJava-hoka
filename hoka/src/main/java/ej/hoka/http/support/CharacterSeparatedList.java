@@ -8,9 +8,7 @@
 package ej.hoka.http.support;
 
 /**
- * <p>
  * Abstract class for implementing parsers for character separated lists.
- * </p>
  */
 public abstract class CharacterSeparatedList {
 
@@ -45,10 +43,8 @@ public abstract class CharacterSeparatedList {
 	protected char separator;
 
 	/**
-	 * <p>
 	 * Creates a new instance of {@link CharacterSeparatedList} using the character <code>separator</code> as the
 	 * separator character.
-	 * </p>
 	 *
 	 * @param separator
 	 *            the character to treat as characters separator for this list
@@ -69,18 +65,14 @@ public abstract class CharacterSeparatedList {
 	}
 
 	/**
-	 * <p>
 	 * End instructions of the string parsing.
-	 * </p>
 	 */
 	protected void endParse() {
 		// nothing to do
 	}
 
 	/**
-	 * <p>
 	 * Generates a String representation.
-	 * </p>
 	 *
 	 * @param sb
 	 *            the {@link StringBuffer}
@@ -89,9 +81,7 @@ public abstract class CharacterSeparatedList {
 	protected abstract StringBuilder generate(StringBuilder sb);
 
 	/**
-	 * <p>
 	 * Set the number of tokens to read.
-	 * </p>
 	 *
 	 * @param nbTokens
 	 *            number of tokens
@@ -99,9 +89,7 @@ public abstract class CharacterSeparatedList {
 	protected abstract void initializeNbTokens(int nbTokens);
 
 	/**
-	 * <p>
 	 * Read a new token between the given start and stop index and set its id.
-	 * </p>
 	 *
 	 * @param id
 	 *            for the token
@@ -113,9 +101,7 @@ public abstract class CharacterSeparatedList {
 	protected abstract void newToken(int id, int start, int stop);
 
 	/**
-	 * <p>
 	 * Parses the given {@link String}.
-	 * </p>
 	 *
 	 * @param str
 	 *            the {@link String} to parse
@@ -125,9 +111,7 @@ public abstract class CharacterSeparatedList {
 	}
 
 	/**
-	 * <p>
 	 * Parses the {@link String} <code>str</code> from the <code>start</code> index to the <code>stop</code> index.
-	 * </p>
 	 *
 	 * @param str
 	 *            the {@link String} to parse
@@ -154,7 +138,7 @@ public abstract class CharacterSeparatedList {
 
 		// 2) extract tokens
 		ptr = start;
-		for (int i = -1; ++i < nbTokens;) {
+		for (int i = 0; i < nbTokens; i++) {
 			// find the first occurence of the separator
 			int endEncoding = str.indexOf(this.separator, ptr);
 			// if the separator is not found, the end index is the initial end

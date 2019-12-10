@@ -9,43 +9,38 @@ package ej.hoka.http;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 import ej.hoka.http.body.BodyParser;
-import ej.hoka.http.body.BodyParserFactory;
-import ej.hoka.http.support.MIMEUtils;
+import ej.hoka.http.body.ParameterParser;
+import ej.hoka.http.encoding.HTTPEncodingRegistry;
+import ej.hoka.http.encoding.IHTTPEncodingHandler;
+import ej.hoka.http.encoding.IHTTPTransferCodingHandler;
+import ej.hoka.http.encoding.UnsupportedHTTPEncodingException;
+import ej.hoka.http.support.URLDecoder;
 
 /**
  * Represents a HTTP Request.
  */
 public class HTTPRequest {
 
+	private static final int INITIAL_STRING_BUILDER_CAPACITY = 16;
 	/**
-	 * <p>
 	 * Value returned by {@link #getMethod()} if the request method is <code>POST</code>.
-	 * </p>
 	 */
 	public static final int POST = 1;
-
 	/**
-	 * <p>
 	 * Value returned by {@link #getMethod()} if the request method is <code>GET</code>.
-	 * </p>
 	 */
 	public static final int GET = 2;
-
 	/**
-	 * <p>
 	 * Value returned by {@link #getMethod()} if the request method is <code>PUT</code>.
-	 * </p>
 	 */
 	public static final int PUT = 3;
-
 	/**
-	 * <p>
 	 * Value returned by {@link #getMethod()} if the request method is <code>DELETE</code>.
-	 * </p>
 	 */
 	public static final int DELETE = 4;
 
@@ -53,84 +48,47 @@ public class HTTPRequest {
 	 * Space character.
 	 */
 	private static final char SPACE_CHAR = ' ';
-
 	/**
 	 * Percentage character.
 	 */
 	private static final char PERCENTAGE_CHAR = '%';
-
 	/**
 	 * Colon character.
 	 */
 	private static final char COLON_CHAR = ':';
-
+	/**
+	 * The colon character.
+	 */
+	private static final String RESPONSE_COLON = ": "; //$NON-NLS-1$
 	/**
 	 * Newline character.
 	 */
 	private static final char NEWLINE_CHAR = '\n';
-
 	/**
 	 * Carriage return character.
 	 */
 	private static final char CARRIAGE_RETURN_CHAR = '\r';
-
 	/**
 	 * Tab character.
 	 */
 	private static final char TABULATION_CHAR = '\t';
-
-	/**
-	 * Ampersand character.
-	 */
-	private static final char AMPERSAND_CHAR = '&';
-
-	/**
-	 * Equals character.
-	 */
-	private static final char EQUAL_CHAR = '=';
-
-	/*
-	 * Commonly used characters Typically used when parsing URI
-	 */
-
-	/**
-	 * Plus character.
-	 */
-	private static final char PLUS_CHAR = '+';
-
 	/**
 	 * Question mark character.
 	 */
 	private static final char QUESTION_MARK_CHAR = '?';
+
 	/**
-	 * Error Message Malformed HTTP Request.
+	 * Error Malformed HTTP Request.
 	 */
 	private static final String MALFORMED_HTTP_REQUEST = "Malformed HTTP Request"; //$NON-NLS-1$
-
 	/**
-	 * EOF marker (-1).
+	 * Error connection lost.
 	 */
-	private static final int END_OF_FILE = -1;
+	private static final String CONNECTION_LOST = "Connection lost"; //$NON-NLS-1$
 
-	/**
-	 * Hexadecimal base (16).
-	 */
-	private static final int HEXA = 16;
-
-	/**
-	 * The {@link InputStream} to use.
-	 */
-	private final InputStream stream;
-
-	/**
-	 * The {@link HTTPServer} instance.
-	 */
-	private final HTTPServer server;
-
-	/**
-	 * Parsed request parameters.
-	 */
-	private final HashMap<String, String> parameters;
+	private static final int INITIAL_MAP_CAPACITY = 10;
+	private static final int INITIAL_URI_CAPACITY = 64;
+	private static final int VERSION_SIZE = 10;
 
 	/**
 	 * Request method code.
@@ -140,448 +98,63 @@ public class HTTPRequest {
 	 * @see HTTPRequest#PUT
 	 * @see HTTPRequest#DELETE
 	 */
-	private int method;
+	private final int method;
 
 	/**
 	 * Request URI.
 	 */
-	private String uri;
+	private final String uri;
+
+	/**
+	 * Parsed request parameters.
+	 */
+	private final Map<String, String> parameters;
 
 	/**
 	 * HTTP Request version String.
 	 */
-	private String version;
+	private final String version;
 
 	/**
 	 * Parsed request headers.
 	 */
-	private HashMap<String, String> header;
+	private final Map<String, String> header;
 
 	/**
-	 * The {@link BodyParser}.
+	 * The {@link InputStream} to use.
 	 */
-	private BodyParser bodyParser;
+	private final InputStream body;
+
+	/**
+	 * Parsed request cookies. Lazily computed.
+	 */
+	private Map<String, String> cookies;
 
 	/**
 	 * Constructs a new instance of HTTPRequest.
 	 *
-	 * @param server
-	 *            the {@link HTTPServer} instance
 	 * @param inputStream
-	 *            the input stream for the request
-	 * @param bodyParserFactory
-	 *            the {@link BodyParserFactory} to use
+	 *            the input stream of the request.
+	 * @param encodingRegistry
+	 *            the register of available encoding and transfer coding handlers.
 	 * @throws IOException
-	 *             if connection is lost during processing the request
+	 *             if connection is lost during processing the request.
 	 * @throws IllegalArgumentException
-	 *             if parsing the request header or body failed
-	 * @throws UnsupportedHTTPEncodingException
-	 *             when an unsupported HTTP encoding encountered
+	 *             if parsing the request failed.
 	 */
-	protected HTTPRequest(HTTPServer server, InputStream inputStream, BodyParserFactory bodyParserFactory)
-			throws IOException, IllegalArgumentException {
-		this.server = server;
+	protected HTTPRequest(InputStream inputStream, HTTPEncodingRegistry encodingRegistry) throws IOException {
+		this.method = parseMethod(inputStream);
+		this.parameters = new HashMap<>(INITIAL_MAP_CAPACITY);
+		this.uri = parseURI(inputStream, this.parameters);
+		this.version = parseVersion(inputStream);
+		this.header = parseHeaderFields(inputStream);
 
-		this.parameters = new HashMap<String, String>(10); // reasonable size for HTTP
-		// Parameters (50 in our default HashMap implementation)
-
-		// FIXME WI 4419, when Persistence will be implemented, this way of
-		// request computing may move in another place but quite in the same way
-
-		// process the request entirely by reading:
-		// 1. method (get/post/put/delete), uri (my/resource.html), query
-		// strings (?a=b&c=d), and HTTP header fields
-		if (!parseRequestHeader(inputStream)) {
-			throw new IllegalArgumentException(MALFORMED_HTTP_REQUEST);
-		}
-
-		// the content-type may have been parsed by parseRequestHeader
-		String contentType = getHeaderField(HTTPConstants.FIELD_CONTENT_TYPE);
-
-		/*
-		 * if (contentType == null) { // If HTTP 1.1 and no content type, it's not the exact HTTP 1.1 // spec. // Spec
-		 * says: Content-Type header field SHOULD be specified }
-		 */
-
-		// Modify InputStream in case header specifies content encoding
-		this.stream = getContentEncodingStream(inputStream);
-
-		// 2. the body (potentially containing additional parameters if
-		// Content-Type is x-www-form-urlencoded)
-		if (MIMEUtils.MIME_FORM_ENCODED_DATA.equalsIgnoreCase(contentType)) {
-			if (!parseRequestBody(this.stream)) {
-				throw new IllegalArgumentException(MALFORMED_HTTP_REQUEST);
-			}
-		}
-
-		if (bodyParserFactory != null) {
-			this.bodyParser = bodyParserFactory.newBodyParser(this);
-		}
+		this.body = getContentEncodingStream(inputStream, encodingRegistry);
 	}
 
 	/**
-	 * Constructs a new instance of HTTPRequest.
-	 *
-	 * @param server
-	 *            the {@link HTTPServer} instance
-	 * @param inputStream
-	 *            the input stream for the request
-	 * @throws IOException
-	 *             if connection is lost during processing the request
-	 * @throws IllegalArgumentException
-	 *             if parsing the request header or body failed
-	 * @throws UnsupportedHTTPEncodingException
-	 *             when an unsupported HTTP encoding encountered
-	 */
-	protected HTTPRequest(HTTPServer server, InputStream inputStream) throws IOException, IllegalArgumentException {
-		this(server, inputStream, null);
-	}
-
-	/**
-	 * Returns the character from the stream, which encode as "%ab" (single byte UTF-8) or "%ab%cd" (two byte ). The
-	 * initial % mark has been already reed. The character is represented as %ab where "a" and "b" is a hexa character
-	 * (0-9, A-F) if the value of (a * 16 + b) > 127 the next 3 bytes will be read as the second byte of a two-byte
-	 * UTF-8 char. When a character encoding problem is encountered, returns -1 (ffff). Since there is no unicode
-	 * character with this code, this does not cause problems. Unicode characters above code point ffff are not handled
-	 * (Suplementary characters).
-	 *
-	 * @param is
-	 *            the Input Stream
-	 * @return the character as integer
-	 * @throws IOException
-	 *             when an I/O error occured reading the Stream
-	 */
-	private static int decodePercentage(InputStream is) throws IOException {
-
-		// temporary variables for storing encoded character values
-		int x, y, z, u;
-
-		// the % is already consumed by the caller method, so skip it
-		x = readEncodedCharacter(is, false);
-
-		// how much byte we should decode?
-		//
-		// one:____0xxxxxxx
-		// two:____110xxxxx|10xxxxxx
-		// three:__1110xxxx|10xxxxxx|10xxxxxx
-		// four:___11110xxx|10xxxxxx|10xxxxxx|10xxxxxx
-
-		boolean oneByte = (x >>> 7) == 0x00;
-
-		if (oneByte) {
-			return x;
-		}
-
-		boolean twoByte = (x >>> 5) == 0x06;
-		boolean threeByte = (x >>> 4) == 0x0E;
-		boolean fourByte = (x >>> 3) == 0x1E;
-		/*
-		 * boolean fiveByte = (x >>> 2) == 0x3E; boolean sixByte = (x >>> 1) == 0x7E;
-		 */
-
-		// validity check
-		if (!(twoByte || threeByte || fourByte /* || fiveByte || sixByte */)) {
-			// encoding error
-			return -1;
-		}
-
-		y = readEncodedCharacter(is, true);
-
-		// validity check
-		if ((y >>> 6) != 0x02) {
-			return -1;
-		}
-
-		if (twoByte) {
-			// two byte
-			// 110xxxxx|10xxxxxx
-			// x|y
-			y = y & 0x3F;
-			x = (x & 0x1F) << 6;
-
-			return y | x;
-		}
-
-		z = readEncodedCharacter(is, true);
-		// validity check
-		if ((z >>> 6) != 0x02) {
-			return -1;
-		}
-
-		if (threeByte) {
-			// three byte
-			// 1110xxxx 10xxxxxx 10xxxxxx
-			// x|y|z
-			z = (z & 0x3F);
-			y = (y & 0x3F) << 6;
-			x = (x & 0x0F) << 12;
-			return z | y | x;
-
-		}
-
-		u = readEncodedCharacter(is, true);
-		// validity check
-		if ((u >>> 6) != 0x02) {
-			return -1;
-		}
-
-		if (fourByte) {
-			// four byte
-			// 11110xxx|10xxxxxx|10xxxxxx|10xxxxxx
-			// x|y|z|u
-			u = (u & 0x3F);
-			z = (z & 0x3F) << 6;
-			y = (y & 0x3F) << 12;
-			x = (x & 0x07) << 18;
-
-			return u | z | y | x;
-		}
-
-		// unexpected error
-		return -1;
-	}
-
-	/**
-	 * When a percentage encoded UTF-16 Surrogate Pair is encountered (integer value above 0xFFFF) this method
-	 * calculates the head and trail surrogate code point for the Unicode character. The head code point is inserted
-	 * into the {@link StringBuilder} and the tail surrogate is returned. If the code doesn't denote a surrogate pair
-	 * (value is less than 0xFFFF) simply return it.
-	 *
-	 * @param code
-	 *            the Unicode character value in the range 0x0-0x10FFFF)
-	 * @param sb
-	 *            The {@link StringBuilder}
-	 * @return the original code (if code's value less than 0xFFFF) or the tail surrogate code point of the surrogate
-	 *         pair.
-	 */
-	private static int handleSurrogatePair(int code, StringBuilder sb) {
-		if (code > 0xffff) {
-			/**
-			 * 1. 0x10000 is subtracted from the code point, leaving a 20 bit number in the range 0..0xFFFFF. 2. The top
-			 * ten bits (a number in the range 0..0x3FF) are added to 0xD800 to give the first code unit or lead
-			 * surrogate, which will be in the range 0xD800..0xDBFF 3. The low ten bits (also in the range 0..0x3FF) are
-			 * added to 0xDC00 to give the second code unit or trail surrogate, which will be in the range
-			 * 0xDC00..0xDFFF
-			 */
-			code = code - 0x10000;
-			int h = (code >>> 10) + 0xD800;
-			int l = (code & 0x3ff) + 0xDC00;
-			// the lead surrogate is added to the buffer
-			sb.append((char) h);
-			// the trail surrogate will be added to the buffer
-			code = l;
-			return code;
-		} else {
-			// no surrogate pair, return original UTF-16 code
-			return code;
-		}
-	}
-
-	/**
-	 * Parses URL query parameters. This method can be called in {@link AbstractHTTPSession#answer(HTTPRequest)} method
-	 * implementation to parse POST parameters in message body. Returns the parameters in a map or <code>null</code> if
-	 * the parameters cannot be read (EOF reached).
-	 *
-	 * @param parameters
-	 *            the map to populate with the parsed parameters
-	 * @param is
-	 *            the input stream from which parameters should be parsed
-	 * @return <code>true</code> if all parameters has been read <code>false</code> if EOF or any error detected
-	 * @throws IOException
-	 *             if an error occurs while reading the input stream.
-	 */
-	private static boolean parserParameters(Map<String, String> parameters, InputStream is) throws IOException {
-		boolean end = false;
-		StringBuilder sbKey = new StringBuilder(16);
-		StringBuilder sbValue = new StringBuilder(4);
-		StringBuilder curBuffer = sbKey;
-		// parameters is a hash table
-		// the stream looks like
-		// "foo=bar&zorg=baz<white space (space, newline, carriage return, tabulation>"
-		loop: while (!end) {
-
-			int i = is.read();
-			switch (i) {
-			case PERCENTAGE_CHAR:
-				// if a special character is found then replace it by the real
-				// ASCII value
-				i = decodePercentage(is);
-				if (i == -1) {
-					return false;
-				}
-				// in case percentage decoded character should be represented as a unicode surrogate pair
-				i = handleSurrogatePair(i, curBuffer);
-
-				break;
-			case PLUS_CHAR:
-				// real '+' are encoded as %2b in HTTP headers, '+' char is a
-				// space alias
-				i = SPACE_CHAR;
-				break;
-			case END_OF_FILE:
-				// save the last parameter
-				if (sbKey.length() > 0) {
-					parameters.put(sbKey.toString(), sbValue.toString());
-				}
-				end = true;
-				break loop;
-			case EQUAL_CHAR: // the key is found so decode the value know;
-				// just don't add the '=' char
-				curBuffer = sbValue;
-				continue loop;
-			case SPACE_CHAR:
-			case NEWLINE_CHAR:
-			case CARRIAGE_RETURN_CHAR:
-			case TABULATION_CHAR:
-				end = true;
-			case AMPERSAND_CHAR:
-				// this is the start of a new key so, that means the value is
-				// found and signal that there is no need to add the char '&'
-				parameters.put(sbKey.toString(), sbValue.toString());
-				sbValue.delete(0, sbValue.length()); // avoid object creation
-				sbKey.delete(0, sbKey.length());
-				curBuffer = sbKey;
-				continue loop;
-			}
-
-			curBuffer.append((char) i);
-
-		}
-		return true;
-	}
-
-	/**
-	 * Reads a percentage encoded character from the input stream "%ab", where 'a' and 'b' is a hexadecimal digit.
-	 *
-	 * @param is
-	 *            the InputStream
-	 * @param readPercentageCharacter
-	 *            if true, the percentage character '%' is first read from the stream. Returns -1 if not found.
-	 * @return the value of the percentage encoded character in the range 0-255, or -1 if any error occurred.
-	 * @throws IOException
-	 *             if I/O error occurred
-	 */
-	private static int readEncodedCharacter(InputStream is, boolean readPercentageCharacter) throws IOException {
-		int i;
-		if (readPercentageCharacter) {
-			char percent = (char) (i = is.read());
-			if (percent != '%') {
-				// encoding error
-				return -1;
-			}
-		}
-
-		// first character
-		char c1 = (char) (i = is.read());
-		if (i == -1) {
-			return -1;
-		}
-		char c2 = (char) (i = is.read());
-		if (i == -1) {
-			return -1;
-		}
-
-		int x;
-		try {
-			x = (Character.digit(c1, HEXA) * HEXA) + Character.digit(c2, HEXA);
-		} catch (NumberFormatException e) {
-			return -1;
-		}
-		return x;
-	}
-
-	/**
-	 * Not implemented(empty method).
-	 */
-	protected void finish() {
-		// === IMPORTANT NOTE
-		// On linux (SunJvm & J9), closing a connection through server side when
-		// there are remaining bytes to read
-		// throws a reset exception to the client (TCP RST/ACK is sent)
-		// This issue does not appear on Windows.
-		// => Choice is to empty the InputStream
-
-		// stream is an input stream that reads remaining
-		// data in request body when closed.
-
-		// try {
-		// // close the input stream. Does NOT close underlying
-		// // stream. cf IHTTPTransferCodingHandler.open
-		// stream.close();
-		// } catch (IOException e) {
-		// // can't do anything more
-		// }
-	}
-
-	/**
-	 * Returns the content encoding input stream.
-	 *
-	 * @param in
-	 *            input stream which can be encoded with the given Content-Encoding
-	 * @return an InputStream which allows the decoding (may be the same as given in input), or null if no handler has
-	 *         been found to manage this encoding.
-	 * @throws IOException
-	 *             when I/O Error occurs.
-	 * @throws UnsupportedHTTPEncodingException
-	 *             when no suitable {@link IHTTPEncodingHandler} is found
-	 */
-	private InputStream getContentEncodingStream(InputStream in) throws IOException {
-		HTTPServer server = this.server;
-		// 1) transfer encoding
-		String transferEncoding = getHeaderField(HTTPConstants.FIELD_TRANSFER_ENCODING);
-		IHTTPTransferCodingHandler transferCodingHandler = server.getTransferCodingHandler(transferEncoding);
-		if (transferCodingHandler == null) {
-			// unable to manage transfer encoding
-			throw new UnsupportedHTTPEncodingException(HTTPConstants.FIELD_TRANSFER_ENCODING, transferEncoding);
-		}
-		in = transferCodingHandler.open(this, in);
-
-		// 2) content encoding
-		String contentEncoding = getHeaderField(HTTPConstants.FIELD_CONTENT_ENCODING);
-		if (contentEncoding != null) {
-			IHTTPEncodingHandler handler = server.getEncodingHandler(contentEncoding);
-			if (handler == null) {
-				throw new UnsupportedHTTPEncodingException(HTTPConstants.FIELD_CONTENT_ENCODING, contentEncoding);
-			}
-			in = handler.open(in);
-		}
-
-		return in;
-	}
-
-	/**
-	 * <p>
-	 * Returns all HTTP Header fields of the request.
-	 * </p>
-	 *
-	 * @return a {@link Map} of (String,String) representing the HTTP Header Fields (may be empty).
-	 */
-	public Map<String, String> getHeader() {
-		return (Map<String, String>) this.header.clone();
-	}
-
-	/**
-	 *
-	 * <p>
-	 * Returns the header field value associated to the given header field <code>key</code>.
-	 * </p>
-	 *
-	 * @param key
-	 *            a header field name (if <code>null</code>, <code>null</code> is returned).
-	 * @return the requested header field value, <code>null</code> if the header field is not found.
-	 */
-	public String getHeaderField(String key) {
-		if (key == null) {
-			return null;
-		}
-		return this.header.get(key.toLowerCase());
-	}
-
-	/**
-	 * <p>
 	 * Returns the request method as an integer value which is one of {@link #POST}, {@link #GET}, {@link #PUT} or
 	 * {@link #DELETE}.
-	 * </p>
 	 *
 	 * @return the request method (one of {@link #POST}, {@link #GET}, {@link #PUT} or {@link #DELETE}).
 	 */
@@ -590,20 +163,7 @@ public class HTTPRequest {
 	}
 
 	/**
-	 * <p>
-	 * Returns the query parameters as {@link Map}.
-	 * </p>
-	 *
-	 * @return a {@link Map} of (String,String) representing the HTTP Query Parameters.
-	 */
-	public Map<String, String> getParameters() {
-		return (Map<String, String>) this.parameters.clone();
-	}
-
-	/**
-	 * <p>
 	 * Returns the request URI.
-	 * </p>
 	 *
 	 * @return the request URI string.
 	 */
@@ -612,9 +172,16 @@ public class HTTPRequest {
 	}
 
 	/**
-	 * <p>
+	 * Returns the query parameters as {@link Map}.
+	 *
+	 * @return a {@link Map} of (String,String) representing the HTTP query parameters.
+	 */
+	public Map<String, String> getParameters() {
+		return Collections.unmodifiableMap(this.parameters);
+	}
+
+	/**
 	 * Returns the HTTP version request.
-	 * </p>
 	 *
 	 * @return the HTTP version request string.
 	 */
@@ -623,22 +190,216 @@ public class HTTPRequest {
 	}
 
 	/**
+	 * Returns all HTTP header fields of the request.
+	 *
+	 * @return a {@link Map} of (String,String) representing the HTTP header fields (may be empty).
+	 */
+	public Map<String, String> getHeader() {
+		return Collections.unmodifiableMap(this.header);
+	}
+
+	/**
+	 * Returns the header field value associated to the given header field <code>name</code>.
+	 *
+	 * @param name
+	 *            the header field name.
+	 * @return the requested header field value, <code>null</code> if the header field is not found or <code>name</code>
+	 *         is null.
+	 */
+	public String getHeaderField(String name) {
+		if (name == null) {
+			return null;
+		}
+		return this.header.get(name.toLowerCase());
+	}
+
+	/**
+	 * Returns the cookies of the request.
+	 * <p>
+	 * Cookies are lazily parsed.
+	 *
+	 * @return a {@link Map} of (String,String) representing the HTTP cookies (may be empty)
+	 */
+	public Map<String, String> getCookies() {
+		if (this.cookies == null) {
+			this.cookies = parseCookies(this.header.get(HTTPConstants.FIELD_COOKIES));
+		}
+		return this.cookies;
+	}
+
+	/**
+	 * Return the cookie of the request with given name.
+	 * <p>
+	 * Cookies are lazily parsed.
+	 *
+	 * @param name
+	 *            the name of the cookie.
+	 * @return the cookie, or <code>null</code> if <code>name</code> is <code>null</code>.
+	 */
+	public String getCookie(String name) {
+		if (name == null) {
+			return null;
+		}
+		return getCookies().get(name);
+	}
+
+	/**
+	 * Request the body to be parsed.
+	 *
+	 * @param <T>
+	 *            the type of body.
+	 * @param bodyParser
+	 *            the parser.
+	 * @return the parsed body.
+	 * @throws IOException
+	 *             if an {@link IOException} occurs during parsing.
+	 */
+	public <T> T parseBody(BodyParser<T> bodyParser) throws IOException {
+		return bodyParser.parseBody(this.body, getHeaderField(HTTPConstants.FIELD_CONTENT_TYPE));
+	}
+
+	/**
+	 * Returns the content encoding input stream.
+	 *
+	 * @param in
+	 *            input stream which can be encoded with the given Content-Encoding
+	 * @return an {@link InputStream} which allows the decoding (may be the same as given in input), or
+	 *         <code>null</code> if no handler has been found to manage this encoding.
+	 * @throws IOException
+	 *             when I/O Error occurs.
+	 */
+	private InputStream getContentEncodingStream(InputStream in, HTTPEncodingRegistry encodingRegistry)
+			throws IOException {
+		// 1) transfer encoding
+		String transferEncoding = getHeaderField(HTTPConstants.FIELD_TRANSFER_ENCODING);
+		IHTTPTransferCodingHandler transferCodingHandler = encodingRegistry.getTransferCodingHandler(transferEncoding);
+		if (transferCodingHandler == null) {
+			// unable to manage transfer encoding
+			throw new UnsupportedHTTPEncodingException(HTTPConstants.HTTP_STATUS_NOTIMPLEMENTED,
+					HTTPConstants.FIELD_TRANSFER_ENCODING + RESPONSE_COLON + transferEncoding);
+		}
+		in = transferCodingHandler.open(this, in);
+
+		// 2) content encoding
+		String contentEncoding = getHeaderField(HTTPConstants.FIELD_CONTENT_ENCODING);
+		if (contentEncoding != null) {
+			IHTTPEncodingHandler handler = encodingRegistry.getEncodingHandler(contentEncoding);
+			if (handler == null) {
+				throw new UnsupportedHTTPEncodingException(HTTPConstants.HTTP_STATUS_NOTIMPLEMENTED,
+						HTTPConstants.FIELD_TRANSFER_ENCODING + RESPONSE_COLON + contentEncoding);
+			}
+			in = handler.open(in);
+		}
+
+		return in;
+	}
+
+	/**
+	 * First step is to extract the method. The HTTP server supports only the GET and POST methods. It can be written
+	 * upper case or lower case depending of the client.
+	 *
+	 * @param input
+	 *            the {@link InputStream}.
+	 * @return {@code true} if a method get, post, put or delete is found, {@code false} otherwise.
+	 * @throws IOException
+	 *             if connection has been lost.
+	 */
+	private static int parseMethod(InputStream input) throws IOException {
+		StringBuilder builder = new StringBuilder();
+		int read;
+		while ((read = input.read()) != ' ') {
+			if (read == -1) {
+				throw new IOException(CONNECTION_LOST);
+			}
+			builder.append((char) read);
+		}
+
+		String inputMethod = builder.toString().toUpperCase();
+		switch (inputMethod) {
+		case HTTPConstants.HTTP_METHOD_GET:
+			return GET;
+		case HTTPConstants.HTTP_METHOD_POST:
+			return POST;
+		case HTTPConstants.HTTP_METHOD_PUT:
+			return PUT;
+		case HTTPConstants.HTTP_METHOD_DELETE:
+			return DELETE;
+		default:
+			throw new IllegalArgumentException(MALFORMED_HTTP_REQUEST);
+		}
+	}
+
+	/**
+	 * Extract the URI and store it in the URI field.
+	 *
+	 * @param input
+	 *            the {@link InputStream}.
+	 * @return {@code true} if succeed, {@code false} otherwise
+	 * @throws IOException
+	 *             if connection has been lost.
+	 */
+	private static String parseURI(InputStream input, Map<String, String> parameters) throws IOException {
+		StringBuilder sb = new StringBuilder(Math.min(INITIAL_URI_CAPACITY, input.available()));
+		// main loop
+		loop: while (true) {
+			// the stream should now be something like
+			// "/resources/index.html?foo=bar " or "/resources/index "
+			int i = input.read();
+			if (i == -1) {
+				throw new IOException(CONNECTION_LOST);
+			}
+
+			switch (i) {
+			case QUESTION_MARK_CHAR:
+				// parse parameters
+				ParameterParser.parseParameters(input, parameters);
+				break loop;
+			case SPACE_CHAR:
+				break loop;
+			case PERCENTAGE_CHAR:
+				// percent encoded character decoding
+				i = URLDecoder.decode(input, sb);
+				break;
+
+			}
+			sb.append((char) i); // assuming ASCII
+
+		}
+
+		return sb.toString();
+	}
+
+	private static String parseVersion(InputStream input) throws IOException {
+		byte[] version = new byte[VERSION_SIZE]; // HTTPx.y\r\n
+		int readBytes = 0;
+		while (readBytes < VERSION_SIZE) {
+			int r = input.read(version, readBytes, VERSION_SIZE - readBytes);
+			if (r == -1) {
+				// EOF
+				throw new IOException(CONNECTION_LOST);
+			}
+			readBytes += r;
+		}
+		return new String(version, 0, VERSION_SIZE - 2);
+	}
+
+	/**
 	 * Parse HTTP header fields from the HTTP request.
 	 *
 	 * @param input
 	 *            {@link InputStream} that contains the HTTP request
-	 * @return true, if the parsing was successful, if false the parsing was unsuccessful.
+	 * @return
 	 * @throws IOException
 	 *             if connection has been lost
 	 */
-	private boolean parseHeaderFields(InputStream input) throws IOException {
+	private static Map<String, String> parseHeaderFields(InputStream input) throws IOException {
 		// headers is a hashmap
 		// the stream look like "foo:bar zor:zorvalue "
-		HashMap<String, String> header = new HashMap<>(10); // most HTTP requests have less
+		HashMap<String, String> header = new HashMap<>(INITIAL_MAP_CAPACITY); // most HTTP requests have less
 		// than 10 header fields
 
-		StringBuilder sbKey = new StringBuilder(16);
-		StringBuilder sbValue = new StringBuilder(16);
+		StringBuilder sbKey = new StringBuilder(INITIAL_STRING_BUILDER_CAPACITY);
+		StringBuilder sbValue = new StringBuilder(INITIAL_STRING_BUILDER_CAPACITY);
 		StringBuilder curBuffer = sbKey;
 		boolean pendingSpace = false;
 		// read char before entering the loop. This allows to loop without
@@ -646,14 +407,14 @@ public class HTTPRequest {
 		int i = input.read();
 		loop: while (true) {
 			if (i == -1) {
-				return false;
+				throw new IOException(CONNECTION_LOST);
 			}
 
 			switch (i) {
 			case PERCENTAGE_CHAR:
 				if (curBuffer == sbKey) {
 					// no percent encoding allowed in HTTP header field name
-					return false;
+					throw new IllegalArgumentException(MALFORMED_HTTP_REQUEST);
 				}
 				/*
 				 * RFC5987 is not implemented
@@ -682,7 +443,7 @@ public class HTTPRequest {
 			case CARRIAGE_RETURN_CHAR:
 				i = input.read();
 				if (i != NEWLINE_CHAR) {
-					return false;
+					throw new IllegalArgumentException(MALFORMED_HTTP_REQUEST);
 				}
 
 				// end of header
@@ -694,7 +455,7 @@ public class HTTPRequest {
 				// if next char is a white space, the header is not finished
 				i = input.read();
 				if (i == -1) {
-					return false;
+					throw new IOException(CONNECTION_LOST);
 				}
 
 				if ((i == SPACE_CHAR) || (i == TABULATION_CHAR)) {
@@ -732,190 +493,27 @@ public class HTTPRequest {
 			i = input.read();
 		}
 
-		this.header = header;
-		return true;
+		return header;
 	}
 
-	/**
-	 * First step is to extract the method. The HTTP server supports only the GET and POST method. It can be written
-	 * upper case or lower case depending of the client.
-	 *
-	 * @param input
-	 *            the {@link InputStream}
-	 * @return true if a method get, post, put or delete is found false otherwise
-	 * @throws IOException
-	 *             if connection has been lost
-	 */
-	private boolean parseMethod(InputStream input) throws IOException {
-		StringBuilder builder = new StringBuilder();
-		int read = input.read();
-		while (read != -1 && read != ' ') {
-			builder.append((char) read);
-			read = input.read();
+	private static Map<String, String> parseCookies(String cookiesHeader) {
+		Map<String, String> cookies = new HashMap<>();
+
+		if (cookiesHeader == null) {
+			return cookies;
 		}
 
-		String inputMethod = builder.toString().toUpperCase();
-		switch (inputMethod) {
-		case HTTPConstants.HTTP_METHOD_GET:
-			this.method = GET;
-			return true;
-		case HTTPConstants.HTTP_METHOD_POST:
-			this.method = POST;
-			return true;
-		case HTTPConstants.HTTP_METHOD_PUT:
-			this.method = PUT;
-			return true;
-		case HTTPConstants.HTTP_METHOD_DELETE:
-			this.method = DELETE;
-			return true;
-		default:
-			return false;
-		}
-	}
+		int prev = 0;
+		int next;
 
-	/**
-	 * Parses the request body given in <code>stream</code>.
-	 *
-	 * @param stream
-	 *            the {@link InputStream}
-	 * @return true if the parsing is successful
-	 * @throws IOException
-	 *             when connection is lost
-	 */
-	protected boolean parseRequestBody(InputStream stream) throws IOException {
-		return parserParameters(this.parameters, stream);
-	}
-
-	/**
-	 * Called by HTTPSession. Parse HTTP header. Fulfill the field header with the informations contained by the input
-	 * stream.
-	 *
-	 * @param input
-	 *            the {@link InputStream}
-	 * @return <code>false</code> if request is invalid, <code>true</code> otherwise
-	 * @throws IOException
-	 *             if connection has been lost
-	 */
-	protected boolean parseRequestHeader(InputStream input) throws IOException {
-		if (!parseMethod(input)) {
-			return false;
-		}
-		if (!parseURI(input)) {
-			return false;
+		while (prev != -1 && (next = cookiesHeader.indexOf('=', prev)) != -1) {
+			String name = cookiesHeader.substring(prev, next);
+			String value = cookiesHeader.substring(next + 1);
+			cookies.put(name, value);
+			prev = cookiesHeader.indexOf(';', next);
 		}
 
-		// extract header
-		if (!parseHeaderFields(input)) {
-			return false;
-		}
-		return true;
+		return cookies;
 	}
 
-	/**
-	 * Extract the URI and store it in the URI field.
-	 *
-	 * @param input
-	 *            the {@link InputStream}
-	 * @return <code>true</code> if succeed, <code>false</code> otherwise
-	 * @throws IOException
-	 *             if connection has been lost
-	 */
-	private boolean parseURI(InputStream input) throws IOException {
-		StringBuilder sb = new StringBuilder(Math.min(64, input.available()));
-		// main loop
-		loop: while (true) {
-			// the stream should now be something like
-			// "/resources/index.html?foo=bar " or "/resources/index "
-			int i = input.read();
-			if (i == -1) {
-				return false;
-			}
-
-			switch (i) {
-			case QUESTION_MARK_CHAR:
-				// parse parameters
-				if (!parserParameters(this.parameters, input)) {
-					// no parameters found after the '?', error
-					return false;
-				}
-			case SPACE_CHAR:
-				break loop; // if QUESTION_MARK_CHAR or SPACE_CHAR break loop
-			case PERCENTAGE_CHAR:
-				// percent encoded character decoding
-				i = decodePercentage(input);
-				if (i == -1) {
-					// encoding error
-					return false;
-				}
-
-				// in case i should be represented as a unicode surrogate pair
-				i = handleSurrogatePair(i, sb);
-				break;
-
-			}
-			sb.append((char) i); // assuming ASCII
-
-		}
-
-		this.uri = sb.toString();
-
-		// get the version of HTTP
-		byte[] version = new byte[10]; // HTTPx.y\r\n
-		int readBytes = 0;
-		while (readBytes < 10) {
-			int r = input.read(version, readBytes, 10 - readBytes);
-			if (r == -1) {
-				// EOF
-				return false;
-			}
-			readBytes += r;
-		}
-
-		// fixed: the version string contained the \r\n, this version removes
-		// the \r\n.
-		String tmp = new String(version);
-		this.version = tmp.substring(0, tmp.length() - 2);
-		return true;
-	}
-
-	/**
-	 * Gets the stream.
-	 *
-	 * @return the stream.
-	 */
-	public InputStream getStream() {
-		return this.stream;
-	}
-
-	/**
-	 * Gets the bodyParser.
-	 *
-	 * @return the bodyParser.
-	 */
-	public BodyParser getBodyParser() {
-		return this.bodyParser;
-	}
-
-	/**
-	 * Sets the bodyParser.
-	 *
-	 * @param bodyParser
-	 *            the bodyParser to set.
-	 */
-	public void setBodyParser(BodyParser bodyParser) {
-		this.bodyParser = bodyParser;
-	}
-
-	/**
-	 * Request the body to be parsed.
-	 * 
-	 * @throws IOException
-	 *             if an {@link IOException} occurs durring parsing.
-	 */
-	public void parseBody() throws IOException {
-		BodyParser bodyParser = this.bodyParser;
-		if (bodyParser != null) {
-			bodyParser.parseBody(this);
-		}
-	}
 }

@@ -13,7 +13,7 @@ import ej.util.message.basic.BasicMessageBuilder;
 import ej.util.message.basic.BasicMessageLogger;
 
 /**
- * Gather the messages.
+ * Gathers the messages.
  */
 public final class Messages {
 	// ****************//
@@ -29,6 +29,16 @@ public final class Messages {
 	 * Multiple start is forbidden.
 	 */
 	public static final int MULTIPLE_START_FORBIDDEN = -2;
+
+	/**
+	 * URI is empty.
+	 */
+	public static final int EMPTY_URI = -3;
+
+	/**
+	 * Requested URI contains "..".
+	 */
+	public static final int DIRECTORY_TRAVERSAL_URI = -4;
 
 	/**
 	 * Unknown error.
@@ -60,9 +70,9 @@ public final class Messages {
 	public static final int PROCESS_CONNECTION = 4;
 
 	/**
-	 * An HTTP error occured.
+	 * A response has been sent.
 	 */
-	public static final int HTTP_ERROR = 5;
+	public static final int HTTP_RESPONSE = 5;
 
 	/**
 	 * The connection is lost.
@@ -75,9 +85,9 @@ public final class Messages {
 	public static final int CONNECTION_CLOSED = 7;
 
 	/**
-	 * Category message.
+	 * Hoka category message.
 	 */
-	public static final String CATEGORY = "Hoka"; //$NON-NLS-1$
+	public static final String CATEGORY_HOKA = "Hoka"; //$NON-NLS-1$
 
 	/**
 	 * The message builder.

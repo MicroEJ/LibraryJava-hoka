@@ -11,9 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * <p>
  * Utilities for handling the MIME-Type header field.
- * </p>
  */
 public class MIMEUtils {
 
@@ -28,73 +26,51 @@ public class MIMEUtils {
 	private static final String APPLICATION = "application/"; //$NON-NLS-1$
 
 	/**
-	 * <p>
 	 * Standard text MIME type.
-	 * </p>
 	 */
 	public static final String MIME_PLAINTEXT = TEXT + "plain"; //$NON-NLS-1$
 
 	/**
-	 * <p>
 	 * HTML code MIME type.
-	 * </p>
 	 */
 	public static final String MIME_HTML = TEXT + HTML;
 
 	// MIME types.
 
 	/**
-	 * <p>
 	 * XML code MIME type.
-	 * </p>
 	 */
 	public static final String MIME_XML = TEXT + XML;
 	/**
-	 * <p>
 	 * Binary code MIME type.
-	 * </p>
 	 */
 	public static final String MIME_DEFAULT_BINARY = APPLICATION + "octet-stream"; //$NON-NLS-1$
 	/**
-	 * <p>
 	 * CSS code MIME type.
-	 * </p>
 	 */
 	public static final String MIME_CSS = TEXT + CSS;
 	/**
-	 * <p>
 	 * PNG files MIME type.
-	 * </p>
 	 */
 	public static final String MIME_PNG = IMAGE + PNG;
 	/**
-	 * <p>
 	 * JPEG files MIME type.
-	 * </p>
 	 */
 	public static final String MIME_JPEG = IMAGE + JPEG;
 	/**
-	 * <p>
 	 * GIF files MIME type.
-	 * </p>
 	 */
 	public static final String MIME_GIF = IMAGE + GIF;
 	/**
-	 * <p>
 	 * JavaScript code MIME type.
-	 * </p>
 	 */
 	public static final String MIME_JS = APPLICATION + "x-javascript"; //$NON-NLS-1$
 	/**
-	 * <p>
 	 * Form Encoded Data MIME type.
-	 * </p>
 	 */
 	public static final String MIME_FORM_ENCODED_DATA = APPLICATION + "x-www-form-urlencoded"; //$NON-NLS-1$
 	/**
-	 * <p>
 	 * Multipart Form Encoded Data MIME type.
-	 * </p>
 	 */
 	public static final String MIME_MULTIPART_FORM_ENCODED_DATA = "multipart/form-data"; //$NON-NLS-1$
 	/**
@@ -123,9 +99,7 @@ public class MIMEUtils {
 	}
 
 	/**
-	 * <p>
 	 * Returns the MIME type from the name of the URI (file extension).
-	 * </p>
 	 *
 	 * @param uri
 	 *            the URI {@link String} to determine the MIME type (mapping between file extension and MIME type)
@@ -141,17 +115,15 @@ public class MIMEUtils {
 	}
 
 	/**
-	 * <p>
 	 * Define a mapping between a file extension and a MIME-Type.<br>
 	 * The mapping is defined only if the given file extension isn't already mapped to a MIME-Type. A
 	 * {@link NullPointerException} is thrown if one of the arguments is <code>null</code>
-	 * </p>
 	 *
 	 * @param fileExtension
 	 *            the file extension to be mapped to the <code>mimeType</code>
 	 * @param mimeType
 	 *            the MIME-Type to be associated with the given file extension.
-	 * @return <code>true</code> if the mapping is successful, <code>false</code> otherwise (file extension already
+	 * @return {@code true} if the mapping is successful, {@code false} otherwise (file extension already
 	 *         mapped to a MIME-Type)
 	 */
 	public static boolean mapFileExtensionToMIMEType(String fileExtension, String mimeType) {

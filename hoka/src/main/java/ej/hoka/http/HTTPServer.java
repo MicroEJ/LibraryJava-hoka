@@ -7,26 +7,31 @@
  */
 package ej.hoka.http;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.net.ServerSocket;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
+import java.util.HashMap;
 
 import javax.net.ServerSocketFactory;
 
-import ej.hoka.http.body.BodyParserFactory;
+import ej.hoka.http.encoding.HTTPEncodingRegistry;
+import ej.hoka.http.encoding.IHTTPEncodingHandler;
+import ej.hoka.http.encoding.UnsupportedHTTPEncodingException;
+import ej.hoka.http.requesthandler.RequestHandler;
+import ej.hoka.http.requesthandler.RequestHandlerComposite;
+import ej.hoka.http.requesthandler.ResourceRequestHandler;
 import ej.hoka.log.Messages;
 import ej.hoka.tcp.TCPServer;
 import ej.util.message.Level;
 
 /**
- * <p>
  * HTTP Server.
- * </p>
- *
  * <p>
  * <b>Features + limitations: </b>
  * <ul>
- *
  * <li>CLDC 1.1</li>
  * <li>No fixed configuration files, logging, authorization, encryption.</li>
  * <li>Supports parameter parsing of GET and POST methods</li>
@@ -35,525 +40,424 @@ import ej.util.message.Level;
  * <li>Doesn't limit bandwidth, request time or simultaneous connections</li>
  * <li>Contains a built-in list of most common MIME types</li>
  * <li>All header names are converted to lower case</li>
- *
  * </ul>
  * <p>
- * Override {@link HTTPSession#answer(HTTPRequest)} and redefine the server behavior for your own application
- *
- * </p>
- *
+ * Define a {@link RequestHandler} to expose the different services of your application.
  * <p>
  * <b>Example:</b>
- * </p>
  *
  * <pre>
- * // get a new server which handle a Default HTTP Session
- * HTTPServer server = new HTTPServer(serverSocket, new DefaultHTTPSession.Factory(), 10, 1);
+ * // get a new server which uses a ResourceRequestHandler
+ * HTTPServer server = new HTTPServer(serverSocket, 10, 1);
  *
  * // start the server
  * server.start();
  * </pre>
+ * <p>
+ * To parse the request and write the response, a buffer size of 2048 by default is used. To change this value, set the
+ * property "hoka.buffer.size".
+ *
+ * @see RequestHandlerComposite
+ * @see ResourceRequestHandler
  */
-public class HTTPServer extends TCPServer {
-	/*
-	 * Implementation notes (some informations may be extracted in documentation or example) <p><b>Features +
-	 * limitations: </b><ul>
-	 *
-	 * <li> CLDC 1.1 </li> <li> No fixed configuration files, logging, authorization, encryption etc. (Implement
-	 * yourself if you need them.) </li> <li> Supports parameter parsing of GET and POST methods </li> <li> Supports
-	 * both dynamic content and file serving </li> <li> Never caches anything </li> <li> Doesn't limit bandwidth,
-	 * request time or simultaneous connections </li> <li> Contains a built-in list of most common MIME types </li> <li>
-	 * All header names are converted in lower case so they don't vary between browsers/clients </li>
-	 *
-	 * </ul>
-	 *
-	 * <p><b>Ways to use: </b><ul>
-	 *
-	 * <li> Instantiate the {@link HTTPServer} with wanted end point address and port </li> <li> Override {@link
-	 * HTTPSession#answer(String, String, java.util.Hashtable, java.util.Hashtable) HTTPSession.answer()} and redefine
-	 * the server behavior for your own application </li>
-	 *
-	 * </ul>
-	 */
-
-	// FIXME for memory usage only
-	// public Runtime r;
+public class HTTPServer {
 
 	/**
-	 * By default, server is configured to keep connection open during one minute if possible (implying that the browser
-	 * is able to manage persistent connections).
+	 * This size is used for the request and answer buffer size (two buffers will be created).
 	 */
-	private static final long DEFAULT_KEEP_ALIVE_DURATION = 60000; // 60s in
+	private static final int BUFFER_SIZE = 2048;
 
 	/**
-	 * Non growable circular queue of opened connections.
+	 * Property to set a custom buffer size.
 	 */
-	private Socket[] streamConnections;
+	private static final String BUFFER_SIZE_PROPERTY = "hoka.buffer.size"; //$NON-NLS-1$
 
 	/**
-	 * Pointer to the last added item.
+	 * The default root directory.
 	 */
-	private int lastAddedPtr; // initialized to 0
+	private static final String HOKA_ROOT_DIRECTORY = "/hoka/"; //$NON-NLS-1$
 
 	/**
-	 * Pointer for the last read item.
+	 * The HTML line break tag.
 	 */
-	private int lastReadPtr; // initialized to 0
+	private static final String HTML_BR = "<br/>"; //$NON-NLS-1$
+
+	private static final String EXCEPTION_PREFIX = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;at "; //$NON-NLS-1$
+
+	private static final HTTPResponse RESPONSE_INTERNAL_ERROR = HTTPResponse
+			.createResponseFromStatus(HTTPConstants.HTTP_STATUS_INTERNALERROR);
+
+	private static final HTTPResponse RESPONSE_REQUEST_TIMEOUT = HTTPResponse
+			.createResponseFromStatus(HTTPConstants.HTTP_STATUS_REQUESTTIMEOUT);
+
+	private static final HTTPResponse RESPONSE_NOT_ACCEPTABLE = HTTPResponse
+			.createResponseFromStatus(HTTPConstants.HTTP_STATUS_NOTACCEPTABLE);
 
 	/**
-	 * Maximum number of opened connections.
+	 * The underlying TCP server.
 	 */
-	private final int maxOpenedConnections;
+	private final TCPServer server;
 
 	/**
 	 * Number of jobs per sessions.
 	 */
 	private final int sessionJobsCount;
 
-	/**
-	 * The keep-alive duration in ms (not used).
-	 */
-	protected final long keepAliveDuration;
+	private final RequestHandlerComposite rootRequestHandler;
+
+	private final HTTPEncodingRegistry encodingRegistry;
 
 	/**
-	 * Array of {@link Thread}s for the session jobs.
+	 * Array of {@link Thread} for the session jobs.
 	 */
 	private Thread[] jobs;
 
-	/**
-	 * Array of {@link IHTTPEncodingHandler}s.
-	 */
-	private IHTTPEncodingHandler[] encodingHandlers;
+	private boolean sendStackTraceOnException;
 
 	/**
-	 * Array of {@link IHTTPTransferCodingHandler}s.
-	 */
-	private IHTTPTransferCodingHandler[] transferCodingHandlers;
-
-	/**
-	 * The HTTP session factory.
-	 */
-	private final HTTPSession.Factory httpSessionFactory;
-
-	/**
-	 * The body parser factory.
-	 */
-	private BodyParserFactory bodyParserFactory;
-
-	/**
+	 * Constructs the underlying {@link TCPServer} and the HTTP server that manage jobs to handle the connections from
+	 * the {@link TCPServer}.
 	 * <p>
-	 * Creates a {@link HTTPServer} on the given port with the {@link DefaultHTTPSession}.
-	 * </p>
-	 * <p>
-	 * The default encoding to be used is the identity encoding. Further encodings may be registered using
-	 * {@link #registerEncodingHandler(IHTTPEncodingHandler)}.
-	 * </p>
-	 * <p>
-	 * Server is not started until {@link #start()} is called.
-	 * </p>
+	 * Requests are handled by a {@link ResourceRequestHandler} targeting the <code>/hoka/</code> resource folder.
 	 *
 	 * @param port
-	 *            the port.
+	 *            the port to use.
 	 * @param maxSimultaneousConnection
-	 *            the maximal number of simultaneously opened connections.
-	 * @param jobCountBySession
-	 *            the number of parallel jobs to process by opened sessions. if <code>jobCountBySession</code> == 1, the
-	 *            jobs are processed sequentially.
-	 * @throws IOException
-	 *             if server cannot be bind to given port.
+	 *            the maximum number of simultaneously opened connections.
+	 * @param jobCount
+	 *            the number of jobs to run.
 	 */
-	public HTTPServer(int port, int maxSimultaneousConnection, int jobCountBySession) throws IOException {
-		this(port, maxSimultaneousConnection, jobCountBySession, new DefaultHTTPSession.Factory());
+	public HTTPServer(int port, int maxSimultaneousConnection, int jobCount) {
+		this(port, maxSimultaneousConnection, jobCount, new ResourceRequestHandler(HOKA_ROOT_DIRECTORY));
 	}
 
 	/**
-	 * <p>
-	 * Creates a {@link HTTPServer} on the given port.
-	 * </p>
-	 * <p>
-	 * The default encoding to be used is the identity encoding. Further encodings may be registered using
-	 * {@link #registerEncodingHandler(IHTTPEncodingHandler)}.
-	 * </p>
-	 * <p>
-	 * Server is not started until {@link #start()} is called.
-	 * </p>
+	 * Constructs the underlying {@link TCPServer} and the HTTP server that manage jobs to handle the connections from
+	 * the {@link TCPServer} with <code>requestHandler</code>.
 	 *
 	 * @param port
-	 *            the port.
-	 * @param httpSessionFactory
-	 *            the HTTP session factory.
+	 *            the port to use.
 	 * @param maxSimultaneousConnection
-	 *            the maximal number of simultaneously opened connections.
-	 * @param jobCountBySession
-	 *            the number of parallel jobs to process by opened sessions. if <code>jobCountBySession</code> == 1, the
-	 *            jobs are processed sequentially.
-	 * @throws IOException
-	 *             if server cannot be bind to given port.
+	 *            the maximum number of simultaneously opened connections.
+	 * @param jobCount
+	 *            the number of jobs to run.
+	 * @param requestHandler
+	 *            the application request handler.
 	 */
-	public HTTPServer(int port, int maxSimultaneousConnection, int jobCountBySession,
-			HTTPSession.Factory httpSessionFactory) throws IOException {
-		this(port, maxSimultaneousConnection, jobCountBySession, httpSessionFactory, ServerSocketFactory.getDefault());
+	public HTTPServer(int port, int maxSimultaneousConnection, int jobCount, RequestHandler requestHandler) {
+		this(new TCPServer(port, maxSimultaneousConnection), jobCount, requestHandler);
 	}
 
 	/**
-	 * <p>
-	 * Creates a {@link HTTPServer} using the given {@link ServerSocket} .
-	 * </p>
-	 * <p>
-	 * The default encoding to be used is the identity encoding. Further encodings may be registered using
-	 * {@link #registerEncodingHandler(IHTTPEncodingHandler)}.
-	 * </p>
-	 * <p>
-	 * Server is not started until {@link #start()} is called.
-	 * </p>
+	 * Constructs the underlying {@link TCPServer} and the HTTP server that manage jobs to handle the connections from
+	 * the {@link TCPServer} with <code>requestHandler</code>.
 	 *
 	 * @param port
-	 *            the port.
+	 *            the port to use.
 	 * @param maxSimultaneousConnection
-	 *            the maximal number of simultaneously opened connections.
-	 * @param jobCountBySession
-	 *            the number of parallel jobs to process by opened sessions. if <code>jobCountBySession</code> == 1, the
-	 *            jobs are processed sequentially.
-	 * @param httpSessionFactory
-	 *            the HTTP session factory.
+	 *            the maximum number of simultaneously opened connections.
+	 * @param jobCount
+	 *            the number of jobs to run.
+	 * @param requestHandler
+	 *            the application request handler.
 	 * @param serverSocketFactory
-	 *            the serverSocketFactory to use.
-	 * @throws IOException
-	 *             if server cannot be bind to given port.
+	 *            the {@link ServerSocketFactory}.
 	 */
-	public HTTPServer(int port, int maxSimultaneousConnection, int jobCountBySession,
-			HTTPSession.Factory httpSessionFactory, ServerSocketFactory serverSocketFactory) throws IOException {
-		this(port, maxSimultaneousConnection, jobCountBySession, httpSessionFactory, serverSocketFactory,
-				DEFAULT_KEEP_ALIVE_DURATION);
+	public HTTPServer(int port, int maxSimultaneousConnection, int jobCount, RequestHandler requestHandler,
+			ServerSocketFactory serverSocketFactory) {
+		this(new TCPServer(port, maxSimultaneousConnection, serverSocketFactory), jobCount, requestHandler);
 	}
 
 	/**
-	 * Constructs a new instance of {@link HTTPServer}.<br>
-	 * The encoding handler will be {@link IdentityEncodingHandler}. The transfer coding handler will be
-	 * {@link IdentityTransferCodingHandler}
+	 * Constructs the underlying {@link TCPServer} and the HTTP server that manage jobs to handle the connections from
+	 * the {@link TCPServer} with <code>requestHandler</code>.
 	 *
 	 * @param port
-	 *            the port.
+	 *            the port to use.
 	 * @param maxSimultaneousConnection
-	 *            the maximal number of simultaneously opened connections.
-	 * @param jobCountBySession
-	 *            the number of parallel jobs to process by opened sessions. if <code>jobCountBySession</code> == 1, the
-	 *            jobs are processed sequentially.
-	 * @param httpSessionFactory
-	 *            the HTTP session factory.
+	 *            the maximum number of simultaneously opened connections.
+	 * @param jobCount
+	 *            the number of jobs to run.
+	 * @param requestHandler
+	 *            the application request handler.
 	 * @param serverSocketFactory
-	 *            the serverSocketFactory to use.
+	 *            the {@link ServerSocketFactory}.
 	 * @param keepAliveDuration
-	 *            the keep alive duration (not used)
-	 * @throws IOException
-	 *             if server cannot be bind to given port.
-	 * @throws IllegalArgumentException
-	 *             when any of the following is true:
-	 *             <ul>
-	 *             <li><code>maxSimultaneousConnection</code><= 0
-	 *             <li><code>jobCountBySession</code><= 0
-	 *             <li><code>jobCountBySession</code><=0
-	 *             <li><code>keepAliveDuration</code><=0
-	 *             </ul>
+	 *            the timeout duration for idling persistent connections.
 	 */
-	private HTTPServer(int port, int maxSimultaneousConnection, int jobCountBySession,
-			HTTPSession.Factory httpSessionFactory, ServerSocketFactory serverSocketFactory, long keepAliveDuration)
-			throws IOException {
-		super(serverSocketFactory.createServerSocket(port));
+	public HTTPServer(int port, int maxSimultaneousConnection, int jobCount, RequestHandler requestHandler,
+			ServerSocketFactory serverSocketFactory, int keepAliveDuration) {
+		this(new TCPServer(port, maxSimultaneousConnection, serverSocketFactory, keepAliveDuration), jobCount,
+				requestHandler);
+	}
 
-		if ((maxSimultaneousConnection <= 0) || (jobCountBySession <= 0) || (keepAliveDuration <= 0)) {
+	/**
+	 * Constructs a HTTP server that manage jobs to handle the connections from <code>tcpServer</code> with
+	 * <code>requestHandler</code>.
+	 *
+	 * @param tcpServer
+	 *            the underlying TCP server that stores upcoming connections.
+	 * @param jobCount
+	 *            the number of jobs to run.
+	 * @param requestHandler
+	 *            the application request handler.
+	 */
+	public HTTPServer(TCPServer tcpServer, int jobCount, RequestHandler requestHandler) {
+		this(tcpServer, jobCount, requestHandler, new HTTPEncodingRegistry());
+	}
+
+	/**
+	 * Constructs a HTTP server that manage jobs to handle the connections from <code>tcpServer</code> with
+	 * <code>requestHandler</code>.
+	 *
+	 * @param tcpServer
+	 *            the underlying TCP server that stores upcoming connections.
+	 * @param jobCount
+	 *            the number of jobs to run.
+	 * @param requestHandler
+	 *            the application request handler.
+	 * @param encodingRegistry
+	 *            the registry of available encoding handlers.
+	 */
+	public HTTPServer(TCPServer tcpServer, int jobCount, final RequestHandler requestHandler,
+			HTTPEncodingRegistry encodingRegistry) {
+		this.server = tcpServer;
+
+		if (jobCount <= 0) {
 			throw new IllegalArgumentException();
 		}
+		this.sessionJobsCount = jobCount;
 
-		// FIXME for memory usage only
-		// r = Runtime.getRuntime();
+		this.rootRequestHandler = new RequestHandlerComposite();
+		// First, check if the resource matches the client cache
+		this.rootRequestHandler.addRequestHandler(IfNoneMatchRequestHandler.instance);
+		// Then, apply the application request handler
+		this.rootRequestHandler.addRequestHandler(requestHandler);
+		// In case the application request handler doesn't process the request, send a "404 Not Found" error
+		this.rootRequestHandler.addRequestHandler(NotFoundRequestHandler.instance);
 
-		this.httpSessionFactory = httpSessionFactory;
-		this.maxOpenedConnections = maxSimultaneousConnection;
-		this.sessionJobsCount = jobCountBySession;
-		this.keepAliveDuration = keepAliveDuration; // TODO handling persistent
-		// connection
+		this.encodingRegistry = encodingRegistry;
 
-		// connect well known encoding handlers
-		this.encodingHandlers = new IHTTPEncodingHandler[] { IdentityEncodingHandler.getInstance() };
-
-		this.transferCodingHandlers = new IHTTPTransferCodingHandler[] { IdentityTransferCodingHandler.getInstance(),
-				ChunkedTransferCodingHandler.getInstance() };
+		this.sendStackTraceOnException = false;
 	}
 
 	/**
-	 * Add a connection to the list of current connections.
-	 *
-	 * @param connection
-	 *            {@link Socket} to add
-	 */
-	@Override
-	protected void addConnection(Socket connection) {
-		// FIXME for memory usage only
-		// r.gc();
-		// System.out.println((new Date()).getTime()+", "+(r.totalMemory() -
-		// r.freeMemory())+", start of addConnection");
-
-		synchronized (this.streamConnections) {
-			int nextPtr = this.lastAddedPtr + 1;
-			if (nextPtr == this.streamConnections.length) {
-				nextPtr = 0;
-			}
-
-			if (nextPtr == this.lastReadPtr) {
-				tooManyOpenConnections(connection);
-				return;
-			}
-
-			this.streamConnections[this.lastAddedPtr = nextPtr] = connection;
-			this.streamConnections.notify();
-		}
-		Messages.LOGGER.log(Level.INFO, Messages.CATEGORY, Messages.NEW_CONNECTION);
-		// FIXME for memory usage only
-		// r.gc();
-		// System.out.println((new Date()).getTime()+", "+(r.totalMemory() -
-		// r.freeMemory())+", end of addConnection");
-	}
-
-	/**
-	 * Return the {@link IHTTPEncodingHandler} corresponding to chunked transfer coding.
-	 *
-	 * @return Return the {@link IHTTPEncodingHandler} corresponding to chunked transfer coding
-	 */
-	protected IHTTPTransferCodingHandler getChunkedTransferCodingHandler() {
-		return ChunkedTransferCodingHandler.getInstance();
-	}
-
-	/**
-	 * Return the {@link IHTTPEncodingHandler} corresponding to the given encoding.
-	 *
-	 * @param encoding
-	 *            case insensitive (See RFC2616, 3.5)
-	 * @return null if no handler has been registered to match this encoding
-	 */
-	protected IHTTPEncodingHandler getEncodingHandler(String encoding) {
-		if (encoding == null) {
-			return IdentityEncodingHandler.getInstance();
-		}
-		IHTTPEncodingHandler[] encodingHandlers = this.encodingHandlers;
-		for (int i = encodingHandlers.length; --i >= 0;) {
-			IHTTPEncodingHandler handler = encodingHandlers[i];
-			if (encoding.equalsIgnoreCase(handler.getId())) {
-				return handler;
-			}
-		}
-		return null;
-	}
-
-	/**
-	 * Return the {@link IHTTPEncodingHandler} corresponding to identity transfer coding (i.e. no transfer coding)
-	 *
-	 * @return Return the {@link IHTTPEncodingHandler} corresponding to identity transfer coding (i.e. no transfer
-	 *         coding)
-	 */
-	protected IHTTPTransferCodingHandler getIdentityTransferCodingHandler() {
-		return IdentityTransferCodingHandler.getInstance();
-	}
-
-	// milliseconds
-	// TODO
-	// handling
-	// persistent
-	// connection
-
-	/**
-	 * Called by HTTPSession. Get a next {@link Socket} to process. Block until a new connection is available or server
-	 * is stopped.
-	 *
-	 * @return null if server is stopped
-	 */
-	protected Socket getNextStreamConnection() {
-		synchronized (this.streamConnections) {
-			while (this.lastAddedPtr == this.lastReadPtr) {
-				if (isStopped()) {
-					return null;
-				}
-				try {
-					this.streamConnections.wait();
-				} catch (InterruptedException e) {
-					// nothing to do on interrupted exception
-				}
-			}
-
-			int nextPtr = this.lastReadPtr + 1;
-			if (nextPtr == this.streamConnections.length) {
-				nextPtr = 0;
-			}
-			Socket connection = this.streamConnections[this.lastReadPtr = nextPtr];
-			// allow GC
-			this.streamConnections[nextPtr] = null;
-			return connection;
-		}
-	}
-
-	/**
-	 * Return the {@link IHTTPEncodingHandler} corresponding to the given encoding.
-	 *
-	 * @param encoding
-	 *            case insensitive (See RFC2616, 3.5)
-	 * @return null if no handler has been registered to match this encoding
-	 */
-	protected IHTTPTransferCodingHandler getTransferCodingHandler(String encoding) {
-		if (encoding == null) {
-			return IdentityTransferCodingHandler.getInstance();
-		}
-		IHTTPTransferCodingHandler[] transferCodingHandlers = this.transferCodingHandlers;
-		for (int i = transferCodingHandlers.length; --i >= 0;) {
-			IHTTPTransferCodingHandler handler = transferCodingHandlers[i];
-			if (encoding.equalsIgnoreCase(handler.getId())) {
-				return handler;
-			}
-		}
-		return null;
-	}
-
-	/**
+	 * Start the {@link HTTPServer} (in a dedicated thread): start listening for connections and start jobs to process
+	 * opened connections.
 	 * <p>
-	 * Registers a new HTTP content encoding handler.
-	 * </p>
-	 * <p>
-	 * Should be called before {@link #start()}, otherwise a {@link RuntimeException} is thrown.
-	 * </p>
-	 *
-	 * @param handler
-	 *            the {@link IHTTPEncodingHandler} to register
-	 */
-	public void registerEncodingHandler(IHTTPEncodingHandler handler) {
-		if (!isStopped()) {
-			throw new IllegalStateException();
-		}
-		if (this.encodingHandlers == null) {
-			this.encodingHandlers = new IHTTPEncodingHandler[] { handler };
-		} else {
-			int length = this.encodingHandlers.length;
-			System.arraycopy(this.encodingHandlers, 0, this.encodingHandlers = new IHTTPEncodingHandler[length + 1], 0,
-					length);
-			this.encodingHandlers[length] = handler;
-		}
-	}
-
-	/**
-	 * <p>
-	 * Registers a new HTTP transfer coding handler.
-	 * </p>
-	 * <p>
-	 * Should be called before {@link #start()}, otherwise a {@link RuntimeException} is raised.
-	 * </p>
-	 *
-	 * @param handler
-	 *            the {@link IHTTPTransferCodingHandler} to register
-	 */
-	public void registerTransferCodingHandler(IHTTPTransferCodingHandler handler) {
-		if (!isStopped()) {
-			throw new RuntimeException();
-		}
-		if (this.transferCodingHandlers == null) {
-			this.transferCodingHandlers = new IHTTPTransferCodingHandler[] { handler };
-		} else {
-			int length = this.transferCodingHandlers.length;
-			System.arraycopy(this.transferCodingHandlers, 0,
-					this.transferCodingHandlers = new IHTTPTransferCodingHandler[length + 1], 0, length);
-			this.transferCodingHandlers[length] = handler;
-		}
-	}
-
-	/**
-	 * <p>
-	 * Start the {@link HTTPServer} (in a dedicated thread): start listening for connections and start session jobs.<br>
 	 * Multiple start is not allowed.
-	 * </p>
+	 *
+	 * @throws IOException
+	 *             if an error occurs during the creation of the socket.
 	 */
-	@Override
-	public void start() {
-		this.streamConnections = new Socket[this.maxOpenedConnections + 1]; // always
-		// an empty index in order to distinguish between empty or full queue
-		super.start();
-		// start jobs
-
-		// FIXME for mem test only
-		// r = Runtime.getRuntime();
+	public void start() throws IOException {
+		this.server.start();
 
 		this.jobs = new Thread[this.sessionJobsCount];
-		// r.gc();
-		// System.out.println((new Date()).getTime()+", "+(r.totalMemory() -
-		// r.freeMemory())+", beginning of server.start()" );
-		for (int i = this.sessionJobsCount; --i >= 0;) {
-			HTTPSession session = this.httpSessionFactory.newHTTPSession(this);
-			session.setBodyParserFactory(this.bodyParserFactory);
-			Thread job = new Thread(session.getRunnable(), "HTTP-JOB-" + i); //$NON-NLS-1$
-			// FIXME for mem test only
-			// r.gc();
-			// System.out.println((new Date()).getTime()+", "+(r.totalMemory() -
-			// r.freeMemory())+", job no"+(nbSessionJobs-i));
 
+		for (int i = this.sessionJobsCount - 1; i >= 0; i--) {
+			Thread job = new Thread(newJob(), "HTTP-JOB-" + i); //$NON-NLS-1$
 			this.jobs[i] = job;
 			job.start();
 		}
-		Messages.LOGGER.log(Level.INFO, Messages.CATEGORY, Messages.SERVER_STARTED);
 	}
 
 	/**
-	 * <p>
 	 * Stops the {@link HTTPServer}. Stops listening for connections. This method blocks until all session jobs are
 	 * stopped.
-	 * </p>
 	 */
-	@Override
 	public void stop() {
-		super.stop();
-		// awake all waiting threads
-		synchronized (this.streamConnections) {
-			this.streamConnections.notifyAll();
-		}
+		this.server.stop();
 
-		for (int i = this.jobs.length; --i >= 0;) {
+		for (int i = this.jobs.length - 1; i >= 0; i--) {
 			try {
 				this.jobs[i].join();
 			} catch (InterruptedException e) {
 				// nothing to do on interrupted exception
 			}
 		}
-		Messages.LOGGER.log(Level.INFO, Messages.CATEGORY, Messages.SERVER_STOPPED);
 	}
 
 	/**
-	 * Called when a connection cannot be added to the buffer. By default, an event is logged and connection is closed.
+	 * Returns a new job process as {@link Runnable}.
 	 *
-	 * @param connection
-	 *            {@link Socket} that can not be added
+	 * @return a new job process as {@link Runnable}.
 	 */
-	protected void tooManyOpenConnections(Socket connection) {
-		Messages.LOGGER.log(Level.SEVERE, Messages.CATEGORY, Messages.TOO_MANY_CONNECTION,
-				connection.getInetAddress().toString(), Integer.valueOf(this.maxOpenedConnections));
-		try {
-			connection.close();
+	private Runnable newJob() {
+		return new Runnable() {
+			@Override
+			public void run() {
+				while (true) {
+					try (Socket connection = HTTPServer.this.server.getNextStreamConnection()) {
+						if (connection == null) {
+							// server stopped
+							return;
+						}
+
+						Messages.LOGGER.log(Level.FINE, Messages.CATEGORY_HOKA, Messages.PROCESS_CONNECTION,
+								Integer.valueOf(connection.hashCode()), connection.getInetAddress().toString());
+
+						handleConnection(connection);
+
+						Messages.LOGGER.log(Level.FINE, Messages.CATEGORY_HOKA, Messages.CONNECTION_CLOSED,
+								Integer.valueOf(connection.hashCode()), connection.getInetAddress().toString());
+					} catch (IOException e) {
+						Messages.LOGGER.log(Level.WARNING, Messages.CATEGORY_HOKA, Messages.ERROR_UNKNOWN, e);
+					}
+				}
+			}
+		};
+	}
+
+	private void handleConnection(Socket connection) {
+		try (InputStream inputStream = new BufferedInputStream(connection.getInputStream(), getBufferSize());
+				OutputStream outputStream = connection.getOutputStream()) {
+			boolean keepAlive;
+			do {
+				HTTPRequest request = null;
+				HTTPResponse response;
+				IHTTPEncodingHandler encodingHandler = null;
+				String responseMessage;
+
+				try {
+					request = new HTTPRequest(inputStream, this.encodingRegistry);
+
+					response = this.rootRequestHandler.process(request, new HashMap<String, String>());
+
+					encodingHandler = this.encodingRegistry
+							.getEncodingHandler(request.getHeaderField(HTTPConstants.FIELD_ACCEPT_ENCODING));
+
+					if (encodingHandler == null && CalibrationConstants.STRICT_ACCEPT_ENCODING_COMPLIANCE) {
+						// RFC2616 14.3
+						response = RESPONSE_NOT_ACCEPTABLE;
+					} /*
+						 * else { // continue with no encoding (null handler == // identity) // Example: Firefox 3.6
+						 * asks for // Accept-Encoding=gzip,deflate by default. // If none of these encodings if present
+						 * on this // embedded server, send without encoding // instead of Error 406. This avoid to
+						 * modify // default options (about:config => //
+						 * network.http.accept-encoding=gzip,deflate,identity }
+						 */
+
+					String requestConnectionHeader = request.getHeaderField(HTTPConstants.FIELD_CONNECTION);
+					String responseConnectionHeader = response.getHeaderField(HTTPConstants.FIELD_CONNECTION);
+					keepAlive = HTTPConstants.FIELD_CONNECTION_VALUE_KEEP_ALIVE
+							.equalsIgnoreCase(requestConnectionHeader)
+							&& !HTTPConstants.FIELD_CONNECTION_VALUE_CLOSE.equalsIgnoreCase(responseConnectionHeader);
+					responseMessage = request.getURI();
+				} catch (IllegalArgumentException e) {
+					responseMessage = e.getMessage();
+					response = HTTPResponse.createError(HTTPConstants.HTTP_STATUS_BADREQUEST, responseMessage);
+					keepAlive = request != null && request.getHeaderField(HTTPConstants.FIELD_CONNECTION)
+							.equalsIgnoreCase(HTTPConstants.FIELD_CONNECTION_VALUE_KEEP_ALIVE);
+				} catch (UnsupportedHTTPEncodingException e) {
+					responseMessage = e.getMessage();
+					response = HTTPResponse.createError(HTTPConstants.HTTP_STATUS_NOTIMPLEMENTED, responseMessage);
+					keepAlive = request != null && request.getHeaderField(HTTPConstants.FIELD_CONNECTION)
+							.equalsIgnoreCase(HTTPConstants.FIELD_CONNECTION_VALUE_KEEP_ALIVE);
+				} catch (SocketTimeoutException e) {
+					responseMessage = ""; //$NON-NLS-1$
+					response = RESPONSE_REQUEST_TIMEOUT;
+					keepAlive = false;
+				} catch (IOException e) {
+					throw e;
+				} catch (final Throwable e) {
+					responseMessage = e.getMessage();
+					if (this.sendStackTraceOnException) {
+						response = HTTPResponse.createError(HTTPConstants.HTTP_STATUS_INTERNALERROR,
+								getHtmlExceptionStackTrace(e));
+					} else {
+						response = RESPONSE_INTERNAL_ERROR;
+					}
+					keepAlive = false;
+				} finally {
+					// TODO : Remove to allow Keep-Alive
+					keepAlive = false;
+				}
+
+				String connectionHeader = keepAlive ? HTTPConstants.FIELD_CONNECTION_VALUE_KEEP_ALIVE
+						: HTTPConstants.FIELD_CONNECTION_VALUE_CLOSE;
+				response.addHeaderField(HTTPConstants.FIELD_CONNECTION, connectionHeader);
+
+				String status = response.getStatus();
+				Messages.LOGGER.log(
+						status.equals(HTTPConstants.HTTP_STATUS_OK) ? Level.FINE
+								: status.equals(HTTPConstants.HTTP_STATUS_INTERNALERROR) ? Level.SEVERE : Level.INFO,
+						Messages.CATEGORY_HOKA, Messages.HTTP_RESPONSE, Integer.valueOf(connection.hashCode()),
+						connection.getInetAddress().toString(), status, responseMessage);
+
+				response.sendResponse(outputStream, encodingHandler, this.encodingRegistry, getBufferSize());
+			} while (keepAlive);
 		} catch (IOException e) {
-			Messages.LOGGER.log(Level.SEVERE, Messages.CATEGORY, Messages.ERROR_UNKNOWN, e);
+			// connection lost
+			Messages.LOGGER.log(Level.INFO, Messages.CATEGORY_HOKA, Messages.CONNECTION_LOST,
+					Integer.valueOf(connection.hashCode()), connection.getInetAddress().toString());
 		}
 	}
 
-	/**
-	 * Gets the bodyParserFactory.
-	 *
-	 * @return the bodyParserFactory.
-	 */
-	public BodyParserFactory getBodyParserFactory() {
-		return this.bodyParserFactory;
+	private int getBufferSize() {
+		return Integer.getInteger(BUFFER_SIZE_PROPERTY, BUFFER_SIZE).intValue();
 	}
 
 	/**
-	 * Sets the bodyParserFactory.
+	 * Returns whether or not the server sends the stack trace of thrown exceptions.
+	 * <p>
+	 * Returns false by default.
 	 *
-	 * @param bodyParserFactory
-	 *            the bodyParserFactory to set.
+	 * @return {@code true} if the server sends the stack trace of thrown exceptions, {@code false} otherwise.
+	 * @see #sendStackTraceOnException(boolean)
 	 */
-	public void setBodyParserFactory(BodyParserFactory bodyParserFactory) {
-		this.bodyParserFactory = bodyParserFactory;
+	public boolean getSendStackTraceOnException() {
+		return this.sendStackTraceOnException;
+	}
+
+	/**
+	 * Sets whether or not the server must send the stack trace of thrown exceptions.
+	 *
+	 * @param sendStackTraceOnException
+	 *            {@code true} if the server must send the stack trace of thrown exceptions, {@code false} otherwise.
+	 */
+	public void sendStackTraceOnException(boolean sendStackTraceOnException) {
+		this.sendStackTraceOnException = sendStackTraceOnException;
+	}
+
+	/**
+	 * Creates a HTML representation of the stack trace of <code>t</code>.
+	 * <p>
+	 * Only the relevant part of the stack trace is dumped. The exception superclasses constructors and the job internal
+	 * calls are skipped.
+	 *
+	 * @param t
+	 *            the throwable to dump.
+	 * @return the HTML representation of the stack trace as a {@link String}.
+	 */
+	private static String getHtmlExceptionStackTrace(Throwable t) {
+		StringBuilder fullMessageBuilder = new StringBuilder();
+
+		String message = t.getMessage();
+		if (message != null) {
+			fullMessageBuilder.append(message);
+			fullMessageBuilder.append(HTML_BR);
+		}
+
+		StackTraceElement[] stackTrace = t.getStackTrace();
+
+		int i = 0;
+		String className;
+
+		// Skip all the exception superclasses constructors
+		className = "java.lang"; //$NON-NLS-1$
+		while (i < stackTrace.length && stackTrace[i].getClassName().startsWith(className)) {
+			i++;
+		}
+
+		// Append only the stack trace up to this class call to RequestHandler#process.
+		className = HTTPServer.class.getName();
+		fullMessageBuilder.append(stackTrace[i - 1].toString()).append(HTML_BR);
+		for (; i < stackTrace.length && !stackTrace[i].getClassName().equals(className); i++) {
+			fullMessageBuilder.append(EXCEPTION_PREFIX).append(stackTrace[i].toString()).append(HTML_BR);
+		}
+
+		return fullMessageBuilder.toString();
 	}
 
 }

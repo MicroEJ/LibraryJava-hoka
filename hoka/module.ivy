@@ -5,8 +5,8 @@
 	This library is provided in source code for use, modification and test, subject to license terms.
 	Any modification of the source code will break MicroEJ Corp. warranties on the whole library.
 -->
-<ivy-module version="2.0" xmlns:ea="http://www.easyant.org" xmlns:m="http://ant.apache.org/ivy/extra" xmlns:ej="https://developer.microej.com" ej:version="2.0.0"> 
-	<info organisation="ej.library.iot" module="hoka" status="integration" revision="6.0.0">
+<ivy-module version="2.0" xmlns:ea="http://www.easyant.org" xmlns:ej="https://developer.microej.com" ej:version="2.0.0"> 
+	<info organisation="ej.library.iot" module="hoka" status="integration" revision="7.0.0">
 		<ea:build organisation="com.is2t.easyant.buildtypes" module="build-microej-javalib" revision="4.+">
 		</ea:build>
 	</info>
@@ -25,14 +25,12 @@
 	</publications>
 	
 	<dependencies>
-		<!-- 
-			Put MicroEJ API dependencies to the "provided->*" configuration
-			Other regular runtime dependencies are in the "default" configuration  
-		-->
 		<dependency org="ej.api" name="edc" rev="1.2.3"/>
 		<dependency org="ej.api" name="bon" rev="1.3.0"/>
 		<dependency org="ej.api" name="net" rev="1.1.0"/>
 		<dependency org="ej.api" name="ssl" rev="2.1.0"/>
+		
+		<dependency org="ej.library.eclasspath" name="base64" rev="1.0.0"/>
 		<dependency org="ej.library.eclasspath" name="collections" rev="1.3.0"/>
 		<dependency org="ej.library.eclasspath" name="io" rev="1.1.0"/>
 		<dependency org="ej.library.runtime" name="basictool" rev="1.2.2"/>
