@@ -111,37 +111,37 @@ Setup a server
 As previously said, the entry point of this library is the ``HTTPServer``
 class. It has a couple of *public* constructors :
 
-    - ``public HTTPServer(int port, int maxSimultaneousConnection, int
-      jobCount)``
-    - ``public HTTPServer(int port, int maxSimultaneousConnection, int
-      jobCount, RequestHandler requestHandler)``
-    - ``public HTTPServer(int port, int maxSimultaneousConnection, int
-      jobCount, RequestHandler requestHandler, ServerSocketFactory
-      serverSocketFactory)``
-    - ``public HTTPServer(int port, int maxSimultaneousConnection, int
-      jobCount, RequestHandler requestHandler, ServerSocketFactory
-      serverSocketFactory, int keepAliveDuration)``
-    - ``public HTTPServer(TCPServer tcpServer, int jobCount, RequestHandler
-      requestHandler)``
-    - ``public HTTPServer(TCPServer tcpServer, int jobCount, RequestHandler
-      requestHandler, HTTPEncodingRegistry encodingRegistry)``
+- ``public HTTPServer(int port, int maxSimultaneousConnection, int
+  jobCount)``
+- ``public HTTPServer(int port, int maxSimultaneousConnection, int
+  jobCount, RequestHandler requestHandler)``
+- ``public HTTPServer(int port, int maxSimultaneousConnection, int
+  jobCount, RequestHandler requestHandler, ServerSocketFactory
+  serverSocketFactory)``
+- ``public HTTPServer(int port, int maxSimultaneousConnection, int
+  jobCount, RequestHandler requestHandler, ServerSocketFactory
+  serverSocketFactory, int keepAliveDuration)``
+- ``public HTTPServer(TCPServer tcpServer, int jobCount, RequestHandler
+  requestHandler)``
+- ``public HTTPServer(TCPServer tcpServer, int jobCount, RequestHandler
+  requestHandler, HTTPEncodingRegistry encodingRegistry)``
 
 The 4 following parameters are used by the underlying ``TCPServer`` :
 
-    - ``port`` : the port number to bind the server socket on. Typically,
-      80 for HTTP and 443 for HTTPS.
-    - ``maxSimultaneousConnection`` : the size of the waiting connections
-      array.
-    - ``serverSocketFactory`` : the factory used to create a socket at startup.
-      A factory that creates secure socket wrappers for HTTPS can be created by
-      the ``ej.api.ssl`` library (see ``javax.net.ssl.SSLContext``). This
-      parameter is **optional**, its default value is the result of
-      ``ServerSocketFactory.getDefault()``.
-    - ``keepAliveDuration`` : used as the ``timeout`` parameter of
-      ``TCPServer`` in milliseconds, connections that fails to send the
-      request within the timeout limit are closed after a "408 Request
-      Timeout" response is sent. This parameter is **optional**, its default
-      value is 60s.
+- ``port`` : the port number to bind the server socket on. Typically,
+  80 for HTTP and 443 for HTTPS.
+- ``maxSimultaneousConnection`` : the size of the waiting connections
+  array.
+- ``serverSocketFactory`` : the factory used to create a socket at startup.
+  A factory that creates secure socket wrappers for HTTPS can be created by
+  the ``ej.api.ssl`` library (see ``javax.net.ssl.SSLContext``). This
+  parameter is **optional**, its default value is the result of
+  ``ServerSocketFactory.getDefault()``.
+- ``keepAliveDuration`` : used as the ``timeout`` parameter of
+  ``TCPServer`` in milliseconds, connections that fails to send the
+  request within the timeout limit are closed after a "408 Request
+  Timeout" response is sent. This parameter is **optional**, its default
+  value is 60s.
 
 They can also be used to create an instance of ``TCPServer``, then passed in
 one of the last two constructors.
@@ -149,20 +149,20 @@ one of the last two constructors.
 The other 3 parameters are used by the ``HTTPServer`` class to manage
 its jobs or by the jobs to process the requests :
 
-    - ``jobCount`` : the number of jobs (threads) used to process upcoming
-      requests. This parameter limits the maximum number of requests
-      concurrently processed.
-    - ``requestHandler`` : the application request handler used to process the
-      request. It is added to the hierarchy of other internal handlers
-      described later in this document. This parameter is **optional**, its
-      default value is an instance of ``ResourceRequestHandler`` that tries to
-      match the requests URIs with the Java application resources available in
-      "/hoka/", loaded with ``Class.getResourceAsStream(String)``. When the
-      matched resource is a directory, its index file is loaded if it exists.
-      Directory traversal are refused.
-    - ``encodingRegistry`` : the registry of encoding and transfer-coding
-      handlers available to parse the requests and send the responses. Use this
-      parameter to provide the server with new encoding handlers.
+- ``jobCount`` : the number of jobs (threads) used to process upcoming
+  requests. This parameter limits the maximum number of requests
+  concurrently processed.
+- ``requestHandler`` : the application request handler used to process the
+  request. It is added to the hierarchy of other internal handlers
+  described later in this document. This parameter is **optional**, its
+  default value is an instance of ``ResourceRequestHandler`` that tries to
+  match the requests URIs with the Java application resources available in
+  "/hoka/", loaded with ``Class.getResourceAsStream(String)``. When the
+  matched resource is a directory, its index file is loaded if it exists.
+  Directory traversal are refused.
+- ``encodingRegistry`` : the registry of encoding and transfer-coding
+  handlers available to parse the requests and send the responses. Use this
+  parameter to provide the server with new encoding handlers.
 
 Another parameter is used for debug : the boolean ``sendStackTraceOnException``
 has a getter and a setter. If it is ``true``, when an exception occurs during
@@ -186,27 +186,27 @@ call the ``start()`` and ``stop()`` methods on the ``HTTPServer`` object.
 
 The following snippet is an example of a simple server setup :
 
-  .. code-block:: java
+.. code-block:: java
 
-    // Constants
-    int PORT = 80;
-    int MAX_CONNECTIONS = 10;
-    int JOBS = 3;
+  // Constants
+  int PORT = 80;
+  int MAX_CONNECTIONS = 10;
+  int JOBS = 3;
 
-    // Initialize the server
-    HTTPServer server = new HTTPServer(PORT, MAX_CONNECTIONS, JOBS);
+  // Initialize the server
+  HTTPServer server = new HTTPServer(PORT, MAX_CONNECTIONS, JOBS);
 
-    try {
-      // Start the server
-      server.start();
+  try {
+    // Start the server
+    server.start();
 
-      // ...
+    // ...
 
-      // Stop the server
-      server.stop();
-    } catch (IOException e) {
-      // Handle the exception
-    }
+    // Stop the server
+    server.stop();
+  } catch (IOException e) {
+    // Handle the exception
+  }
 
 
 Develop services
@@ -220,28 +220,28 @@ application.
 As previously said, the request handler mechanism is designed to be used in a
 hierarchical manner. Internally, the request is processed successively by :
 
-  - a ``IfNoneMatchRequestHandler`` that handles requests with a
-    ``If-None-Match`` header and sends a "304 Not Modified" response, whatever
-    the resource fingerprint is to enable browser caching. Do not cache
-    dynamic files, they won't be detected as modified and, therefore, the
-    server won't send the new content.
-  - the application request handler
-  - a ``NotFoundRequestHandler`` that handles all requests not handled by the
-    two previous handlers and sends a "404 Not Found" response.
+- a ``IfNoneMatchRequestHandler`` that handles requests with a
+  ``If-None-Match`` header and sends a "304 Not Modified" response, whatever
+  the resource fingerprint is to enable browser caching. Do not cache
+  dynamic files, they won't be detected as modified and, therefore, the
+  server won't send the new content.
+- the application request handler
+- a ``NotFoundRequestHandler`` that handles all requests not handled by the
+  two previous handlers and sends a "404 Not Found" response.
 
 The loop over the handlers is implemented in ``RequestHandlerComposite``. Use
 it recursively to define a hierarchical handler :
 
-  .. code-block:: java
+.. code-block:: java
 
-    RequestHandlerComposite root = new RequestHandlerComposite();
+  RequestHandlerComposite root = new RequestHandlerComposite();
 
-    RequestHandlerComposite node = new RequestHandlerComposite();
-    node.addRequestHandler(aRequestHandler);
-    node.addRequestHandler(anotherRequestHandler);
+  RequestHandlerComposite node = new RequestHandlerComposite();
+  node.addRequestHandler(aRequestHandler);
+  node.addRequestHandler(anotherRequestHandler);
 
-    root.addRequestHandler(node);
-    root.addRequestHandler(yetAnotherRequestHandler);
+  root.addRequestHandler(node);
+  root.addRequestHandler(yetAnotherRequestHandler);
 
 Note that it is possible to add new services to an existing
 ``RequestHandlerComposite`` while the server is running. After adding a
@@ -253,106 +253,106 @@ resources) in a single way.
 
 Typically, such a request handler will :
 
-  #. Retrieve relevant data from the request :
+#. Retrieve relevant data from the request :
 
-    - ``HTTPRequest#getMethod()`` : the request method (1 for ``POST``, 2 for
-      ``GET``, 3 for ``PUT`` and 4 for ``DELETE``), other methods are not
-      supported and the server replies with a "400 Bad Request" in case the
-      method specified is not one of the 4 supported methods.
-    - ``HTTPRequest#getURI()`` : the URI requested.
-    - ``HTTPRequest#getParameters()`` : the parameters parsed from the query
-      of the request.
-    - ``HTTPRequest#getVersion()`` : the HTTP version of the request.
-    - ``HTTPRequest#getHeader()`` : the parsed headers, all header field names
-      are converted to lowercase.
-    - ``HTTPRequest#getHeaderField(String)`` : the value of the header with
-      given name.
-    - ``HTTPRequest#getCookies()`` : the (lazily) parsed cookies.
-    - ``HTTPRequest#getCookie(String)`` : the value of the cookie with
-      given name. Inits the parsing of all cookies.
-    - ``HTTPRequest#parseBody(BodyParser)`` : parses the body of the request
-      with the given parser.
+   - ``HTTPRequest#getMethod()`` : the request method (1 for ``POST``, 2 for
+     ``GET``, 3 for ``PUT`` and 4 for ``DELETE``), other methods are not
+     supported and the server replies with a "400 Bad Request" in case the
+     method specified is not one of the 4 supported methods.
+   - ``HTTPRequest#getURI()`` : the URI requested.
+   - ``HTTPRequest#getParameters()`` : the parameters parsed from the query
+     of the request.
+   - ``HTTPRequest#getVersion()`` : the HTTP version of the request.
+   - ``HTTPRequest#getHeader()`` : the parsed headers, all header field names
+     are converted to lowercase.
+   - ``HTTPRequest#getHeaderField(String)`` : the value of the header with
+     given name.
+   - ``HTTPRequest#getCookies()`` : the (lazily) parsed cookies.
+   - ``HTTPRequest#getCookie(String)`` : the value of the cookie with
+     given name. Inits the parsing of all cookies.
+   - ``HTTPRequest#parseBody(BodyParser)`` : parses the body of the request
+     with the given parser.
 
-  2. Match the request against the type of requests it handles.
-  #. If not matched, return ``null`` to delegate the process of the request.
-  #. Build a ``HTTPResponse`` based on the request with the following data :
+#. Match the request against the type of requests it handles.
+#. If not matched, return ``null`` to delegate the process of the request.
+#. Build a ``HTTPResponse`` based on the request with the following data :
 
-    - ``data`` : the body of the response as a ``byte[]`` or as an
-      ``InputStream``.
-    - ``status`` : the status of the response to send.
-    - ``mimeType`` : the value of the ``content-type`` header.
-    - ``HTTPRequest#addHeaderField(String, String)`` : adds a header with
-      given name and value.
+   - ``data`` : the body of the response as a ``byte[]`` or as an
+     ``InputStream``.
+   - ``status`` : the status of the response to send.
+   - ``mimeType`` : the value of the ``content-type`` header.
+   - ``HTTPRequest#addHeaderField(String, String)`` : adds a header with
+     given name and value.
 
 To parse the body of a request, 4 implementations of ``BodyParser`` are
 provided by the library :
 
-  - ``StringBodyParser`` : read the whole body into a string
-  - ``MultipartStringsParser`` : parse a ``multipart/*`` body, each part read
-    into a string
-  - ``MultiPartBodyParser`` : parse a ``multipart/*`` body, and parse each part
-    as header fields and a body.
-  - ``ParameterParser`` : parse a ``application/x-www-form-urlencoded`` body.
+- ``StringBodyParser`` : read the whole body into a string
+- ``MultipartStringsParser`` : parse a ``multipart/*`` body, each part read
+  into a string
+- ``MultiPartBodyParser`` : parse a ``multipart/*`` body, and parse each part
+  as header fields and a body.
+- ``ParameterParser`` : parse a ``application/x-www-form-urlencoded`` body.
 
 The following snippet is an example of a simple request handler
 implementation :
 
-  .. code-block:: java
+.. code-block:: java
 
-    @Override
-    public HTTPResponse process(HTTPRequest request, Map<String, String> attributes) {
-      // Step 1
+  @Override
+  public HTTPResponse process(HTTPRequest request, Map<String, String> attributes) {
+    // Step 1
 
-      // Use the URI as the path of the resource
-      String uri = request.getURI();
+    // Use the URI as the path of the resource
+    String uri = request.getURI();
 
-      // Step 2
+    // Step 2
 
-      // Load the targeted resource
-      InputStream resource = getClass().getResourceAsStream(uri);
+    // Load the targeted resource
+    InputStream resource = getClass().getResourceAsStream(uri);
 
-      // Step 3
+    // Step 3
 
-      // If the targeted resource doesn't exist, do not process the request.
-      if (resource == null) {
-        return null;
-      }
-
-      // Step 4
-
-      // Send a response with status "200 OK", resource corresponding MIME type and
-      // resource stream as body.
-      HTTPResponse response = new HTTPResponse(resource);
-      response.setStatus(HTTPConstants.HTTP_STATUS_OK); // See HTTPConstants
-      response.setMimeType(MIMEUtils.getMIMEType(uri)); // See MIMEUtils
-      return response;
+    // If the targeted resource doesn't exist, do not process the request.
+    if (resource == null) {
+      return null;
     }
+
+    // Step 4
+
+    // Send a response with status "200 OK", resource corresponding MIME type and
+    // resource stream as body.
+    HTTPResponse response = new HTTPResponse(resource);
+    response.setStatus(HTTPConstants.HTTP_STATUS_OK); // See HTTPConstants
+    response.setMimeType(MIMEUtils.getMIMEType(uri)); // See MIMEUtils
+    return response;
+  }
 
 Another example for the ``PUT`` method :
 
-  .. code-block:: java
+.. code-block:: java
 
-    @Override
-    public HTTPResponse process(HTTPRequest request, Map<String, String> attributes) {
-      // Step 1
+  @Override
+  public HTTPResponse process(HTTPRequest request, Map<String, String> attributes) {
+    // Step 1
 
-      int method = request.getMethod();
-      String body = request.parseBody(new StringBodyParser());
+    int method = request.getMethod();
+    String body = request.parseBody(new StringBodyParser());
 
-      // Step 3
+    // Step 3
 
-      // Process only PUT requests.
-      if (method != 1) {
-        return null;
-      }
-
-      // Step 4
-
-      System.out.println(body);
-
-      // Send a response with an empty body.
-      return HTTPResponse.createResponseFromStatus(HTTPConstants.HTTP_STATUS_OK);
+    // Process only PUT requests.
+    if (method != 1) {
+      return null;
     }
+
+    // Step 4
+
+    System.out.println(body);
+
+    // Send a response with an empty body.
+    return HTTPResponse.createResponseFromStatus(HTTPConstants.HTTP_STATUS_OK);
+  }
 
 Handle encoding
 ---------------
@@ -410,41 +410,41 @@ information (a list of space-separated strings) depending on the message.
 
 The ids have the following meanings :
 
-  - -1 : Too many connections, logged when a connection is rejected by the
-    server because the waiting connection array is full.
-  - -2 : Multiple start, logged when the ``start()`` method is called while
-    the server is running.
-  - -3 : Empty endpoint, logged when a REST endpoint is created for an empty
-    endpoint.
-  - -4 : Directory traversal, logged when a request target a resource using a
-    directory traversal URI.
-  - -255 : Error unknown, logged when an unexpected exception is thrown.
-    Additional information (the stack trace of the exception thrown) is sent
-    to the browser if the server debug mode is activated. Activate the debug
-    mode with ``server.sendStackTraceOnException(true)``.
-  - 1 : New connection, logged when a new connection is opened.
-  - 2 : Server started, logged when the server has finished its startup.
-  - 3 : Server stopped, logged after the server is stopped.
-  - 4 : Process connection, logged when a job starts processing a connection.
-  - 5 : Response sent, logged when a response is sent.
-  - 6 : Connection lost, logged when the connection is broken by the client.
-  - 7 : Connection closed, logged when the connection is closed.
+- -1 : Too many connections, logged when a connection is rejected by the
+  server because the waiting connection array is full.
+- -2 : Multiple start, logged when the ``start()`` method is called while
+  the server is running.
+- -3 : Empty endpoint, logged when a REST endpoint is created for an empty
+  endpoint.
+- -4 : Directory traversal, logged when a request target a resource using a
+  directory traversal URI.
+- -255 : Error unknown, logged when an unexpected exception is thrown.
+  Additional information (the stack trace of the exception thrown) is sent
+  to the browser if the server debug mode is activated. Activate the debug
+  mode with ``server.sendStackTraceOnException(true)``.
+- 1 : New connection, logged when a new connection is opened.
+- 2 : Server started, logged when the server has finished its startup.
+- 3 : Server stopped, logged after the server is stopped.
+- 4 : Process connection, logged when a job starts processing a connection.
+- 5 : Response sent, logged when a response is sent.
+- 6 : Connection lost, logged when the connection is broken by the client.
+- 7 : Connection closed, logged when the connection is closed.
 
 Some messages contains information about the connection : the socket hashcode
 to identify the connection and the IP source address.
 
 The following is an example of the logs produced by Hoka :
 
-  .. code-block::
+.. code-block::
 
-    Hoka:I=2                                            -> Server started
-    Hoka:I=1 165120 /127.0.0.1                          -> New connection
-    Hoka:F=4 165120 /127.0.0.1                          -> Process connection
-    Hoka:I=1 172944 /127.0.0.1                          -> New connection
-    Hoka:F=4 172944 /127.0.0.1                          -> Process connection
-    Hoka:F=5 165120 /127.0.0.1 200 OK /                 -> Response sent
-    Hoka:F=7 165120 /127.0.0.1                          -> Connection closed
-    Hoka:I=1 184136 /127.0.0.1                          -> New connection
-    Hoka:F=4 184136 /127.0.0.1                          -> Process connection
-    Hoka:F=5 172944 /127.0.0.1 200 OK /png/microej.png  -> Response sent
-    Hoka:F=7 172944 /127.0.0.1                          -> Connection closed
+  Hoka:I=2                                            -> Server started
+  Hoka:I=1 165120 /127.0.0.1                          -> New connection
+  Hoka:F=4 165120 /127.0.0.1                          -> Process connection
+  Hoka:I=1 172944 /127.0.0.1                          -> New connection
+  Hoka:F=4 172944 /127.0.0.1                          -> Process connection
+  Hoka:F=5 165120 /127.0.0.1 200 OK /                 -> Response sent
+  Hoka:F=7 165120 /127.0.0.1                          -> Connection closed
+  Hoka:I=1 184136 /127.0.0.1                          -> New connection
+  Hoka:F=4 184136 /127.0.0.1                          -> Process connection
+  Hoka:F=5 172944 /127.0.0.1 200 OK /png/microej.png  -> Response sent
+  Hoka:F=7 172944 /127.0.0.1                          -> Connection closed
