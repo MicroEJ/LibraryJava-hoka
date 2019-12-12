@@ -217,6 +217,9 @@ request handler can be defined to control the processing of the requests. This
 is the entry point to develop the different services provided by the web
 application.
 
+Internal request handling
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
 As previously said, the request handler mechanism is designed to be used in a
 hierarchical manner. Internally, the request is processed successively by :
 
@@ -228,6 +231,9 @@ hierarchical manner. Internally, the request is processed successively by :
 - the application request handler
 - a ``NotFoundRequestHandler`` that handles all requests not handled by the
   two previous handlers and sends a "404 Not Found" response.
+
+Request handler hierarchy
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The loop over the handlers is implemented in ``RequestHandlerComposite``. Use
 it recursively to define a hierarchical handler :
@@ -250,6 +256,9 @@ service, it will become available for next processed requests.
 By splitting the web application into multiples, leaf handlers can be
 relatively simple and serve only one resource (or a list of similar
 resources) in a single way.
+
+Request handler template
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 Typically, such a request handler will :
 
@@ -284,6 +293,9 @@ Typically, such a request handler will :
    - ``HTTPRequest#addHeaderField(String, String)`` : adds a header with
      given name and value.
 
+Body parsing
+~~~~~~~~~~~~
+
 To parse the body of a request, 4 implementations of ``BodyParser`` are
 provided by the library :
 
@@ -293,6 +305,61 @@ provided by the library :
 - ``MultiPartBodyParser`` : parse a ``multipart/*`` body, and parse each part
   as header fields and a body.
 - ``ParameterParser`` : parse a ``application/x-www-form-urlencoded`` body.
+
+MIME types
+~~~~~~~~~~
+
+The ``MIMEUtils`` class provides constant values for commonly used MIME types
+and utility methods to return the MIME type of a resource name based on file
+extensions.
+
+The predefined MIME types are :
+
+- MIME_PLAINTEXT = "text/plain"
+- MIME_HTML = "text/html"
+- MIME_XML = "text/xml"
+- MIME_DEFAULT_BINARY = "application/octet-stream"
+- MIME_CSS = "text/css"
+- MIME_PNG = "image/png"
+- MIME_JPEG = "image/jpeg"
+- MIME_GIF = "image/gif"
+- MIME_JS = "application/x-javascript"
+- MIME_FORM_ENCODED_DATA = "application/x-www-form-urlencoded"
+- MIME_MULTIPART_FORM_ENCODED_DATA = "multipart/form-data"
+
+The method ``public static String getMIMEType(String uri)`` returns the MIME
+type of the given uri, assuming that the file extension in the uri was
+previously registered with the mapFileExtensionToMIMEType(...). Only lower
+case file extensions are recognized.
+
+For example calling getMIMEType(“/images/logo.png”) will return the string
+“image/png”.
+
+The following table shows the predefined assignments between file extensions
+and MIME types:
+
+========= =========
+Extension MIME type
+========= =========
+".png"    ``MIME_PNG``
+".css"    ``MIME_CSS``
+".gif"    ``MIME_GIF``
+".jpeg"   ``MIME_JPEG``
+".jpg"    ``MIME_JPEG``
+".html"   ``MIME_HTML``
+".htm"    ``MIME_HTML``
+".js"     ``MIME_JS``
+".txt"    ``MIME_PLAINTEXT``
+".xml"    ``MIME_XML``
+========= =========
+
+The method ``public static boolean mapFileExtensionToMIMEType(String
+fileExtension, String mimeType)`` can be used to add further file extension /
+MIME type assignments. The MIME type given in the parameter ``mimeType`` will
+be assigned to the extension ``fileExtension``.
+
+Examples
+~~~~~~~~
 
 The following snippet is an example of a simple request handler
 implementation :
@@ -448,3 +515,12 @@ The following is an example of the logs produced by Hoka :
   Hoka:F=4 184136 /127.0.0.1                          -> Process connection
   Hoka:F=5 172944 /127.0.0.1 200 OK /png/microej.png  -> Response sent
   Hoka:F=7 172944 /127.0.0.1                          -> Connection closed
+
+Additional features
+-------------------
+
+REST services
+~~~~~~~~~~~~~
+
+Authentication
+~~~~~~~~~~~~~~
