@@ -14,7 +14,7 @@ Scope
 
 This document explains how the Hoka HTTP server can be facilitated to create
 web interfaces or M2M capabilities for embedded applications. This manual is
-made for the version 7.0.0. For later versions, see `changelog
+made for the version 7.0.0. For later versions updates, see `changelog
 <../CHANGELOG.md>`_.
 
 Intended audience
@@ -45,7 +45,7 @@ Upcoming connections
 The first class to consider is ``ej.hoka.tcp.TCPServer``. This class is
 responsible for maitaining (start and stop) the server socket thread. This
 thread accepts new connections and store them in a waiting array. The
-maximum number of waiting connections is a parameter, beyond this amount,
+maximum number of waiting connections is a parameter. Beyond this amount,
 the new upcoming connections sockets are directly closed.
 
   It is possible to change this behavior by overriding
@@ -63,15 +63,14 @@ manages jobs that will repeatedly call this method and process the connection
 by parsing the HTTP request, processing it, and replying with the appropriate
 response.
 
-The number of jobs is a parameter that can be used to configure the number of
+The number of jobs is a parameter that is used to configure the number of
 request processed concurrently. Note that one user (one browser) can send
-multiple connections at a time. To prevent idling connections to lock the
-server, the ``TCPServer`` has a socket timeout that is activated when
-initiating the parsing of the request.
+multiple connections at a time. To prevent idling connections to lock a job,
+the ``TCPServer`` has a socket timeout parameter to limit the time a job is
+waiting for the client to send data.
 
-  It is the responsability of these jobs to properly close the
-  resources associated with the processed socket (mainly, the I/O
-  connections) at the end of the HTTP protocol.
+  It is the responsability of these jobs to properly close the I/O connections
+  associated with the processed socket at the end of the HTTP protocol.
 
 Request parser / Response builder
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -138,7 +137,7 @@ The 4 following parameters are used by the underlying ``TCPServer`` :
   parameter is **optional**, its default value is the result of
   ``ServerSocketFactory.getDefault()``.
 - ``keepAliveDuration`` : used as the ``timeout`` parameter of
-  ``TCPServer`` in milliseconds, connections that fails to send the
+  ``TCPServer``, in milliseconds, connections that fails to send the
   request within the timeout limit are closed after a "408 Request
   Timeout" response is sent. This parameter is **optional**, its default
   value is 60s.
@@ -165,10 +164,10 @@ its jobs or by the jobs to process the requests :
   parameter to provide the server with new encoding handlers.
 
 Another parameter is used for debug : the boolean ``sendStackTraceOnException``
-has a getter and a setter. If it is ``true``, when an exception occurs during
-the process of a request, the stack trace is sent in a plain text response.
-This is useful when developing the web application, otherwise, a "500 Internal
-Error" response is sent.
+has a getter and a setter methods. If it is ``true``, when an exception occurs
+during the process of a request, the stack trace is sent in a plain text
+response. This is useful when developing the web application, otherwise, a "500
+Internal Error" response is sent.
 
 When manually creating the ``TCPServer``, it is possible to redefine the name
 of the server thread by overriding ``getName()`` and the behavior in case the
@@ -179,7 +178,8 @@ Finally, both the ``TCPServer`` and the ``HTTPServer`` have a ``start()`` and
 a ``stop()`` methods. Do not call the ``start()`` method twice unless the
 ``stop()`` method is called between the two calls. Even though the
 ``TCPServer#stop()`` method also stops the ``HTTPServer``, it is recommended to
-call the ``start()`` and ``stop()`` methods on the ``HTTPServer`` object.
+call the ``start()`` and ``stop()`` methods directly on the ``HTTPServer``
+object.
 
   Note that the server socket is bound to the given port only upon call to the
   ``start()`` method and unbound upon call to the ``stop()`` method.
@@ -197,15 +197,15 @@ The following snippet is an example of a simple server setup :
   HTTPServer server = new HTTPServer(PORT, MAX_CONNECTIONS, JOBS);
 
   try {
-    // Start the server
-    server.start();
+      // Start the server
+      server.start();
 
-    // ...
+      // ...
 
-    // Stop the server
-    server.stop();
+      // Stop the server
+      server.stop();
   } catch (IOException e) {
-    // Handle the exception
+      // Handle the exception
   }
 
 
@@ -296,14 +296,17 @@ Typically, such a request handler will :
 Body parsing
 ~~~~~~~~~~~~
 
-To parse the body of a request, 4 implementations of ``BodyParser`` are
-provided by the library :
+The ``HTTPRequest#parseBody(BodyParser)`` is used to parse the body of a
+request. Prior to a call to this method, the stream is not consumed. Then,
+the ``BodyParser`` implementation parses the stream and outputs the body in
+the custom form. 4 implementations of ``BodyParser`` are provided by the
+library :
 
-- ``StringBodyParser`` : read the whole body into a string
+- ``StringBodyParser`` : read the whole body into a string.
 - ``MultipartStringsParser`` : parse a ``multipart/*`` body, each part read
-  into a string
+  into a string.
 - ``MultiPartBodyParser`` : parse a ``multipart/*`` body, and parse each part
-  as header fields and a body.
+  as header fields and an ``InputStream`` body.
 - ``ParameterParser`` : parse a ``application/x-www-form-urlencoded`` body.
 
 MIME types
@@ -327,13 +330,14 @@ The predefined MIME types are :
 - MIME_FORM_ENCODED_DATA = "application/x-www-form-urlencoded"
 - MIME_MULTIPART_FORM_ENCODED_DATA = "multipart/form-data"
 
-The method ``public static String getMIMEType(String uri)`` returns the MIME
+The method ``getMIMEType(String uri)`` returns the MIME
 type of the given uri, assuming that the file extension in the uri was
-previously registered with the mapFileExtensionToMIMEType(...). Only lower
-case file extensions are recognized.
+previously registered with the ``mapFileExtensionToMIMEType(String
+fileExtension, String mimeType)``. Only lower case file extensions are
+recognized.
 
-For example calling getMIMEType(“/images/logo.png”) will return the string
-“image/png”.
+For example, calling ``getMIMEType("/images/logo.png")`` will return the string
+``"image/png"``.
 
 The following table shows the predefined assignments between file extensions
 and MIME types:
@@ -368,31 +372,31 @@ implementation :
 
   @Override
   public HTTPResponse process(HTTPRequest request, Map<String, String> attributes) {
-    // Step 1
+      // Step 1
 
-    // Use the URI as the path of the resource
-    String uri = request.getURI();
+      // Use the URI as the path of the resource
+      String uri = request.getURI();
 
-    // Step 2
+      // Step 2
 
-    // Load the targeted resource
-    InputStream resource = getClass().getResourceAsStream(uri);
+      // Load the targeted resource
+      InputStream resource = getClass().getResourceAsStream(uri);
 
-    // Step 3
+      // Step 3
 
-    // If the targeted resource doesn't exist, do not process the request.
-    if (resource == null) {
-      return null;
-    }
+      // If the targeted resource doesn't exist, do not process the request.
+      if (resource == null) {
+          return null;
+      }
 
-    // Step 4
+      // Step 4
 
-    // Send a response with status "200 OK", resource corresponding MIME type and
-    // resource stream as body.
-    HTTPResponse response = new HTTPResponse(resource);
-    response.setStatus(HTTPConstants.HTTP_STATUS_OK); // See HTTPConstants
-    response.setMimeType(MIMEUtils.getMIMEType(uri)); // See MIMEUtils
-    return response;
+      // Send a response with status "200 OK", resource corresponding MIME type and
+      // resource stream as body.
+      HTTPResponse response = new HTTPResponse(resource);
+      response.setStatus(HTTPConstants.HTTP_STATUS_OK); // See HTTPConstants
+      response.setMimeType(MIMEUtils.getMIMEType(uri)); // See MIMEUtils
+      return response;
   }
 
 Another example for the ``PUT`` method :
@@ -401,24 +405,24 @@ Another example for the ``PUT`` method :
 
   @Override
   public HTTPResponse process(HTTPRequest request, Map<String, String> attributes) {
-    // Step 1
+      // Step 1
 
-    int method = request.getMethod();
-    String body = request.parseBody(new StringBodyParser());
+      int method = request.getMethod();
+      String body = request.parseBody(new StringBodyParser());
 
-    // Step 3
+      // Step 3
 
-    // Process only PUT requests.
-    if (method != 1) {
-      return null;
-    }
+      // Process only PUT requests.
+      if (method != 1) {
+          return null;
+      }
 
-    // Step 4
+      // Step 4
 
-    System.out.println(body);
+      System.out.println(body);
 
-    // Send a response with an empty body.
-    return HTTPResponse.createResponseFromStatus(HTTPConstants.HTTP_STATUS_OK);
+      // Send a response with an empty body.
+      return HTTPResponse.createResponseFromStatus(HTTPConstants.HTTP_STATUS_OK);
   }
 
 Handle encoding
@@ -522,5 +526,73 @@ Additional features
 REST services
 ~~~~~~~~~~~~~
 
+For the server to serve REST endpoints, this library provides a REST request
+handler. This handler contains a list of endpoints. To add an endpoint to this
+handler, use the ``addEndpoint(RestEndpoint)``. This handler uses the URI
+requested to select the most specific endpoint that will, then, process the
+request depending on the method used.
+
+To define a REST endpoint, extend the ``RestEndpoint`` class and override at
+least one of the following methods :
+
+- ``public HTTPResponse get(HTTPRequest request, Map<String, String>
+  attributes)``
+- ``public HTTPResponse post(HTTPRequest request, Map<String, String>
+  attributes)``
+- ``public HTTPResponse put(HTTPRequest request, Map<String, String>
+  attributes)``
+- ``public HTTPResponse delete(HTTPRequest request, Map<String, String>
+  attributes)``
+
+Not overrided methods return a "501 Not Implemented" response.
+
+Also, the ``RestEndpoint`` constructor has an URI argument used by the REST
+request handler to match the URI of the request. By default, the matching is
+strict, but adding a ``/*`` trailer to the ``RestEndpoint`` URI enable the
+endpoint to match all the sub-URI. For example, ``/my/endpoint/*`` matches
+``/my/endpoint/and/sub/URI`` and ``/my/endpoint`` doesn't match
+``/my/endpoint/index.html``.
+
+The library provides 3 implementations of ``RestEndpoint`` :
+
+- ``ResourceRestEndpoint`` : Resource-based endpoint, looks for a specific
+  file in the application ressources.
+- ``GzipResourceRestEndpoint`` : Extension of ``ResourceRestEndpoint`` to use
+  to send compressed files with the "gzip" content-encoding and MIME type given
+  by ``MIMEUtils#getMIMEType(String)``.
+- ``AliasEndpoint`` : Forwards requests to another endpoint. Useful to use a
+  ``RestEndpoint`` for different URIs.
+
 Authentication
 ~~~~~~~~~~~~~~
+
+The Hoka library provides tools to enable authentication on the HTTP server.
+First, the ``ej.hoka.auth`` package contains a session authentication engine
+``SessionAuthenticator`` that uses, by default, an in-memory database of all
+active sessions.
+
+The ``SessionAuthenticator`` class is parameterized by a session lifetime used
+to set an expiration date on session tokens and a database interface used to
+query the database. By default, the session lifetime is set to 1 hour and the
+database inteface used is an instance of ``InMemorySessionDataAccess`` that
+creates maps representing the relations between session IDs, user IDs and
+session expiration dates.
+
+Then, this engine is used by the following ready-to-use components in the
+``ej.hoka.auth.session`` package :
+
+- ``AuthenticatedRequestHandler`` : a ``RequestHandlerComposite`` that requires
+  the user to be authenticated before to delegates the request to its
+  sub-handlers. The request is only processed when the ``protected boolean
+  match(HTTPRequest request)`` returns ``true``. Default behavior is that the
+  request targets a sub-URI of the root URI defined in the
+  ``AuthenticatedRequestHandler`` constructor. Overrides the method to change
+  the behavior.
+- ``RestAuthenticatedRequestHandler`` : Extension of the
+  ``AuthenticatedRequestHandler`` used for REST services. Only endpoints with
+  sub-URIs of the root URI are accepted by ``public void
+  addEndpoint(RestEndpointendpoint)``.
+- ``LoginEndpoint`` : an abstract extension of ``RestEndpoint`` to quickly
+  setup a login endpoint.
+- ``LogoutEndpoint`` : an abstract extension of ``RestEndpoint`` to quickly
+  setup a logout endpoint.
