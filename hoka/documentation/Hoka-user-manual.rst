@@ -110,20 +110,12 @@ Setup a server
 As previously said, the entry point of this library is the ``HTTPServer``
 class. It has a couple of *public* constructors :
 
-- ``public HTTPServer(int port, int maxSimultaneousConnection, int
-  jobCount)``
-- ``public HTTPServer(int port, int maxSimultaneousConnection, int
-  jobCount, RequestHandler requestHandler)``
-- ``public HTTPServer(int port, int maxSimultaneousConnection, int
-  jobCount, RequestHandler requestHandler, ServerSocketFactory
-  serverSocketFactory)``
-- ``public HTTPServer(int port, int maxSimultaneousConnection, int
-  jobCount, RequestHandler requestHandler, ServerSocketFactory
-  serverSocketFactory, int keepAliveDuration)``
-- ``public HTTPServer(TCPServer tcpServer, int jobCount, RequestHandler
-  requestHandler)``
-- ``public HTTPServer(TCPServer tcpServer, int jobCount, RequestHandler
-  requestHandler, HTTPEncodingRegistry encodingRegistry)``
+- ``public HTTPServer(int port, int maxSimultaneousConnection, int jobCount)``
+- ``public HTTPServer(int port, int maxSimultaneousConnection, int jobCount, RequestHandler requestHandler)``
+- ``public HTTPServer(int port, int maxSimultaneousConnection, int jobCount, RequestHandler requestHandler, ServerSocketFactory serverSocketFactory)``
+- ``public HTTPServer(int port, int maxSimultaneousConnection, int jobCount, RequestHandler requestHandler, ServerSocketFactory serverSocketFactory, int keepAliveDuration)``
+- ``public HTTPServer(TCPServer tcpServer, int jobCount, RequestHandler requestHandler)``
+- ``public HTTPServer(TCPServer tcpServer, int jobCount, RequestHandler requestHandler, HTTPEncodingRegistry encodingRegistry)``
 
 The 4 following parameters are used by the underlying ``TCPServer`` :
 
@@ -332,9 +324,9 @@ The predefined MIME types are :
 
 The method ``getMIMEType(String uri)`` returns the MIME
 type of the given uri, assuming that the file extension in the uri was
-previously registered with the ``mapFileExtensionToMIMEType(String
-fileExtension, String mimeType)``. Only lower case file extensions are
-recognized.
+previously registered with the
+``mapFileExtensionToMIMEType(String fileExtension, String mimeType)``.
+Only lower case file extensions are recognized.
 
 For example, calling ``getMIMEType("/images/logo.png")`` will return the string
 ``"image/png"``.
@@ -357,8 +349,9 @@ Extension MIME type
 ".xml"    ``MIME_XML``
 ========= =========
 
-The method ``public static boolean mapFileExtensionToMIMEType(String
-fileExtension, String mimeType)`` can be used to add further file extension /
+The method
+``boolean mapFileExtensionToMIMEType(String fileExtension, String mimeType)``
+can be used to add further file extension /
 MIME type assignments. The MIME type given in the parameter ``mimeType`` will
 be assigned to the extension ``fileExtension``.
 
@@ -442,11 +435,10 @@ payloads with the relevant handler (``IHTTPEncodingHandler`` or
 header value is used to determine the available encoding with the highest
 quality (acceptance value).
 
-To add a encoding handler, use the ``public HTTPServer(TCPServer tcpServer,
-int jobCount, RequestHandler requestHandler, HTTPEncodingRegistry
-encodingRegistry)`` constructor with a custom instance of
-``HTTPEncodingRegistry`` and add the handler with
-``HTTPEncodingRegistry#registerEncodingHandler`` or
+To add a encoding handler, use the
+``public HTTPServer(TCPServer tcpServer, int jobCount, RequestHandler requestHandler, HTTPEncodingRegistry encodingRegistry)``
+constructor with a custom instance of ``HTTPEncodingRegistry`` and add the
+handler with ``HTTPEncodingRegistry#registerEncodingHandler`` or
 ``HTTPEncodingRegistry#registerTransferCodingHandler``.
 
 By default, the registry already contains the "identity" encoding handler
@@ -535,14 +527,10 @@ request depending on the method used.
 To define a REST endpoint, extend the ``RestEndpoint`` class and override at
 least one of the following methods :
 
-- ``public HTTPResponse get(HTTPRequest request, Map<String, String>
-  attributes)``
-- ``public HTTPResponse post(HTTPRequest request, Map<String, String>
-  attributes)``
-- ``public HTTPResponse put(HTTPRequest request, Map<String, String>
-  attributes)``
-- ``public HTTPResponse delete(HTTPRequest request, Map<String, String>
-  attributes)``
+- ``public HTTPResponse get(HTTPRequest request, Map<String, String> attributes)``
+- ``public HTTPResponse post(HTTPRequest request, Map<String, String> attributes)``
+- ``public HTTPResponse put(HTTPRequest request, Map<String, String> attributes)``
+- ``public HTTPResponse delete(HTTPRequest request, Map<String, String> attributes)``
 
 Not overrided methods return a "501 Not Implemented" response.
 
@@ -583,9 +571,9 @@ Then, this engine is used by the following ready-to-use components in the
 
 - ``AuthenticatedRequestHandler`` : a ``RequestHandlerComposite`` that requires
   the user to be authenticated before to delegates the request to its
-  sub-handlers. The request is only processed when the ``protected boolean
-  match(HTTPRequest request)`` returns ``true``. Default behavior is that the
-  request targets a sub-URI of the root URI defined in the
+  sub-handlers. The request is only processed when the
+  ``protected boolean match(HTTPRequest request)`` returns ``true``. Default
+  behavior is that the request targets a sub-URI of the root URI defined in the
   ``AuthenticatedRequestHandler`` constructor. Overrides the method to change
   the behavior.
 - ``RestAuthenticatedRequestHandler`` : Extension of the
