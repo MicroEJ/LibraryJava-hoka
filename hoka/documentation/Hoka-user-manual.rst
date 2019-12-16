@@ -578,8 +578,8 @@ Then, this engine is used by the following ready-to-use components in the
   the behavior.
 - ``RestAuthenticatedRequestHandler`` : Extension of the
   ``AuthenticatedRequestHandler`` used for REST services. Only endpoints with
-  sub-URIs of the root URI are accepted by ``public void
-  addEndpoint(RestEndpointendpoint)``.
+  sub-URIs of the root URI are accepted by
+  ``public void addEndpoint(RestEndpointendpoint)``.
 - ``LoginEndpoint`` : an abstract extension of ``RestEndpoint`` to quickly
   setup a login endpoint.
 - ``LogoutEndpoint`` : an abstract extension of ``RestEndpoint`` to quickly
