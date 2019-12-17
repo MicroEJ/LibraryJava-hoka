@@ -111,11 +111,25 @@ As previously said, the entry point of this library is the ``HTTPServer``
 class. It has a couple of *public* constructors :
 
 - ``public HTTPServer(int port, int maxSimultaneousConnection, int jobCount)``
-- ``public HTTPServer(int port, int maxSimultaneousConnection, int jobCount, RequestHandler requestHandler)``
-- ``public HTTPServer(int port, int maxSimultaneousConnection, int jobCount, RequestHandler requestHandler, ServerSocketFactory serverSocketFactory)``
-- ``public HTTPServer(int port, int maxSimultaneousConnection, int jobCount, RequestHandler requestHandler, ServerSocketFactory serverSocketFactory, int keepAliveDuration)``
-- ``public HTTPServer(TCPServer tcpServer, int jobCount, RequestHandler requestHandler)``
-- ``public HTTPServer(TCPServer tcpServer, int jobCount, RequestHandler requestHandler, HTTPEncodingRegistry encodingRegistry)``
+- ::
+
+    public HTTPServer(int port, int maxSimultaneousConnection, int jobCount, RequestHandler requestHandler)
+
+- ::
+
+    public HTTPServer(int port, int maxSimultaneousConnection, int jobCount, RequestHandler requestHandler, ServerSocketFactory serverSocketFactory)
+
+- ::
+
+    public HTTPServer(int port, int maxSimultaneousConnection, int jobCount, RequestHandler requestHandler, ServerSocketFactory serverSocketFactory, int keepAliveDuration)
+
+- ::
+
+    public HTTPServer(TCPServer tcpServer, int jobCount, RequestHandler requestHandler)
+
+- ::
+
+    public HTTPServer(TCPServer tcpServer, int jobCount, RequestHandler requestHandler, HTTPEncodingRegistry encodingRegistry)
 
 The 4 following parameters are used by the underlying ``TCPServer`` :
 
@@ -527,10 +541,21 @@ request depending on the method used.
 To define a REST endpoint, extend the ``RestEndpoint`` class and override at
 least one of the following methods :
 
-- ``public HTTPResponse get(HTTPRequest request, Map<String, String> attributes)``
-- ``public HTTPResponse post(HTTPRequest request, Map<String, String> attributes)``
-- ``public HTTPResponse put(HTTPRequest request, Map<String, String> attributes)``
-- ``public HTTPResponse delete(HTTPRequest request, Map<String, String> attributes)``
+- ::
+
+    public HTTPResponse get(HTTPRequest request, Map<String, String> attributes)
+
+- ::
+
+    public HTTPResponse post(HTTPRequest request, Map<String, String> attributes)``
+
+- ::
+
+    public HTTPResponse put(HTTPRequest request, Map<String, String> attributes)``
+
+- ::
+
+    public HTTPResponse delete(HTTPRequest request, Map<String, String> attributes)``
 
 Not overrided methods return a "501 Not Implemented" response.
 

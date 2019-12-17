@@ -41,10 +41,13 @@ in case the request is out of the REST scope.
 Usage
 ^^^^^
 
-#.  Run the example.
-#.  Go to `/ <http://localhost:8080/>`__, you should see the decompressed html content of `index.html.gz <src/resources/hoka/index.html.gz>`__.
-#.  Go to `/hello/world <http://localhost:8080/hello/world>`__, you should receive a text starting with "REPLY /hello/world".
-#.  Go to `/not/a/valid/endpoint <http://localhost:8080/not/a/valid/endpoint>`__, you should receive a textual dump of the request you sent.
+#. Run the example.
+#. Go to `/ <http://localhost:8080/>`__, you should see the decompressed html
+   content of `index.html.gz <src/resources/hoka/index.html.gz>`__.
+#. Go to `/hello/world <http://localhost:8080/hello/world>`__, you should
+   receive a text starting with "REPLY /hello/world".
+#. Go to `/not/a/valid/endpoint <http://localhost:8080/not/a/valid/endpoint>`__,
+   you should receive a textual dump of the request you sent.
 
 AuthenticationExampleServer
 ---------------------------
@@ -62,11 +65,41 @@ Usage
 ^^^^^
 
 #. Run the example.
-#. Go to `/api/private <http://localhost:8080/api/private>`__, you should receive a 401 Not authorized response.
+#. Go to `/api/private <http://localhost:8080/api/private>`__, you should receive
+   a 401 Not authorized response.
 #. Go to `/api/login <http://localhost:8080/api/login>`__ and completes the form.
-#. Go back to `/api/private <http://localhost:8080/api/private>`__, this time you should be able to pass the authentication (check cookies).
+#. Go back to `/api/private <http://localhost:8080/api/private>`__, this time you
+   should be able to pass the authentication (check cookies).
 #. Go to `/api/logout <http://localhost:8080/api/logout>`__.
-#. Go back to `/api/private <http://localhost:8080/api/private>`__, you are not authenticated again.
+#. Go back to `/api/private <http://localhost:8080/api/private>`__, you are not
+   authenticated again.
+
+SlowNetworkServer
+---------------------------
+
+The example `SlowNetworkServer <src/java/com/microej/example/
+hoka/slownetwork/SlowNetworkServer.java>`__ is designed for a slow network :
+
+- Resources are sent in a compressed form when available if supported by the
+  client.
+- Also, immutable resources are cached in the user's browser.
+
+Usage
+^^^^^
+
+#. Run the example.
+#. Go to `localhost:8080 <http://localhost:8080>`__, you should see the
+   `microej.v1.png <filesystem/hoka/png/microej.v1.png>`__ image.
+#. Refresh the page by pressing ``ENTER`` in the URL bar (refresh button will
+   disable the cache for the request) and look at the Hoka logs : the image is
+   not requested again (because it was cached by the browser).
+#. Edit the file `index.html <filesystem/hoka/index.html>`__ and change the image
+   source to ``png/microej.v2.png``.
+#. Go to `localhost:8080 <http://localhost:8080>`__ again, you should see the
+   `microej.v2.png <filesystem/hoka/png/microej.v2.png>`__ image.
+#. Refresh the page by pressing ``ENTER`` in the URL bar (refresh button will
+   disable the cache for the request) and look at the Hoka logs : the image is
+   not requested again (because it was cached by the browser).
 
 Requirements
 ============
