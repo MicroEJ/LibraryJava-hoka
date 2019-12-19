@@ -6,7 +6,7 @@ It also includes tools for REST services and for authentication.
 
 # Usage
 
-The technical documentation on the usage of the Hoka library is in the [User Manual](Hoka-user-manual.rst).
+The technical documentation on the usage of the Hoka library is in the [User Manual](user-manual.rst).
 
 # Requirements
 
