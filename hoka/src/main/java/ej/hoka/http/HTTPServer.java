@@ -1,7 +1,7 @@
 /*
  * Java
  *
- * Copyright 2009-2019 MicroEJ Corp. All rights reserved.
+ * Copyright 2009-2020 MicroEJ Corp. All rights reserved.
  * This library is provided in source code for use, modification and test, subject to license terms.
  * Any modification of the source code will break MicroEJ Corp. warranties on the whole library.
  */
@@ -65,7 +65,7 @@ public class HTTPServer {
 	/**
 	 * This size is used for the request and answer buffer size (two buffers will be created).
 	 */
-	private static final int BUFFER_SIZE = 2048;
+	private static final int BUFFER_SIZE = 4096;
 
 	/**
 	 * Property to set a custom buffer size.
