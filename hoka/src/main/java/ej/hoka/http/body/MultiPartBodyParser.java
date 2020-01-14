@@ -1,7 +1,7 @@
 /*
  * Java
  *
- * Copyright 2018-2019 MicroEJ Corp. All rights reserved.
+ * Copyright 2018-2020 MicroEJ Corp. All rights reserved.
  * This library is provided in source code for use, modification and test, subject to license terms.
  * Any modification of the source code will break MicroEJ Corp. warranties on the whole library.
  */
@@ -19,7 +19,15 @@ import ej.hoka.http.support.MIMEUtils;
  */
 public class MultiPartBodyParser implements BodyParser {
 
-	private static final int SIZE = 512;
+	/**
+	 * This size is used for the buffer size.
+	 */
+	private static final int BUFFER_SIZE = 4096;
+
+	/**
+	 * Property to set a custom buffer size.
+	 */
+	private static final String BUFFER_SIZE_PROPERTY = "hoka.buffer.size"; //$NON-NLS-1$
 	/**
 	 * The boundary delimiter;
 	 */
@@ -37,10 +45,10 @@ public class MultiPartBodyParser implements BodyParser {
 		if ((contentType != null) && contentType.startsWith(MIMEUtils.MIME_MULTIPART_FORM_ENCODED_DATA)) {
 			String boundary = contentType.substring(contentType.indexOf(';') + 1);
 			this.buffer = new MultiPartBuffer();
-			this.buffer.boundary = (HTTPConstants.END_OF_LINE + "--" //$NON-NLS-1$
-					+ boundary.substring(boundary.indexOf(BOUNDARY) + BOUNDARY.length())).getBytes();
+			this.buffer.boundary = HTTPConstants.END_OF_LINE + "--" //$NON-NLS-1$
+					+ boundary.substring(boundary.indexOf(BOUNDARY) + BOUNDARY.length());
 			this.buffer.stream = httpRequest.getStream();
-			this.buffer.buffer = new byte[SIZE];
+			this.buffer.buffer = new byte[Integer.getInteger(BUFFER_SIZE_PROPERTY, BUFFER_SIZE).intValue()];
 			/**
 			 * The first boundary does not have the line jump, artificially add it to have a generic behaviour.
 			 */
@@ -79,9 +87,9 @@ public class MultiPartBodyParser implements BodyParser {
 		 */
 		private InputStream stream;
 		/**
-		 * The boundaries bytes.
+		 * The boundaries pattern.
 		 */
-		private byte[] boundary;
+		private String boundary;
 		/**
 		 * The buffer of the data read.
 		 */
@@ -129,7 +137,7 @@ public class MultiPartBodyParser implements BodyParser {
 			if (boundaryIndex != -1) {
 				toRead = boundaryIndex;
 			} else {
-				toRead = Math.min(toRead, this.lengthAvailable - this.boundary.length);
+				toRead = Math.min(toRead, this.lengthAvailable - this.boundary.length());
 			}
 			if (toRead > 0) {
 				System.arraycopy(this.buffer, this.offset, b, off, toRead);
@@ -165,17 +173,16 @@ public class MultiPartBodyParser implements BodyParser {
 		public void skipToBoundary() throws IOException {
 			this.buffer(1);
 			int boundaryIndex = getBoundaryIndex(this.lengthAvailable);
-			int boundaryLength = this.boundary.length;
 			while (boundaryIndex == -1
 					&& (this.lengthAvailable > 0 || (this.stream != null && this.stream.available() > 0))) {
-				System.arraycopy(this.buffer, this.offset + this.lengthAvailable - boundaryLength, this.buffer, 0,
-						boundaryLength);
-				this.lengthAvailable = boundaryLength;
+				System.arraycopy(this.buffer, this.offset + this.lengthAvailable - this.boundary.length(), this.buffer,
+						0, this.boundary.length());
+				this.lengthAvailable = this.boundary.length();
 				this.offset = 0;
 				boundaryIndex = getBoundaryIndex(this.lengthAvailable);
 			}
 			if (boundaryIndex != -1) {
-				int offset = boundaryIndex + boundaryLength + 2;
+				int offset = boundaryIndex + this.boundary.length() + 2;
 				this.offset += offset;
 				this.lengthAvailable -= offset;
 			}
@@ -192,23 +199,20 @@ public class MultiPartBodyParser implements BodyParser {
 		 */
 		public int getBoundaryIndex(int length) throws IOException {
 			this.buffer(1);
-			int boundary = -1;
-			int boundaryLength = this.boundary.length;
-			for (int boundaryStart = 0; boundaryStart < Math.min(length,
-					this.lengthAvailable - boundaryLength - 1); boundaryStart++) {
-				int i = 0;
-				while (i < boundaryLength) {
-					if (this.buffer[this.offset + i + boundaryStart] != this.boundary[i]) {
-						break;
-					}
-					i++;
-				}
-				if (i == boundaryLength) {
-					boundary = boundaryStart;
-					break;
+
+			byte[] buffer = this.buffer;
+			String bufferAsString = new String(buffer, "US-ASCII");
+
+			int max = Math.min(length, this.lengthAvailable - 1 - this.boundary.length());
+
+			int index = this.offset - 1;
+			while ((index = bufferAsString.indexOf(this.boundary.charAt(0), index + 1)) != -1 && index < max) {
+				if (bufferAsString.startsWith(this.boundary, index)) {
+					return index - this.offset;
 				}
 			}
-			return boundary;
+
+			return -1;
 		}
 
 		/**
@@ -221,7 +225,7 @@ public class MultiPartBodyParser implements BodyParser {
 		 */
 		private void buffer(int length) throws IOException {
 			int lengthAvailable = this.lengthAvailable;
-			if (this.stream != null && lengthAvailable - this.boundary.length - 1 < length) {
+			if (this.stream != null && lengthAvailable - this.boundary.length() - 1 < length) {
 				int offset = this.offset;
 				int bufferLength = this.buffer.length;
 				if (offset != 0) {
