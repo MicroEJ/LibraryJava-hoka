@@ -1,4 +1,4 @@
-.. Copyright 2019 MicroEJ Corp. All rights reserved.
+.. Copyright 2019-2020 MicroEJ Corp. All rights reserved.
 .. This library is provided in source code for use, modification and test, subject to license terms.
 .. Any modification of the source code will break MicroEJ Corp. warranties on the whole library.
 
@@ -590,6 +590,11 @@ query the database. By default, the session lifetime is set to 1 hour and the
 database inteface used is an instance of ``InMemorySessionDataAccess`` that
 creates maps representing the relations between session IDs, user IDs and
 session expiration dates.
+
+However the ``SessionAuthenticator`` doesn't use ``SecureRandom`` by default in
+order to allow the use of this library without SSL, users shall instantiate the
+``SessionAuthenticator`` with an instance of ``SecureRandom`` to generate
+secure session IDs.
 
 Then, this engine is used by the following ready-to-use components in the
 ``ej.hoka.auth.session`` package :
