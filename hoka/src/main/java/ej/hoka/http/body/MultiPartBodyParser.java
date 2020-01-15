@@ -16,13 +16,18 @@ import ej.hoka.http.support.MIMEUtils;
 
 /**
  * A body parser for MIME_MULTIPART_FORM_ENCODED_DATA.
+ *
+ * It uses a buffer, typically useful when the content of a file is uploaded. Default size is 4096 bytes but can be
+ * changed using the "hoka.buffer.size" property.
  */
 public class MultiPartBodyParser implements BodyParser {
 
 	/**
-	 * This size is used for the buffer size.
+	 * This size is the default size used for the buffer.
+	 *
+	 * Use the "hoka.buffer.size" property to change it.
 	 */
-	private static final int BUFFER_SIZE = 4096;
+	private static final int DEFAULT_BUFFER_SIZE = 4096;
 
 	/**
 	 * Property to set a custom buffer size.
@@ -48,7 +53,7 @@ public class MultiPartBodyParser implements BodyParser {
 			this.buffer.boundary = HTTPConstants.END_OF_LINE + "--" //$NON-NLS-1$
 					+ boundary.substring(boundary.indexOf(BOUNDARY) + BOUNDARY.length());
 			this.buffer.stream = httpRequest.getStream();
-			this.buffer.buffer = new byte[Integer.getInteger(BUFFER_SIZE_PROPERTY, BUFFER_SIZE).intValue()];
+			this.buffer.buffer = new byte[Integer.getInteger(BUFFER_SIZE_PROPERTY, DEFAULT_BUFFER_SIZE).intValue()];
 			/**
 			 * The first boundary does not have the line jump, artificially add it to have a generic behaviour.
 			 */
@@ -173,16 +178,17 @@ public class MultiPartBodyParser implements BodyParser {
 		public void skipToBoundary() throws IOException {
 			this.buffer(1);
 			int boundaryIndex = getBoundaryIndex(this.lengthAvailable);
+			int boundaryLength = this.boundary.length();
 			while (boundaryIndex == -1
 					&& (this.lengthAvailable > 0 || (this.stream != null && this.stream.available() > 0))) {
-				System.arraycopy(this.buffer, this.offset + this.lengthAvailable - this.boundary.length(), this.buffer,
-						0, this.boundary.length());
-				this.lengthAvailable = this.boundary.length();
+				System.arraycopy(this.buffer, this.offset + this.lengthAvailable - boundaryLength, this.buffer, 0,
+						boundaryLength);
+				this.lengthAvailable = boundaryLength;
 				this.offset = 0;
 				boundaryIndex = getBoundaryIndex(this.lengthAvailable);
 			}
 			if (boundaryIndex != -1) {
-				int offset = boundaryIndex + this.boundary.length() + 2;
+				int offset = boundaryIndex + boundaryLength + 2;
 				this.offset += offset;
 				this.lengthAvailable -= offset;
 			}
@@ -206,7 +212,7 @@ public class MultiPartBodyParser implements BodyParser {
 			int max = Math.min(length, this.lengthAvailable - 1 - this.boundary.length());
 
 			int index = this.offset - 1;
-			while ((index = bufferAsString.indexOf(this.boundary.charAt(0), index + 1)) != -1 && index < max) {
+			while ((index = bufferAsString.indexOf('\r', index + 1)) != -1 && index < max) {
 				if (bufferAsString.startsWith(this.boundary, index)) {
 					return index - this.offset;
 				}
