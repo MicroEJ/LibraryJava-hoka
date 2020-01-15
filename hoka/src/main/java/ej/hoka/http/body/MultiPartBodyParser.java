@@ -15,12 +15,10 @@ import ej.hoka.http.body.MultiPartBodyParser.MultiPartBody;
 import ej.hoka.http.support.MIMEUtils;
 
 /**
- * <<<<<<< HEAD A body parser for {@link MIMEUtils#MIME_MULTIPART_FORM_ENCODED_DATA}. ======= A body parser for
- * MIME_MULTIPART_FORM_ENCODED_DATA.
+ * A body parser for {@link MIMEUtils#MIME_MULTIPART_FORM_ENCODED_DATA}.
  *
  * It uses a buffer, typically useful when the content of a file is uploaded. Default size is 4096 bytes but can be
- * changed using the "hoka.buffer.size" property. >>>>>>> 28aa829... J0153H-23 Add javadoc about the buffer size
- * property.
+ * changed using the "hoka.buffer.size" property.
  */
 public class MultiPartBodyParser implements BodyParser<MultiPartBody> {
 
