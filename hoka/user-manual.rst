@@ -591,10 +591,10 @@ database inteface used is an instance of ``InMemorySessionDataAccess`` that
 creates maps representing the relations between session IDs, user IDs and
 session expiration dates.
 
-However the ``SessionAuthenticator`` doesn't use ``SecureRandom`` by default in
-order to allow the use of this library without SSL, users shall instantiate the
-``SessionAuthenticator`` with an instance of ``SecureRandom`` to generate
-secure session IDs.
+By default, the ``SessionAuthenticator`` uses a ``Random`` instance to generate
+session IDs. To generate secure session IDs, users shall instantiate the
+``SessionAuthenticator`` with an instance of ``SecureRandom``. The
+``java.security.SecureRandom`` class is available in the ``Security`` library.
 
 Then, this engine is used by the following ready-to-use components in the
 ``ej.hoka.auth.session`` package :

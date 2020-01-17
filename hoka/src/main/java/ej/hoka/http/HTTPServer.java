@@ -452,7 +452,9 @@ public class HTTPServer {
 
 		// Append only the stack trace up to this class call to RequestHandler#process.
 		className = HTTPServer.class.getName();
-		fullMessageBuilder.append(stackTrace[i - 1].toString()).append(HTML_BR);
+		if (i > 0 && i - 1 < stackTrace.length) {
+			fullMessageBuilder.append(stackTrace[i - 1].toString()).append(HTML_BR);
+		}
 		for (; i < stackTrace.length && !stackTrace[i].getClassName().equals(className); i++) {
 			fullMessageBuilder.append(EXCEPTION_PREFIX).append(stackTrace[i].toString()).append(HTML_BR);
 		}
