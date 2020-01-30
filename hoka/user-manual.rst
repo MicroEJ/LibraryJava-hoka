@@ -12,9 +12,9 @@ Introduction
 Scope
 ~~~~~
 
-This document explains how the Hoka HTTP server can be facilitated to create
-web interfaces or M2M capabilities for embedded applications. This manual is
-made for the version 7.0.0. For later versions updates, see `changelog
+This document explains how the Hoka HTTP server can be used to create
+web interfaces or M2M capabilities for embedded applications. This manual
+addresses version 7.0.0. For later versions updates, see `changelog
 <../CHANGELOG.md>`_.
 
 Intended audience
@@ -26,13 +26,13 @@ with socket communication, the HTTP 1.1 protocol and web server concepts.
 Overview
 ~~~~~~~~
 
-Hoka is an addon library that provides a tiny footprint yet extensible web
-server. It also includes tools for REST services and for authentication.
+Hoka is a MicroEJ addon library that provides a tiny footprint yet extensible
+web server. It also includes tools for REST services and for authentication.
 
-The server is based on the ``java.net.Socket`` API available in the
+The server is based on the ``java.net.Socket`` API defined in the
 ``ej.api.net`` library.
 
-  This means it is possible to use a secure socket to use the
+  Note that it is possible to instantiate a secure socket to use the
   server in HTTPS mode (see the library ``ej.api.ssl`` for secure socket
   protocol implementation).
 
@@ -43,10 +43,11 @@ Upcoming connections
 ~~~~~~~~~~~~~~~~~~~~
 
 The first class to consider is ``ej.hoka.tcp.TCPServer``. This class is
-responsible for maitaining (start and stop) the server socket thread. This
-thread accepts new connections and store them in a waiting array. The
-maximum number of waiting connections is a parameter. Beyond this amount,
-the new upcoming connections sockets are directly closed.
+responsible for monitoring the server socket thread (start and stop). This
+thread accepts new connections and store them in a waiting array. The maximum
+number of waiting connections can be specified in the constructors. Once this
+limit is reached, any new upcoming connections sockets are automatically
+closed.
 
   It is possible to change this behavior by overriding
   ``TCPServer#tooManyOpenConnections(Socket)``.
@@ -55,13 +56,12 @@ Connection processing
 ~~~~~~~~~~~~~~~~~~~~~
 
 After populating the waiting connections array, the method
-``TCPServer#getNextStreamConnection()`` returns one socket from the available
-connections.
+``TCPServer#getNextStreamConnection()`` will return the next socket from the
+available connections.
 
-The class ``HTTPServer``, which is also the entry point of this library,
-manages jobs that will repeatedly call this method and process the connection
-by parsing the HTTP request, processing it, and replying with the appropriate
-response.
+The class ``HTTPServer`` manages jobs that will repeatedly call this method and
+process the connection : parse the request, process it, and reply with the
+appropriate response.
 
 The number of jobs is a parameter that is used to configure the number of
 request processed concurrently. Note that one user (one browser) can send
@@ -76,8 +76,8 @@ Request parser / Response builder
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 As said in the previous part, the jobs parse the HTTP request and send a
-response. To do so, it uses the classes ``HTTPRequest`` and ``HTTPResponse``.
-The two uses the ``ej.hoka.http.encoding`` to read/write in the correct
+response. To do so, they use the classes ``HTTPRequest`` and ``HTTPResponse``.
+Both use the ``ej.hoka.http.encoding`` to read/write in the correct
 encoding. Available encodings are **identity** for encodings and **identity**
 and **chunked** for transfer codings.
 
@@ -95,11 +95,12 @@ construction is done by request handlers.
   It is possible to define its own handler or to use provided ones
   like the REST request handler or the ``ResourceRequestHandler``.
 
-The design of this processing chain is to use several implementations of the
-``RequestHandler`` interface, hierarchically organized (see
-``RequestHandlerComposite``) so that the different use cases can be defined
-separately. A request handler can delegate the processing of the request to
-other handlers by returning ``null``. The list of handlers is ordered : the
+The processing chain is designed so that it can use different implementations
+of the ``RequestHandler`` interface. The hierarchical organization of handlers
+(see ``RequestHandlerComposite``) allow for different use cases to be
+defined separately.
+A request handler can delegate the processing of the request to other handlers
+by discarding it (returning ``null``). The list of handlers is ordered : the
 hierarchy is only browsed until one handler processes the request. Also, the
 handlers can communicate one to another through a ``Map<String, String>`` of
 attributes.
@@ -107,8 +108,8 @@ attributes.
 Setup a server
 --------------
 
-As previously said, the entry point of this library is the ``HTTPServer``
-class. It has a couple of *public* constructors :
+The entry point of this library is the ``HTTPServer`` class. It has a couple of
+*public* constructors :
 
 - ``public HTTPServer(int port, int maxSimultaneousConnection, int jobCount)``
 - ::
@@ -138,18 +139,18 @@ The 4 following parameters are used by the underlying ``TCPServer`` :
 - ``maxSimultaneousConnection`` : the size of the waiting connections
   array.
 - ``serverSocketFactory`` : the factory used to create a socket at startup.
-  A factory that creates secure socket wrappers for HTTPS can be created by
-  the ``ej.api.ssl`` library (see ``javax.net.ssl.SSLContext``). This
+  A factory that creates secure socket wrappers for HTTPS can be instantiated
+  with the ``ej.api.ssl`` library (see ``javax.net.ssl.SSLContext``). This
   parameter is **optional**, its default value is the result of
   ``ServerSocketFactory.getDefault()``.
 - ``keepAliveDuration`` : used as the ``timeout`` parameter of
-  ``TCPServer``, in milliseconds, connections that fails to send the
+  ``TCPServer``, in milliseconds. Connections that fails to send the
   request within the timeout limit are closed after a "408 Request
   Timeout" response is sent. This parameter is **optional**, its default
   value is 60s.
 
-They can also be used to create an instance of ``TCPServer``, then passed in
-one of the last two constructors.
+They can also be used to create an instance of ``TCPServer``, which can be
+passed in one of the last two constructors listed above.
 
 The other 3 parameters are used by the ``HTTPServer`` class to manage
 its jobs or by the jobs to process the requests :
@@ -175,10 +176,11 @@ during the process of a request, the stack trace is sent in a plain text
 response. This is useful when developing the web application, otherwise, a "500
 Internal Error" response is sent.
 
-When manually creating the ``TCPServer``, it is possible to redefine the name
-of the server thread by overriding ``getName()`` and the behavior in case the
-waiting connections array is full by overriding
-``tooManyOpenConnections(Socket)``.
+When manually creating the ``TCPServer``, it is possible to:
+
+- rename the server thread by overriding ``getName()``
+- define the behavior in case the waiting connections array is full by
+  overriding ``tooManyOpenConnections(Socket)``.
 
 Finally, both the ``TCPServer`` and the ``HTTPServer`` have a ``start()`` and
 a ``stop()`` methods. Do not call the ``start()`` method twice unless the
@@ -218,10 +220,9 @@ The following snippet is an example of a simple server setup :
 Develop services
 ----------------
 
-During the initialization of the server, it was mentioned an application
-request handler can be defined to control the processing of the requests. This
-is the entry point to develop the different services provided by the web
-application.
+In previous sections, it was mentioned that an application request handler can
+be defined to control the processing of the requests. This is the starting
+point when developing the custom services provided by the web application.
 
 Internal request handling
 ~~~~~~~~~~~~~~~~~~~~~~~~~
