@@ -22,7 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-  - Fix HTTPServer.getHtmlExceptionStackTrace().
+  - Fix HTTPServer.getHtmlExceptionStackTrace() OutOfBounds exception that was thrown when the first 
+    element of the stack trace wasn't a part of the java.lang package.
 
 ## 7.0.0 - 2019-12-10
 
