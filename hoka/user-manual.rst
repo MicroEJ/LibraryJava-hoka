@@ -14,7 +14,7 @@ Scope
 
 This document explains how the Hoka HTTP server can be used to create
 web interfaces or M2M capabilities for embedded applications. This manual
-addresses version 7.0.0. For later versions updates, see `changelog
+addresses version 7.1.0. For later versions updates, see `changelog
 <../CHANGELOG.md>`_.
 
 Intended audience
