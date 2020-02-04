@@ -1,7 +1,7 @@
 /*
  * Java
  *
- * Copyright 2009-2019 MicroEJ Corp. All rights reserved.
+ * Copyright 2009-2020 MicroEJ Corp. All rights reserved.
  * This library is provided in source code for use, modification and test, subject to license terms.
  * Any modification of the source code will break MicroEJ Corp. warranties on the whole library.
  */
@@ -65,7 +65,7 @@ public class HTTPServer {
 	/**
 	 * This size is used for the request and answer buffer size (two buffers will be created).
 	 */
-	private static final int BUFFER_SIZE = 2048;
+	private static final int BUFFER_SIZE = 4096;
 
 	/**
 	 * Property to set a custom buffer size.
@@ -452,7 +452,9 @@ public class HTTPServer {
 
 		// Append only the stack trace up to this class call to RequestHandler#process.
 		className = HTTPServer.class.getName();
-		fullMessageBuilder.append(stackTrace[i - 1].toString()).append(HTML_BR);
+		if (i > 0 && i - 1 < stackTrace.length) {
+			fullMessageBuilder.append(stackTrace[i - 1].toString()).append(HTML_BR);
+		}
 		for (; i < stackTrace.length && !stackTrace[i].getClassName().equals(className); i++) {
 			fullMessageBuilder.append(EXCEPTION_PREFIX).append(stackTrace[i].toString()).append(HTML_BR);
 		}

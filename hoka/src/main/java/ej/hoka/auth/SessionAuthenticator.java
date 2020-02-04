@@ -1,14 +1,14 @@
 /*
  * Java
  *
- * Copyright 2019 MicroEJ Corp. All rights reserved.
+ * Copyright 2019-2020 MicroEJ Corp. All rights reserved.
  * This library is provided in source code for use, modification and test, subject to license terms.
  * Any modification of the source code will break MicroEJ Corp. warranties on the whole library.
  */
 package ej.hoka.auth;
 
-import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.Random;
 
 /**
  * An implementation of {@link Authenticator} that stores active sessions in a database and authenticate a request using
@@ -19,9 +19,9 @@ public class SessionAuthenticator implements Authenticator {
 	private static final long ONE_SECOND = 1000L;
 	private static final long DEFAULT_SESSION_LIFETIME = 3600L; // 1 hour
 
-	private static final SecureRandom secureRandomNumberGenerator = new SecureRandom();
 	private static final int TOKEN_SIZE = 128;
 
+	private final Random randomNumberGenerator;
 	private final long sessionLifetime; // in seconds
 
 	private final SessionDataAccess database;
@@ -30,9 +30,25 @@ public class SessionAuthenticator implements Authenticator {
 	 * Constructs a {@link SessionAuthenticator} with 1-hour-long sessions and using an in-memory database.
 	 *
 	 * @see InMemorySessionDataAccess
+	 * @deprecated Uses an insecure implementation of {@link Random}.
 	 */
+	@Deprecated
 	public SessionAuthenticator() {
 		this(DEFAULT_SESSION_LIFETIME);
+	}
+
+	/**
+	 * Constructs a {@link SessionAuthenticator} with 1-hour-long sessions and using an in-memory database.
+	 *
+	 * Use a secure {@link Random} implementation (see java.security.SecureRandom).
+	 *
+	 * @param random
+	 *            the random number generator used to create session IDs.
+	 *
+	 * @see InMemorySessionDataAccess
+	 */
+	public SessionAuthenticator(Random random) {
+		this(random, DEFAULT_SESSION_LIFETIME);
 	}
 
 	/**
@@ -42,9 +58,27 @@ public class SessionAuthenticator implements Authenticator {
 	 *            the time before a session is considered invalid.
 	 *
 	 * @see InMemorySessionDataAccess
+	 * @deprecated Uses an insecure implementation of {@link Random}.
 	 */
+	@Deprecated
 	public SessionAuthenticator(long sessionLifetime) {
 		this(sessionLifetime, new InMemorySessionDataAccess());
+	}
+
+	/**
+	 * Constructs a {@link SessionAuthenticator} with 1-hour-long sessions and using an in-memory database.
+	 *
+	 * Use a secure {@link Random} implementation (see java.security.SecureRandom).
+	 *
+	 * @param random
+	 *            the random number generator used to create session IDs.
+	 * @param sessionLifetime
+	 *            the time before a session is considered invalid.
+	 *
+	 * @see InMemorySessionDataAccess
+	 */
+	public SessionAuthenticator(Random random, long sessionLifetime) {
+		this(random, sessionLifetime, new InMemorySessionDataAccess());
 	}
 
 	/**
@@ -54,8 +88,28 @@ public class SessionAuthenticator implements Authenticator {
 	 *            the time before a session is considered invalid.
 	 * @param database
 	 *            the database to store active sessions.
+	 *
+	 * @deprecated Uses an insecure implementation of {@link Random}.
 	 */
+	@Deprecated
 	public SessionAuthenticator(long sessionLifetime, SessionDataAccess database) {
+		this(new Random(), sessionLifetime, database);
+	}
+
+	/**
+	 * Constructs a {@link SessionAuthenticator}.
+	 *
+	 * Use a secure {@link Random} implementation (see java.security.SecureRandom).
+	 *
+	 * @param random
+	 *            the random number generator used to create session IDs.
+	 * @param sessionLifetime
+	 *            the time before a session is considered invalid.
+	 * @param database
+	 *            the database to store active sessions.
+	 */
+	public SessionAuthenticator(Random random, long sessionLifetime, SessionDataAccess database) {
+		this.randomNumberGenerator = random;
 		this.database = database;
 		this.sessionLifetime = sessionLifetime;
 	}
@@ -147,7 +201,7 @@ public class SessionAuthenticator implements Authenticator {
 	 */
 	protected String generateSessionID() {
 		byte[] sidBytes = new byte[TOKEN_SIZE];
-		secureRandomNumberGenerator.nextBytes(sidBytes);
+		this.randomNumberGenerator.nextBytes(sidBytes);
 
 		return Base64.getEncoder().encodeToString(sidBytes);
 	}

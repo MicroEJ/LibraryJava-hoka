@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 7.1.0-RC - 2020-01-14
+
+### Changed
+
+  - Update the user manual.
+  - Optimize MultipartBodyParser (getBoundaryIndex).
+  
+### Deprecated
+
+  - SessionAuthenticator constructors that use the default Random implementation.
+
+### Removed
+
+  - Remove SSL dependency used by SessionAuthenticator to generate secure session IDs.
+
+### Fixed
+
+  - Fix HTTPServer.getHtmlExceptionStackTrace() OutOfBounds exception that was thrown when the first 
+    element of the stack trace wasn't a part of the java.lang package.
+
 ## 7.0.0 - 2019-12-10
 
 ### Changed
@@ -93,6 +113,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Initial  revision.
   
 ---  
-_Copyright 2017-2019 MicroEJ Corp. All rights reserved._  
+_Copyright 2017-2020 MicroEJ Corp. All rights reserved._  
 _This library is provided in source code for use, modification and test, subject to license terms._  
 _Any modification of the source code will break MicroEJ Corp. warranties on the whole library._  
