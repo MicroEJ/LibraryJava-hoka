@@ -1,9 +1,1 @@
-/bin*
-/*~
-/**/*~
-/.DS_Store
-/**/.DS_Store
-
-/ej.*
-/.sonar
-/bin-test/
+bin/
