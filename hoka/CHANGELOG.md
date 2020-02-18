@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 7.1.1 - 2020-02-18
+
+### Changed
+
+  - Update ej.api.edc library to version 1.3.0.
+  - Update ej.api.bon library to version 1.4.0.
+  - Update ej.api.net library to version 1.1.1.
+  - Update ej.library.eclasspath.base64 library to version 1.1.0.
+  - Update ej.library.runtime.basictool library to version 1.3.0.
+
 ## 7.1.0 - 2020-02-04
 
 ### Changed
@@ -48,7 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
   - Replace abstract method HTTPServer#newHTTPSession(HTTPSession) with an abstract factory inner class to HTTPSession that subclasses can implement.
-  - Use ServerSocketFatory instead of ServerSocket.
+  - Use ServerSocketFactory instead of ServerSocket.
 
 ## 5.1.0 - 2019-03-13
 
