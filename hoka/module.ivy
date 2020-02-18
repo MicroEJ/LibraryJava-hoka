@@ -25,9 +25,9 @@
 	</publications>
 	
 	<dependencies>
-		<dependency org="ej.api" name="edc" rev="1.2.3"/>
-		<dependency org="ej.api" name="bon" rev="1.3.0"/>
-		<dependency org="ej.api" name="net" rev="1.1.0"/>
+		<dependency org="ej.api" name="edc" rev="1.3.0"/>
+		<dependency org="ej.api" name="bon" rev="1.4.0"/>
+		<dependency org="ej.api" name="net" rev="1.1.1"/>
 		
 		<dependency org="ej.library.eclasspath" name="base64" rev="1.1.0"/>
 		<dependency org="ej.library.eclasspath" name="collections" rev="1.3.0"/>
